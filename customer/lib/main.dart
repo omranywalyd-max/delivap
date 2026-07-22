@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +25,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 
-  // ring: MyFirebaseMessagingService يتعامل معها في الخلفية عبر fullScreenIntent
+  // ring: MyFirebaseMessagingService ?????? ???? ?? ??????? ??? fullScreenIntent
   if (message.data['sound'] == 'ring') return;
 
   const AndroidInitializationSettings androidSettings =
@@ -40,7 +40,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (title == null && body == null) return;
   final soundName = message.data['sound'] as String?;
   final channelId = soundName != null ? 'user_channel_$soundName' : 'user_channel';
-  final channelName = soundName != null ? 'إشعارات $soundName' : 'إشعارات المستخدم';
+  final channelName = soundName != null ? '??????? $soundName' : '??????? ????????';
   flutterLocalNotificationsPlugin.show(
     id: message.hashCode,
     title: title,
@@ -49,7 +49,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       android: AndroidNotificationDetails(
         channelId,
         channelName,
-        channelDescription: 'إشعارات الطلبات والتوصيل',
+        channelDescription: '??????? ??????? ????????',
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
@@ -90,20 +90,20 @@ Future<void> _initDeferredServices() async {
         try {
           final data = jsonDecode(response.payload!);
           _handleNotificationNavigation(data);
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
     },
   );
 
-  // إنشاء قنوات الإشعار بوضوح مع إعدادات الصوت
+  // ????? ????? ??????? ????? ?? ??????? ?????
   final androidPlugin = flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
   if (androidPlugin != null) {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel',
-        'إشعارات المستخدم',
-        description: 'إشعارات الطلبات والتوصيل',
+        '??????? ????????',
+        description: '??????? ??????? ????????',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -112,8 +112,8 @@ Future<void> _initDeferredServices() async {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel_okhrej',
-        'إشعار وصول السائق',
-        description: 'إشعار صوت وصول السائق',
+        '????? ???? ??????',
+        description: '????? ??? ???? ??????',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -123,8 +123,8 @@ Future<void> _initDeferredServices() async {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel_ring',
-        'رنين الزبون',
-        description: 'رنين الزبون من السائق',
+        '???? ??????',
+        description: '???? ?????? ?? ??????',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -216,7 +216,7 @@ Future<void> _initDeferredServices() async {
         final idToken = await user.getIdToken();
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('fb_id_token', idToken!);
-      } catch (_) {}
+      } catch (_) { /* ignored */ }
     }
   }).catchError((_) {});
 
@@ -228,7 +228,7 @@ Future<void> _initDeferredServices() async {
         final idToken = await u.getIdToken();
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('fb_id_token', idToken!);
-      } catch (_) {}
+      } catch (_) { /* ignored */ }
     }
   });
 
@@ -241,7 +241,7 @@ Future<void> _initDeferredServices() async {
         final idToken = await user.getIdToken();
         await prefs.setString('fb_id_token', idToken!);
       }
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   });
 }
 
@@ -251,12 +251,12 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
   if (title == null && body == null) return;
   final soundName = message.data['sound'] as String?;
   final channelId = soundName != null ? 'user_channel_$soundName' : 'user_channel';
-  final channelName = soundName != null ? 'إشعارات $soundName' : 'إشعارات المستخدم';
+  final channelName = soundName != null ? '??????? $soundName' : '??????? ????????';
 
   final androidDetails = AndroidNotificationDetails(
     channelId,
     channelName,
-    channelDescription: 'إشعارات الطلبات والتوصيل',
+    channelDescription: '??????? ??????? ????????',
     importance: Importance.max,
     priority: Priority.high,
     playSound: true,

@@ -69,7 +69,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       await ApiClient.post('/api/users/${widget.userId}/messages/reply', {'text': text});
       _replyCtrl.clear();
       await _load();
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
     if (mounted) setState(() => _sendingReply = false);
   }
 

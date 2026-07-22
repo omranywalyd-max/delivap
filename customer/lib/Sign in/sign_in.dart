@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,9 +10,9 @@ import '../user_local.dart';
 import '../theme.dart';
 import '../main_page.dart';
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  شاشة اختيار الجنس (صفحة كاملة)
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ???? ?????? ????? (???? ?????)
+// ------------------------------------------------------------------------------
 class GenderScreen extends StatefulWidget {
   final String uid;
   const GenderScreen({required this.uid});
@@ -70,7 +70,7 @@ class _GenderScreenState extends State<GenderScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'حدث خطأ، حاول مرة أخرى',
+              '??? ???? ???? ??? ????',
               textAlign: TextAlign.center,
               style: TextStyle(fontFamily: 'Amiri'),
             ),
@@ -101,7 +101,7 @@ class _GenderScreenState extends State<GenderScreen>
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
-                    // أيقونة
+                    // ??????
                     Container(
                       width: 90,
                       height: 90,
@@ -140,7 +140,7 @@ class _GenderScreenState extends State<GenderScreen>
                     ),
           const SizedBox(height: 14),
                     const Text(
-                      'اختر جنسك',
+                      '???? ????',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -151,7 +151,7 @@ class _GenderScreenState extends State<GenderScreen>
           const SizedBox(height: 10),
 
                     const Text(
-                      'معلومة واحدة باش نكملو حسابك',
+                      '?????? ????? ??? ????? ?????',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppTheme.textGrey,
@@ -159,11 +159,11 @@ class _GenderScreenState extends State<GenderScreen>
                       ),
                     ),
                     const SizedBox(height: 28),
-                    // أزرار الجنس
+                    // ????? ?????
                     Row(
-                      children: ['ذكر', 'أنثى'].map((g) {
+                      children: ['???', '????'].map((g) {
                         final sel = _selected == g;
-                        final isM = g == 'ذكر';
+                        final isM = g == '???';
                         return Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() => _selected = g),
@@ -235,7 +235,7 @@ class _GenderScreenState extends State<GenderScreen>
                       }).toList(),
                     ),
                     const SizedBox(height: 28),
-                    // زر التأكيد
+                    // ?? ???????
                     GestureDetector(
                       onTap: (_selected == null || _loading) ? null : _save,
                       child: AnimatedContainer(
@@ -272,7 +272,7 @@ class _GenderScreenState extends State<GenderScreen>
                                   ),
                                 )
                               : const Text(
-                                  'تأكيد والمتابعة',
+                                  '????? ?????????',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -295,9 +295,9 @@ class _GenderScreenState extends State<GenderScreen>
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  SignInScreen
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class SignInScreen extends StatefulWidget {
   final bool standaloneMode;
   const SignInScreen({super.key, this.standaloneMode = false});
@@ -315,8 +315,8 @@ class _SignInScreenState extends State<SignInScreen>
   @override
   void initState() {
     super.initState();
-    // ما نحتاجوش listener هنا — MainPage فيه StreamBuilder<User?>
-    // دايماً حيّ ويقرر يعرض ProfileGate بعد تسجيل الدخول
+    // ?? ??????? listener ??? � MainPage ??? StreamBuilder<User?>
+    // ?????? ??? ????? ???? ProfileGate ??? ????? ??????
 
     _headerController = AnimationController(
       vsync: this,
@@ -413,7 +413,7 @@ class _SignInScreenState extends State<SignInScreen>
                   GestureDetector(
                     onTap: () => _openPrivacyPolicy(context),
                     child: const Text(
-                      'سياسة الخصوصية',
+                      '????? ????????',
                       style: TextStyle(
                         fontFamily: 'Amiri',
                         fontSize: 12,
@@ -440,9 +440,9 @@ class _SignInScreenState extends State<SignInScreen>
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _SignForm
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _SignForm extends StatefulWidget {
   final VoidCallback onSuccess;
   const _SignForm({required this.onSuccess});
@@ -481,11 +481,11 @@ class _SignFormState extends State<_SignForm> {
         password: _passCtrl.text.trim(),
       );
       if (!mounted) return;
-      // ✅ ProfileGate يتولى الباقي (يجيب البيانات من Firestore ويقرر)
+      // ? ProfileGate ????? ?????? (???? ???????? ?? Firestore ?????)
     } on FirebaseAuthException catch (e) {
       setState(() => _error = AuthService.errorMessage(e.code));
     } catch (_) {
-      setState(() => _error = 'حدث خطأ غير متوقع');
+      setState(() => _error = '??? ??? ??? ?????');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -528,7 +528,7 @@ class _SignFormState extends State<_SignForm> {
         children: [
           FormField<String>(
             validator: (v) =>
-                (v == null || !v.contains('@')) ? 'البريد غير صحيح' : null,
+                (v == null || !v.contains('@')) ? '?????? ??? ????' : null,
             builder: (s) => _field(
               err: s.hasError && (_submitted || !s.isValid),
               child: TextFormField(
@@ -539,7 +539,7 @@ class _SignFormState extends State<_SignForm> {
                 onChanged: (v) => s.didChange(v),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: const InputDecoration(
-                  hintText: 'البريد الإلكتروني',
+                  hintText: '?????? ??????????',
                   hintStyle: TextStyle(
                     color: AppTheme.textGrey,
                     fontSize: 14,
@@ -563,7 +563,7 @@ class _SignFormState extends State<_SignForm> {
           const SizedBox(height: 14),
           FormField<String>(
             validator: (v) =>
-                (v == null || v.length < 6) ? 'كلمة السر قصيرة' : null,
+                (v == null || v.length < 6) ? '???? ???? ?????' : null,
             builder: (s) => _field(
               err: s.hasError && (_submitted || !s.isValid),
               child: TextFormField(
@@ -573,7 +573,7 @@ class _SignFormState extends State<_SignForm> {
                 onChanged: (v) => s.didChange(v),
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
-                  hintText: 'كلمة السر',
+                  hintText: '???? ????',
                   hintStyle: const TextStyle(
                     color: AppTheme.textGrey,
                     fontSize: 14,
@@ -608,7 +608,7 @@ class _SignFormState extends State<_SignForm> {
             child: GestureDetector(
               onTap: () => _showForgotPassword(context),
               child: const Text(
-                'نسيت كلمة السر؟',
+                '???? ???? ?????',
                 style: TextStyle(
                   color: AppTheme.primary,
                   fontWeight: FontWeight.w600,
@@ -623,7 +623,7 @@ class _SignFormState extends State<_SignForm> {
             const SizedBox(height: 12),
           ],
           _GradientButton(
-            label: 'تسجيل الدخول',
+            label: '????? ??????',
             isLoading: _isLoading,
             onTap: _isLoading ? null : _signIn,
           ),
@@ -642,7 +642,7 @@ class _SignFormState extends State<_SignForm> {
         backgroundColor: AppTheme.background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
-          'نسيت كلمة السر؟',
+          '???? ???? ?????',
           textAlign: TextAlign.right,
           style: TextStyle(
             color: AppTheme.primary,
@@ -654,7 +654,7 @@ class _SignFormState extends State<_SignForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'أدخل بريدك وسنرسل لك رابط إعادة التعيين',
+              '???? ????? ?????? ?? ???? ????? ???????',
               textAlign: TextAlign.right,
               style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
             ),
@@ -682,7 +682,7 @@ class _SignFormState extends State<_SignForm> {
                 textAlign: TextAlign.right,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  hintText: 'البريد الإلكتروني',
+                  hintText: '?????? ??????????',
                   hintStyle: TextStyle(
                     color: AppTheme.textGrey,
                     fontSize: 14,
@@ -706,7 +706,7 @@ class _SignFormState extends State<_SignForm> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء', style: TextStyle(color: AppTheme.textGrey)),
+            child: const Text('?????', style: TextStyle(color: AppTheme.textGrey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -724,7 +724,7 @@ class _SignFormState extends State<_SignForm> {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: const Text(
-                        'تم إرسال الرابط ✓',
+                        '?? ????? ?????? ?',
                         textAlign: TextAlign.right,
                       ),
                       backgroundColor: AppTheme.primary,
@@ -735,9 +735,9 @@ class _SignFormState extends State<_SignForm> {
                     ),
                   );
                 }
-              } catch (_) {}
+              } catch (_) { /* ignored */ }
             },
-            child: const Text('إرسال', style: TextStyle(color: Colors.white)),
+            child: const Text('?????', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -745,9 +745,9 @@ class _SignFormState extends State<_SignForm> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _SocialSection
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _SocialSection extends StatefulWidget {
   final VoidCallback onSuccess;
   const _SocialSection({required this.onSuccess});
@@ -771,7 +771,7 @@ class _SocialSectionState extends State<_SocialSection> {
       setState(() => _error = AuthService.errorMessage(e.code));
     } catch (e) {
       if (!e.toString().toLowerCase().contains('cancel')) {
-        setState(() => _error = 'فشل تسجيل الدخول بـ Google');
+        setState(() => _error = '??? ????? ?????? ?? Google');
       }
     } finally {
       if (mounted) setState(() => _googleLoading = false);
@@ -795,8 +795,6 @@ class _SocialSectionState extends State<_SocialSection> {
               isLoading: _googleLoading,
               onTap: _googleLoading ? null : _signInWithGoogle,
             ),
-            const SizedBox(width: 16),
-            _SocialButton(iconPath: 'assets/icons/facebook.png', onTap: () {}),
           ],
         ),
         const SizedBox(height: 16),
@@ -807,9 +805,9 @@ class _SocialSectionState extends State<_SocialSection> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  Shared Widgets
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _SocialButton extends StatelessWidget {
   final String iconPath;
   final VoidCallback? onTap;
@@ -987,7 +985,7 @@ class _NoAccountText extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const SignUpScreen()),
         ),
         child: const Text(
-          'إنشاء حساب',
+          '????? ????',
           style: TextStyle(
             fontSize: 15,
             color: AppTheme.primary,
@@ -996,7 +994,7 @@ class _NoAccountText extends StatelessWidget {
         ),
       ),
       const Text(
-        '  ليس لديك حساب؟',
+        '  ??? ???? ?????',
         style: TextStyle(fontSize: 15, color: AppTheme.textGrey),
       ),
     ],

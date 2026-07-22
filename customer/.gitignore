@@ -1,42 +1,64 @@
-# Flutter
-build/
-.dart_tool/
-.packages
-.pub-cache/
-pubspec.lock
-
-# Android
-**/android/.gradle/
-**/android/local.properties
-**/android/**/GeneratedPluginRegistrant.java
-**/android/**/GeneratedPluginRegistrant.kt
-**/android/**/keystore.jks
-**/android/**/keystore.properties
-*.jks
-
-# iOS
-**/ios/Pods/
-**/ios/.symlinks/
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral/
-**/ios/Flutter/app.flx
-**/ios/Flutter/app.zip
-**/ios/Flutter/flutter_assets/
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/ServiceDefinitions.json
-
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# OS
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.rar
+*.zip
 .DS_Store
-Thumbs.db
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
 
-# Sensitive
-*.jks
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Security — sensitive files
 *.keystore
+*.jks
+key.properties
+.env
 google-services.json
+local.properties
+serviceAccountKey.json
+
+# Debug & temp files
+*.log
+flutter_*.log
+okhrej.mp3
+devtools_options.yaml
+
+# Project-specific
+assets/icons/facebook.png
+AGENTS.md

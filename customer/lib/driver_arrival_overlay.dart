@@ -21,7 +21,7 @@ class DriverArrivalOverlay {
           'driverName': driverName ?? 'السائق',
           'driverPhoto': driverPhoto ?? '',
         });
-      } catch (_) {}
+      } catch (_) { /* ignored */ }
     });
   }
 
@@ -46,7 +46,7 @@ class DriverArrivalOverlay {
   static Future<void> requestPermission() async {
     try {
       await _channel.invokeMethod('requestOverlayPermission');
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   static void cancelPending() {

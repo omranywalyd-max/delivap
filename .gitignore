@@ -1,0 +1,46 @@
+# Build artifacts
+build/
+.gradle/
+.kotlin/
+
+# IDE
+.idea/
+.vscode/
+
+# Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# Sensitive
+*.keystore
+*.jks
+key.properties
+.env
+google-services.json
+local.properties
+serviceAccountKey.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archives & logs
+*.rar
+*.zip
+*.log
+*.mp3
+
+# Flutter platform dirs (Android only)
+ios/
+linux/
+macos/
+web/
+windows/
+
+# Agent files
+.agents/
+skills-lock.json
+AGENTS.md
+devtools_options.yaml

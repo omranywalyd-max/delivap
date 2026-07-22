@@ -81,5 +81,5 @@ Future<void> _precacheOne(String url) async {
     stream.addListener(listener);
     await completer.future.timeout(const Duration(seconds: 10));
     stream.removeListener(listener);
-  } catch (_) {}
+  } catch (_) { /* ignored */ }
 }

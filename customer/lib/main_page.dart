@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/Services/api_client.dart';
 import 'package:flutter_application_1/Services/socket_client.dart';
@@ -43,7 +43,7 @@ class _MainPageState extends State<MainPage> {
   void _onUserDeleted(data) {
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _forceLogout('تم حذف حسابك من قبل الإدارة');
+        _forceLogout('?? ??? ????? ?? ??? ???????');
       });
     }
   }
@@ -59,12 +59,12 @@ class _MainPageState extends State<MainPage> {
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('تم حذف الحساب', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.red)),
+          title: const Text('?? ??? ??????', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.red)),
           content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Amiri', fontSize: 14)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('حسناً', style: TextStyle(fontFamily: 'Amiri')),
+              child: const Text('?????', style: TextStyle(fontFamily: 'Amiri')),
             ),
           ],
         ),
@@ -83,7 +83,7 @@ class _MainPageState extends State<MainPage> {
     try {
       await UserLocal.load(uid);
       if (mounted) {
-        if (UserLocal.loadError == 'تم حذف حسابك') {
+        if (UserLocal.loadError == '?? ??? ?????') {
           _forceLogout(UserLocal.loadError!);
           return;
         }
@@ -135,14 +135,14 @@ class _MainPageState extends State<MainPage> {
           children: [
             Icon(isIpBan ? Icons.gpp_bad : Icons.block, color: isIpBan ? Colors.red : Colors.orange, size: 28),
             const SizedBox(width: 8),
-            Text(isIpBan ? 'تم حظر جهازك' : 'تم حظر حسابك',
+            Text(isIpBan ? '?? ??? ?????' : '?? ??? ?????',
               style: const TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.red)),
           ],
         ),
         content: Text(
           isIpBan
-              ? 'عذراً، تم حظر جهازك بالكامل.\nلا يمكنك استخدام التطبيق.'
-              : 'عذراً، تم حظر حسابك.\nلا يمكنك استخدام التطبيق حالياً.\nيمكنك التواصل مع الإدارة للمساعدة.',
+              ? '?????? ?? ??? ????? ???????.\n?? ????? ??????? ???????.'
+              : '?????? ?? ??? ?????.\n?? ????? ??????? ??????? ??????.\n????? ??????? ?? ??????? ????????.',
           textAlign: TextAlign.center,
           style: const TextStyle(fontFamily: 'Amiri', fontSize: 14, color: Colors.black87),
         ),
@@ -156,7 +156,7 @@ class _MainPageState extends State<MainPage> {
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
+              child: const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
             ),
           if (!isIpBan)
             ElevatedButton(
@@ -165,12 +165,12 @@ class _MainPageState extends State<MainPage> {
                 _openChatAsDialog();
               },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2D2A3A)),
-              child: const Text('التحدث مع الادمن', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
+              child: const Text('?????? ?? ??????', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
             ),
           if (isIpBan)
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('حسناً', style: TextStyle(fontFamily: 'Amiri', color: Colors.grey)),
+              child: const Text('?????', style: TextStyle(fontFamily: 'Amiri', color: Colors.grey)),
             ),
         ],
       ),
@@ -189,11 +189,11 @@ class _MainPageState extends State<MainPage> {
           children: [
             Icon(Icons.block, color: Colors.orange, size: 28),
             SizedBox(width: 8),
-            Text('حسابك غير مفعل', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.orange)),
+            Text('????? ??? ????', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.orange)),
           ],
         ),
         content: const Text(
-          'تم تعطيل حسابك. لا يمكنك استخدام خدمات التطبيق حالياً.\nيمكنك التواصل مع الإدارة عبر المحادثة المباشرة.',
+          '?? ????? ?????. ?? ????? ??????? ????? ??????? ??????.\n????? ??????? ?? ??????? ??? ???????? ????????.',
           textAlign: TextAlign.center,
           style: TextStyle(fontFamily: 'Amiri', fontSize: 14, color: Colors.black87),
         ),
@@ -205,7 +205,7 @@ class _MainPageState extends State<MainPage> {
               await UserLocal.clear();
               if (ctx.mounted) Navigator.of(ctx).pop();
             },
-            child: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Amiri', color: Colors.red)),
+            child: const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri', color: Colors.red)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -213,7 +213,7 @@ class _MainPageState extends State<MainPage> {
               _openChatAsDialog();
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2D2A3A)),
-            child: const Text('محادثة الإدارة', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
+            child: const Text('?????? ???????', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
           ),
         ],
       ),
@@ -283,7 +283,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _signedInLayout(User user) {
-    if (UserLocal.loadError == 'تم حذف حسابك') {
+    if (UserLocal.loadError == '?? ??? ?????') {
       WidgetsBinding.instance.addPostFrameCallback((_) => _forceLogout(UserLocal.loadError!));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -317,7 +317,7 @@ class _MainPageState extends State<MainPage> {
                     await FirebaseAuth.instance.signOut();
                     await UserLocal.clear();
                   },
-                  child: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Amiri')),
+                  child: const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri')),
                 ),
               ],
             ),
@@ -385,6 +385,6 @@ class _MainPageState extends State<MainPage> {
       if (msgs.any((m) => m is Map && m['from'] == 'admin' && m['read'] == false)) {
         _openChatAsDialog();
       }
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 }

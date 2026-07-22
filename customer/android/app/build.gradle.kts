@@ -4,22 +4,24 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+val localPropsFile = rootProject.file("local.properties")
+val mapsApiKey = if (localPropsFile.exists()) {
+    localPropsFile.readLines().firstOrNull { it.startsWith("MAPS_API_KEY=") }
+        ?.substringAfter("MAPS_API_KEY=") ?: ""
+} else ""
+
 android {
-    // تأكد أن هذا الاسم هو نفسه الموجود في Firebase Console وفي ملف google-services.json
     namespace = "com.deliv.customer" 
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // ✅ تفعيل ميزة Desugaring لحل مشكلة مكتبة الإشعارات
         isCoreLibraryDesugaringEnabled = true 
-
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
 
     defaultConfig {
-        // تأكد أن هذا هو نفس الـ Package Name القديم لكي يعمل الـ SHA-1
         applicationId = "com.deliv.customer"
         
         minSdk = 26
@@ -27,13 +29,14 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         
-        // 3. دعم مكتبات الفايربيز الكبيرة
-        multiDexEnabled = true 
+        multiDexEnabled = true
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("../../keystore.jks")?.takeIf { it.exists() }
+            storeFile = file("../../keystore.jks").takeIf { it.exists() }
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEY_ALIAS") ?: ""
             keyPassword = System.getenv("KEY_PASSWORD") ?: ""
@@ -57,7 +60,6 @@ flutter {
     source = "../.."
 }
 
-// 5. ✅ إضافة المكتبة اللازمة لعملية الـ Desugaring
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("com.github.bumptech.glide:glide:4.16.0")

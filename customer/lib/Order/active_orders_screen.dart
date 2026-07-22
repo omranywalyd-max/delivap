@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/Services/api_client.dart';
@@ -20,16 +20,16 @@ import '../product_alternative_overlay.dart';
 final List<Order> activeOrders = [];
 
 String _formatTime(dynamic ts) {
-  if (ts == null) return 'الآن';
+  if (ts == null) return '????';
   if (ts is String) return ts;
   if (ts is int) {
     final dt = DateTime.fromMillisecondsSinceEpoch(ts);
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
-  return 'الآن';
+  return '????';
 }
 
-// ── Neumorphic helpers ────────────────────────────────────────────────────────
+// -- Neumorphic helpers --------------------------------------------------------
 List<BoxShadow> _neuShadow({double blur = 10, double offset = 4}) => [
   BoxShadow(
     color: const Color(0xFFB8B1C8).withOpacity(0.6),
@@ -37,7 +37,7 @@ List<BoxShadow> _neuShadow({double blur = 10, double offset = 4}) => [
     offset: Offset(offset, offset),
   ),
   BoxShadow(
-    color: const Color(0xFFFFFFFF), // أبيض صريح للجهة المقابلة
+    color: const Color(0xFFFFFFFF), // ???? ???? ????? ????????
     blurRadius: blur,
     offset: Offset(-offset, -offset),
   ),
@@ -50,19 +50,19 @@ BoxDecoration _neuDeco({double radius = 18}) => BoxDecoration(
   boxShadow: _neuShadow(),
 );
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  OrderModel
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class OrderModel {
   static Order fromDoc(Map<String, dynamic> d, String id) {
     final items = (d['items'] as List? ?? []).map((item) {
       final m = item as Map<String, dynamic>;
 
-      // ✅ السعر الأصلي
+      // ? ????? ??????
       final originalPrice =
           ((m['prix'] ?? m['price'] ?? m['totalItem'] ?? 0) as num).toDouble();
 
-      // ✅ finalPrice إذا غيّر السائق السعر
+      // ? finalPrice ??? ???? ?????? ?????
       final finalPrice = m['finalPrice'] != null
           ? (m['finalPrice'] as num).toDouble()
           : originalPrice;
@@ -110,9 +110,9 @@ class OrderModel {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  LocationsCache
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class LocationsCache {
   static String? _cachedUid;
   static List<Map<String, dynamic>> _data = [];
@@ -129,9 +129,9 @@ class LocationsCache {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  ActiveOrdersScreen
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class ActiveOrdersScreen extends StatefulWidget {
   const ActiveOrdersScreen({super.key});
   @override
@@ -197,7 +197,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
           _serviceDocs = results[2].cast<Map<String, dynamic>>();
           _projectDeliveries = results[3].cast<Map<String, dynamic>>();
 
-          // إزالة الطلبيات المرفوضة من السائق + إرجاع هدية التوصيل
+          // ????? ???????? ???????? ?? ?????? + ????? ???? ???????
           for (final o in _rawOrders) {
             final rejectedBy = o['rejectedBy'];
             final hasRejected = rejectedBy is String
@@ -305,7 +305,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
           ProductAlternativeOverlayHelper.show(
             context: context,
             orderId: orderData['_id'] as String? ?? '',
-            driverName: orderData['driverName'] as String? ?? 'السائق',
+            driverName: orderData['driverName'] as String? ?? '??????',
             productName: itemName,
             productPrice: ((m['prix'] ?? m['price'] ?? 0) as num).toDouble(),
             alternativeName: alternativeName,
@@ -334,7 +334,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
         update['hasFreeDelivery'] = true;
       }
       await ApiClient.put('/api/users/$uid', update);
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   void _flashUpdateBadge() {
@@ -359,7 +359,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     _updateIndicatorTimer?.cancel();
     _pageCtrl.dispose();
     
-    // إلغاء كل المستمعين لهذا النوع من الأحداث
+    // ????? ?? ????????? ???? ????? ?? ???????
     SocketClient.off('order:updated');
     SocketClient.off('order:created');
     SocketClient.off('service:updated');
@@ -416,7 +416,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       ));
     } else {
       if (_projectDeliveries.isNotEmpty) {
-        sections.add(_buildSectionHeader('مشاريعي'));
+        sections.add(_buildSectionHeader('???????'));
         sections.addAll(
           _projectDeliveries.map((d) => _ProjectDeliveryCard(doc: d)),
         );
@@ -435,7 +435,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       final serviceOrders = _serviceDocs.where((d) => activeStatuses.contains(d['status'])).toList();
 
       if (transportOrders.isNotEmpty) {
-        sections.add(_buildSectionHeader('طلبات النقل'));
+        sections.add(_buildSectionHeader('????? ?????'));
         for (var d in transportOrders) {
           sections.add(TransportCard(
             data: d,
@@ -447,7 +447,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       }
 
       if (serviceOrders.isNotEmpty) {
-        sections.add(_buildSectionHeader('طلبات الخدمة'));
+        sections.add(_buildSectionHeader('????? ??????'));
         for (var d in serviceOrders) {
           sections.add(ServiceOrderCard(
             data: d,
@@ -459,7 +459,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       }
 
       if (orderModels.isNotEmpty) {
-        sections.add(_buildSectionHeader('الطلبات'));
+        sections.add(_buildSectionHeader('???????'));
         for (var i = 0; i < orderModels.length; i++) {
           sections.add(
             AnimatedSwitcher(
@@ -520,7 +520,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
-                  'تم التحديث',
+                  '?? ???????',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -532,7 +532,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
             ),
           ),
         const Text(
-          'الطلبات الجارية',
+          '??????? ???????',
           style: TextStyle(
             color: kTextColor,
             fontWeight: FontWeight.bold,
@@ -550,7 +550,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
 
   Widget _notLoggedIn() => const Center(
     child: Text(
-      'سجل دخولك لعرض طلبياتك',
+      '??? ????? ???? ???????',
       style: TextStyle(
         fontSize: 16,
         color: Color(0xFF6E6B7B),
@@ -559,7 +559,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     ),
   );
 
-  Widget _emptyState({String msg = 'لا توجد طلبات جارية'}) => Center(
+  Widget _emptyState({String msg = '?? ???? ????? ?????'}) => Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -605,9 +605,9 @@ Widget _buildSectionHeader(String title) => Padding(
   ),
 );
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _AnimatedOrderCard
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _AnimatedOrderCard extends StatefulWidget {
   final Order order;
   final int index;
@@ -686,9 +686,9 @@ class _AnimatedOrderCardState extends State<_AnimatedOrderCard>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  OrderCard — بطاقة الطلبية (Stream داخلي)
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  OrderCard � ????? ??????? (Stream ?????)
+// ------------------------------------------------------------------------------
 class OrderCard extends StatefulWidget {
   final Order order;
   final String docId, userId;
@@ -710,17 +710,17 @@ class _OrderCardState extends State<OrderCard> {
   String _statusLabel(OrderStatus s) {
     switch (s) {
       case OrderStatus.pending:
-        return 'في الانتظار ⏳';
+        return '?? ???????? ?';
       case OrderStatus.accepted:
-        return 'تم القبول ✓';
+        return '?? ?????? ?';
       case OrderStatus.purchased:
-        return 'تم الشراء 🛒';
+        return '?? ?????? ??';
       case OrderStatus.onway:
-        return 'في الطريق 🚗';
+        return '?? ?????? ??';
       case OrderStatus.delivered:
-        return 'تم التوصيل 🎉';
+        return '?? ??????? ??';
       case OrderStatus.cancelled:
-        return 'ملغاة ✗';
+        return '????? ?';
     }
   }
 
@@ -745,20 +745,20 @@ class _OrderCardState extends State<OrderCard> {
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (_) => CupertinoAlertDialog(
-        title: const Text('حذف الطلبية', style: TextStyle(fontFamily: 'Amiri')),
+        title: const Text('??? ???????', style: TextStyle(fontFamily: 'Amiri')),
         content: const Text(
-          'سيتم إخفاء هذه الطلبية من قائمتك',
+          '???? ????? ??? ??????? ?? ??????',
           style: TextStyle(fontFamily: 'Amiri', fontSize: 13),
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Amiri')),
+            child: const Text('?????', style: TextStyle(fontFamily: 'Amiri')),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(fontFamily: 'Amiri')),
+            child: const Text('???', style: TextStyle(fontFamily: 'Amiri')),
           ),
         ],
       ),
@@ -781,7 +781,7 @@ class _OrderCardState extends State<OrderCard> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('تم استلام الطلبية، شكراً لك!', style: const TextStyle(fontFamily: 'Amiri')),
+              content: Text('?? ?????? ???????? ????? ??!', style: const TextStyle(fontFamily: 'Amiri')),
               backgroundColor: kPrimaryColor,
               behavior: SnackBarBehavior.floating,
             ),
@@ -794,12 +794,12 @@ class _OrderCardState extends State<OrderCard> {
             'driverId': widget.order.driverId,
           }) as Map<String, dynamic>? ?? {};
           alreadyVerified = userData['isVerified'] ?? false;
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                alreadyVerified ? 'تم استلام الطلبية، شكراً لك!' : 'تم توثيق حسابك بنجاح، لن يظهر رقمك للسائقين بعد الآن',
+                alreadyVerified ? '?? ?????? ???????? ????? ??!' : '?? ????? ????? ?????? ?? ???? ???? ???????? ??? ????',
                 style: const TextStyle(fontFamily: 'Amiri')),
               backgroundColor: alreadyVerified ? kPrimaryColor : kSuccessColor,
               behavior: SnackBarBehavior.floating,
@@ -811,7 +811,7 @@ class _OrderCardState extends State<OrderCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('فشل تأكيد الاستلام: $e', style: const TextStyle(fontFamily: 'Amiri')),
+            content: Text('??? ????? ????????: $e', style: const TextStyle(fontFamily: 'Amiri')),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
           ),
@@ -830,7 +830,7 @@ class _OrderCardState extends State<OrderCard> {
     final counterOffer = order.counterOffer;
     final hasCounterOffer = counterOffer != null && counterOffer['status'] == 'pending';
 
-        // ✅ هل فيه منتجات تغير سعرها؟
+        // ? ?? ??? ?????? ???? ??????
         final hasPriceChanges = order.items.any(
           (item) =>
               item.purchaseStatus == 'purchased' &&
@@ -895,13 +895,13 @@ class _OrderCardState extends State<OrderCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // ── الهيدر ────────────────────────────────────────────
+                  // -- ?????? --------------------------------------------
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          // ✅ زر حذف للطلبيات المنتهية فقط
+                          // ? ?? ??? ???????? ???????? ???
                           if (isDone)
                             GestureDetector(
                               onTap: _hideOrder,
@@ -919,7 +919,7 @@ class _OrderCardState extends State<OrderCard> {
                               ),
                             ),
                           const SizedBox(width: 8),
-                          // شارة الحالة
+                          // ???? ??????
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -978,14 +978,14 @@ class _OrderCardState extends State<OrderCard> {
                   Divider(height: 1, color: Colors.grey.shade300),
                   const SizedBox(height: 10),
 
-                  // ── شريط الحالة ───────────────────────────────────────
+                  // -- ???? ?????? ---------------------------------------
                   _StatusTracker(status: order.status),
                   const SizedBox(height: 12),
 
-                  // ✅ بانر تعديل السعر
+                  // ? ???? ????? ?????
                   if (hasPriceChanges) _PriceChangedBanner(items: order.items),
 
-                  // ✅ بانر البدائل غير المتوفرة
+                  // ? ???? ??????? ??? ????????
                   if (order.items.any((i) => i.purchaseStatus == 'unavailable' && i.alternativeStatus == 'pending' && i.alternativeName.isNotEmpty))
                     _UnavailableAlternativesBanner(
                       items: order.items,
@@ -994,7 +994,7 @@ class _OrderCardState extends State<OrderCard> {
                       onRefresh: widget.onChanged ?? () => setState(() {}),
                     ),
 
-                  // ── بانر عرض السعر المضاد من السائق ─────────────────
+                  // -- ???? ??? ????? ?????? ?? ?????? -----------------
                   if (hasCounterOffer)
                     _CounterOfferBanner(
                       counterOffer: counterOffer!,
@@ -1003,7 +1003,7 @@ class _OrderCardState extends State<OrderCard> {
               onRefresh: widget.onChanged ?? () => setState(() {}),
                     ),
 
-                  // ── صور المنتجات ───────────────────────────────────────
+                  // -- ??? ???????? ---------------------------------------
                   if (order.items.isNotEmpty)
                     SizedBox(
                       height: 45,
@@ -1048,7 +1048,7 @@ class _OrderCardState extends State<OrderCard> {
                                       color: Colors.green,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: const Text('بديل', style: TextStyle(color: Colors.white, fontSize: 7, fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
+                                    child: const Text('????', style: TextStyle(color: Colors.white, fontSize: 7, fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
                                   ),
                                 ),
                             ],
@@ -1058,7 +1058,7 @@ class _OrderCardState extends State<OrderCard> {
                     ),
                   const SizedBox(height: 12),
 
-                  // ── الإجمالي + العنوان ─────────────────────────────────
+                  // -- ???????? + ??????? ---------------------------------
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1089,7 +1089,7 @@ class _OrderCardState extends State<OrderCard> {
                               child: Text(
                                 order.address.isNotEmpty
                                     ? order.address
-                                    : 'غير محدد',
+                                    : '??? ????',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFF6E6B7B),
@@ -1111,13 +1111,13 @@ class _OrderCardState extends State<OrderCard> {
                     ],
                   ),
 
-                  // ── أزرار الإجراءات ────────────────────────────────────
+                  // -- ????? ????????? ------------------------------------
                   const SizedBox(height: 12),
 
-                  // زر التتبع
+                  // ?? ??????
                   if (canTrack)
                     _ActionButton(
-                      label: 'تتبع السائق المباشر',
+                      label: '???? ?????? ???????',
                       icon: CupertinoIcons.location_solid,
                       gradient: const [Color(0xFF9232E8), Color(0xFF7D29C6), Color(0xFF6D22AC)],
                       onTap: () => Navigator.push(
@@ -1134,11 +1134,11 @@ class _OrderCardState extends State<OrderCard> {
                       ),
                     ),
 
-                  // ✅ زر تغيير السائق (pending فقط)
+                  // ? ?? ????? ?????? (pending ???)
                   if (order.status == OrderStatus.pending) ...[
                     const SizedBox(height: 8),
                     _ActionButton(
-                      label: 'تغيير السائق',
+                      label: '????? ??????',
                       icon: CupertinoIcons.arrow_2_circlepath,
                       gradient: const [Color(0xFF9232E8), Color(0xFF7D29C6), Color(0xFF6D22AC)],
                       onTap: () =>
@@ -1146,11 +1146,11 @@ class _OrderCardState extends State<OrderCard> {
                     ),
                   ],
 
-                  // ✅ زر إعادة الطلب (منتهية / ملغاة)
+                  // ? ?? ????? ????? (?????? / ?????)
                   if (order.status == OrderStatus.cancelled || order.status == OrderStatus.delivered) ...[
                     const SizedBox(height: 8),
                     _ActionButton(
-                      label: 'إعادة الطلب',
+                      label: '????? ?????',
                       icon: CupertinoIcons.refresh_circled,
                       gradient: const [Color(0xFF2ECC71), Color(0xFF27AE60), Color(0xFF1D8348)],
                       onTap: () =>
@@ -1158,11 +1158,11 @@ class _OrderCardState extends State<OrderCard> {
                     ),
                   ],
 
-                  // ✅ زر تم الاستلام (خارج الكارد)
+                  // ? ?? ?? ???????? (???? ??????)
                   if (order.status == OrderStatus.delivered && !order.customerConfirmed && !order.isFreeDelivery) ...[
                     const SizedBox(height: 8),
                     _ActionButton(
-                      label: _isConfirming ? 'جاري التأكيد...' : 'لقد استلمت الطلبية ✅',
+                      label: _isConfirming ? '???? ???????...' : '??? ?????? ??????? ?',
                       icon: _isConfirming ? CupertinoIcons.hourglass : CupertinoIcons.check_mark_circled_solid,
                       gradient: _isConfirming
                         ? const [Color(0xFF95A5A6), Color(0xFF7F8C8D), Color(0xFF636E72)]
@@ -1204,7 +1204,7 @@ class _OrderCardState extends State<OrderCard> {
             ? await ApiClient.getList('/api/products?storeId=$storeId')
             : await ApiClient.getList('/api/products');
         apiProducts = raw.cast<Map<String, dynamic>>();
-      } catch (_) {}
+      } catch (_) { /* ignored */ }
 
       final List<Product> toAdd = [];
       final List<String> notFound = [];
@@ -1252,9 +1252,9 @@ class _OrderCardState extends State<OrderCard> {
       if (context.mounted) {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const CartScreen()));
 
-        String msg = '✅ تم إضافة ${toAdd.length} منتجات إلى السلة';
+        String msg = '? ?? ????? ${toAdd.length} ?????? ??? ?????';
         if (notFound.isNotEmpty) {
-          msg += '\n⚠️ غير متوفر: ${notFound.join('، ')}';
+          msg += '\n?? ??? ?????: ${notFound.join('? ')}';
         }
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(msg, style: const TextStyle(fontFamily: 'Amiri', fontSize: 13)),
@@ -1268,7 +1268,7 @@ class _OrderCardState extends State<OrderCard> {
       if (context.mounted) Navigator.pop(context);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ تعذرت إعادة الطلب: $e', style: const TextStyle(fontFamily: 'Amiri', fontSize: 13)),
+          content: Text('? ????? ????? ?????: $e', style: const TextStyle(fontFamily: 'Amiri', fontSize: 13)),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1278,9 +1278,9 @@ class _OrderCardState extends State<OrderCard> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ✅ _PriceChangedBanner — بانر تعديل السعر من السائق
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ? _PriceChangedBanner � ???? ????? ????? ?? ??????
+// ------------------------------------------------------------------------------
 class _PriceChangedBanner extends StatelessWidget {
   final List<OrderItem> items;
   const _PriceChangedBanner({required this.items});
@@ -1306,12 +1306,12 @@ class _PriceChangedBanner extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // العنوان
+          // ???????
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               const Text(
-                'تم تعديل سعر بعض المنتجات',
+                '?? ????? ??? ??? ????????',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -1328,14 +1328,14 @@ class _PriceChangedBanner extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          // تفاصيل المنتجات المعدلة
+          // ?????? ???????? ???????
           ...changedItems.map(
             (item) => Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // السعر الجديد
+                  // ????? ??????
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
@@ -1363,7 +1363,7 @@ class _PriceChangedBanner extends StatelessWidget {
                       color: Colors.orange,
                     ),
                   ),
-                  // السعر القديم
+                  // ????? ??????
                   Text(
                     '${item.originalPrice.toInt()} DZD',
                     style: const TextStyle(
@@ -1397,9 +1397,9 @@ class _PriceChangedBanner extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ✅ _ChangeDriverSheet — bottom sheet السائقين أون لاين
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ? _ChangeDriverSheet � bottom sheet ???????? ??? ????
+// ------------------------------------------------------------------------------
 class _ChangeDriverSheet extends StatefulWidget {
   final String orderId;
   final String? currentDriverId;
@@ -1454,7 +1454,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
     try {
       final data = await ApiClient.getList('/api/drivers/cities?isOnline=true&vehicleType=motorcycle');
       if (mounted) setState(() => _cities = data.cast<String>());
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   Future<void> _loadDrivers() async {
@@ -1504,7 +1504,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-              '✅ تم تغيير السائق بنجاح',
+              '? ?? ????? ?????? ?????',
               style: TextStyle(fontFamily: 'Amiri'),
             ),
             backgroundColor: kSuccessColor,
@@ -1571,7 +1571,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            widget.isReorder ? 'إعادة الطلب' : 'تغيير السائق',
+                            widget.isReorder ? '????? ?????' : '????? ??????',
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -1581,8 +1581,8 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                           ),
                           Text(
                             widget.isReorder
-                                ? 'اختر سائقاً لإعادة إرسال الطلبية'
-                                : 'اختر سائقاً آخر من المتاحين الآن',
+                                ? '???? ?????? ?????? ????? ???????'
+                                : '???? ?????? ??? ?? ???????? ????',
                             style: const TextStyle(
                               fontSize: 11,
                               color: kTextGrey,
@@ -1609,13 +1609,13 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _selectedCity,
-                      hint: const Text('فلترة حسب المدينة', style: TextStyle(fontFamily: 'Amiri', fontSize: 13, color: kTextGrey)),
+                      hint: const Text('????? ??? ???????', style: TextStyle(fontFamily: 'Amiri', fontSize: 13, color: kTextGrey)),
                       underline: const SizedBox(),
                       dropdownColor: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       onChanged: (val) => setState(() { _selectedCity = val; _applyFilter(); }),
                       items: [
-                        const DropdownMenuItem<String>(value: null, child: Text('جميع المدن', style: TextStyle(fontFamily: 'Amiri', fontSize: 13))),
+                        const DropdownMenuItem<String>(value: null, child: Text('???? ?????', style: TextStyle(fontFamily: 'Amiri', fontSize: 13))),
                         ..._cities.map((c) => DropdownMenuItem<String>(value: c, child: Text(c, style: const TextStyle(fontFamily: 'Amiri', fontSize: 13)))),
                       ],
                     ),
@@ -1648,7 +1648,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                                 ),
                                 const SizedBox(height: 14),
                                 const Text(
-                                  'لا يوجد سائقون متاحون الآن',
+                                  '?? ???? ?????? ?????? ????',
                                   style: TextStyle(
                                     color: kTextGrey,
                                     fontFamily: 'Amiri',
@@ -1748,7 +1748,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                                                     BorderRadius.circular(8),
                                               ),
                                               child: const Text(
-                                                'الحالي',
+                                                '??????',
                                                 style: TextStyle(
                                                   fontSize: 9,
                                                   color: kWarningColor,
@@ -1776,7 +1776,7 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                                             MainAxisAlignment.end,
                                         children: [
                                           Text(
-                                            '$deliveries توصيلة',
+                                            '$deliveries ??????',
                                             style: const TextStyle(
                                               fontSize: 10,
                                               color: kTextGrey,
@@ -1894,9 +1894,9 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
                                 Text(
                                   _selectedDriverId != null
                                       ? (widget.isReorder
-                                            ? 'إعادة الطلب'
-                                            : 'تأكيد السائق')
-                                      : 'اختر سائقاً من القائمة',
+                                            ? '????? ?????'
+                                            : '????? ??????')
+                                      : '???? ?????? ?? ???????',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
@@ -1935,9 +1935,9 @@ class _ChangeDriverSheetState extends State<_ChangeDriverSheet>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ✅ _ReportDriverSheet — الإبلاغ عن السائق
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ? _ReportDriverSheet � ??????? ?? ??????
+// ------------------------------------------------------------------------------
 class _ReportDriverSheet extends StatefulWidget {
   final String orderId;
   final String driverId;
@@ -1972,7 +1972,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
   try {
     final userData = await ApiClient.get('/api/users/${widget.userId}') as Map<String, dynamic>? ?? {};
     final String apiName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-    final String fullName = apiName.isNotEmpty ? apiName : (FirebaseAuth.instance.currentUser?.displayName ?? 'زبون');
+    final String fullName = apiName.isNotEmpty ? apiName : (FirebaseAuth.instance.currentUser?.displayName ?? '????');
 
     await ApiClient.post('/api/reports', {
       'type': 'customer_report',
@@ -1981,7 +1981,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
       'userId': widget.userId,
       'userName': fullName,
       'orderId': widget.orderId,
-      'reason': 'شكوى',
+      'reason': '????',
       'note': _noteCtrl.text.trim(),
       'status': 'pending',
       'createdAt': DateTime.now().toIso8601String(),
@@ -1991,7 +1991,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(' تم إرسال البلاغ بنجاح للإدارة', style: TextStyle(fontFamily: 'Amiri')),
+          content: Text(' ?? ????? ?????? ????? ???????', style: TextStyle(fontFamily: 'Amiri')),
           backgroundColor: Color(0xFF27AE60),
           behavior: SnackBarBehavior.floating,
         ),
@@ -2045,7 +2045,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'الإبلاغ عن السائق',
+                        '??????? ?? ??????',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -2054,7 +2054,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
                         ),
                       ),
                       Text(
-                        'اكتب تفاصيل البلاغ',
+                        '???? ?????? ??????',
                         style: TextStyle(
                           fontSize: 11,
                           color: kTextGrey,
@@ -2075,7 +2075,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Text(
-                    'تفاصيل البلاغ *',
+                    '?????? ?????? *',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -2096,7 +2096,7 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
                       textAlign: TextAlign.right,
                       textDirection: TextDirection.rtl,
                       decoration: const InputDecoration(
-                        hintText: 'اكتب تفاصيل البلاغ...',
+                        hintText: '???? ?????? ??????...',
                         hintStyle: TextStyle(
                           color: Colors.black38,
                           fontSize: 12,
@@ -2167,8 +2167,8 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _noteCtrl.text.trim().isNotEmpty
-                                        ? 'إرسال البلاغ'
-                                        : 'اكتب تفاصيل البلاغ أولاً',
+                                        ? '????? ??????'
+                                        : '???? ?????? ?????? ?????',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -2194,9 +2194,9 @@ class _ReportDriverSheetState extends State<_ReportDriverSheet> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ✅ _DriverInfoSheet — معلومات السائق وطلبياته
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ? _DriverInfoSheet � ??????? ?????? ????????
+// ------------------------------------------------------------------------------
 class _DriverInfoSheet extends StatefulWidget {
   final String driverId;
   const _DriverInfoSheet({required this.driverId});
@@ -2306,11 +2306,11 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
                       Text(
                         _driverData != null
                             ? '${_driverData!['firstName'] ?? ''} ${_driverData!['lastName'] ?? ''}'.trim()
-                            : 'معلومات السائق',
+                            : '??????? ??????',
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: kTextColor, fontFamily: 'Amiri'),
                       ),
                       Text(
-                        '$_totalDeliveries توصيلة',
+                        '$_totalDeliveries ??????',
                         style: const TextStyle(fontSize: 11, color: kTextGrey, fontFamily: 'Amiri'),
                       ),
                     ],
@@ -2346,26 +2346,26 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('الرصيد المالي', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: kPrimaryColor, fontFamily: 'Amiri')),
+                          const Text('?????? ??????', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: kPrimaryColor, fontFamily: 'Amiri')),
                           const SizedBox(height: 12),
-                          _finRow('القيمة الإجمالية للطلبيات', '${_totalOrderValue.toStringAsFixed(0)} د.ج', kTextColor, bold: true),
+                          _finRow('?????? ????????? ????????', '${_totalOrderValue.toStringAsFixed(0)} ?.?', kTextColor, bold: true),
                           const SizedBox(height: 8),
-                          _finRow('إجمالي الأرباح (التوصيل فقط)', '${_totalEarnings.toStringAsFixed(0)} د.ج', kPrimaryColor),
+                          _finRow('?????? ??????? (??????? ???)', '${_totalEarnings.toStringAsFixed(0)} ?.?', kPrimaryColor),
                           const SizedBox(height: 8),
-                          _finRow('النقدي', '${_cash.toStringAsFixed(0)} د.ج', Colors.green),
+                          _finRow('??????', '${_cash.toStringAsFixed(0)} ?.?', Colors.green),
                           const SizedBox(height: 8),
-                          _finRow('المحجوز', '${_hold.toStringAsFixed(0)} د.ج', Colors.orange.shade700),
+                          _finRow('???????', '${_hold.toStringAsFixed(0)} ?.?', Colors.orange.shade700),
                           const SizedBox(height: 8),
                           if (_discount > 0) ...[
-                            _finRow('الخصم', '-${_discount.toStringAsFixed(0)} د.ج', Colors.red),
+                            _finRow('?????', '-${_discount.toStringAsFixed(0)} ?.?', Colors.red),
                             const SizedBox(height: 8),
                           ],
-                          _finRow('العمولة (${_commissionPercent.toInt()}%)', '${_calcCommission.toStringAsFixed(0)} د.ج', Colors.red.shade400),
+                          _finRow('??????? (${_commissionPercent.toInt()}%)', '${_calcCommission.toStringAsFixed(0)} ?.?', Colors.red.shade400),
                           if (_totalEarnings > 0) ...[
                             const SizedBox(height: 12),
                             Divider(color: kPrimaryColor.withOpacity(0.2), height: 1),
                             const SizedBox(height: 10),
-                            _finRow('الصافي', '${(_totalEarnings - _discount - _calcCommission).toStringAsFixed(0)} د.ج', kTextColor, bold: true),
+                            _finRow('??????', '${(_totalEarnings - _discount - _calcCommission).toStringAsFixed(0)} ?.?', kTextColor, bold: true),
                           ],
                         ],
                       ),
@@ -2378,16 +2378,16 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
                           const SizedBox(height: 20),
                           Icon(CupertinoIcons.tray, size: 40, color: Colors.grey.shade400),
                           const SizedBox(height: 8),
-                          const Text('لا توجد طلبيات منجزة بعد', style: TextStyle(fontFamily: 'Amiri', color: Colors.grey)),
+                          const Text('?? ???? ?????? ????? ???', style: TextStyle(fontFamily: 'Amiri', color: Colors.grey)),
                         ],
                       )
                     else ...[
-                      const Text('آخر الطلبيات', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kTextGrey, fontFamily: 'Amiri')),
+                      const Text('??? ????????', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kTextGrey, fontFamily: 'Amiri')),
                       const SizedBox(height: 8),
                       ..._completedOrders.take(10).map((o) {
                         final items = (o['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
                         final deliveryFee = (o['deliveryFee'] as num? ?? 0).toDouble();
-                        final userName = o['userName'] as String? ?? 'زبون';
+                        final userName = o['userName'] as String? ?? '????';
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
@@ -2402,7 +2402,7 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('${deliveryFee.toInt()} دينار', style: const TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor, fontFamily: 'Amiri')),
+                                  Text('${deliveryFee.toInt()} ?????', style: const TextStyle(fontWeight: FontWeight.bold, color: kPrimaryColor, fontFamily: 'Amiri')),
                                   Text(userName, style: const TextStyle(fontWeight: FontWeight.bold, color: kTextColor, fontFamily: 'Amiri')),
                                 ],
                               ),
@@ -2410,13 +2410,13 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
                               ...items.take(3).map((item) => Padding(
                                 padding: const EdgeInsets.only(top: 3),
                                 child: Text(
-                                  '• ${item['name'] ?? ''} x${item['quantity'] ?? 1}',
+                                  '� ${item['name'] ?? ''} x${item['quantity'] ?? 1}',
                                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontFamily: 'Amiri'),
                                   maxLines: 1, overflow: TextOverflow.ellipsis,
                                 ),
                               )),
                               if (items.length > 3)
-                                Text('+${items.length - 3} منتجات أخرى', style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontFamily: 'Amiri')),
+                                Text('+${items.length - 3} ?????? ????', style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontFamily: 'Amiri')),
                             ],
                           ),
                         );
@@ -2443,9 +2443,9 @@ class _DriverInfoSheetState extends State<_DriverInfoSheet> {
 
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  OrderDetailsSheet
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class OrderDetailsSheet extends StatefulWidget {
   final Order order;
   final String docId, userId;
@@ -2497,7 +2497,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
           _order = OrderModel.fromDoc(data, widget.docId);
         });
       }
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   @override
@@ -2545,7 +2545,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
         'total': _order.subtotal + _order.deliveryFee,
         'updatedAt': DateTime.now().toIso8601String(),
       });
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   Future<void> _cancelOrder() async {
@@ -2575,7 +2575,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
             ),
             const SizedBox(height: 15),
             const Text(
-              'إلغاء الطلبية',
+              '????? ???????',
               style: TextStyle(
                 fontFamily: 'Amiri',
                 fontWeight: FontWeight.bold,
@@ -2585,7 +2585,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'أخبرنا لماذا تود إلغاء الطلبية؟\nهذا يساعد السائق على فهم السبب.',
+              '?????? ????? ??? ????? ????????\n??? ????? ?????? ??? ??? ?????.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Amiri',
@@ -2618,7 +2618,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
                 maxLines: 3,
                 style: const TextStyle(fontFamily: 'Amiri', fontSize: 14),
                 decoration: const InputDecoration(
-                  hintText: 'اكتب السبب هنا (مثلاً: غيرت رأيي، تأخر السائق...)',
+                  hintText: '???? ????? ??? (?????: ???? ????? ???? ??????...)',
                   hintStyle: TextStyle(color: Color(0xFFB8B1C8), fontSize: 12),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(15),
@@ -2635,7 +2635,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
                 child: TextButton(
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text(
-                    'تراجع',
+                    '?????',
                     style: TextStyle(fontFamily: 'Amiri', color: kTextGrey),
                   ),
                 ),
@@ -2648,7 +2648,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'يرجى كتابة سبب الإلغاء',
+                            '???? ????? ??? ???????',
                             style: TextStyle(fontFamily: 'Amiri'),
                           ),
                         ),
@@ -2665,7 +2665,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'تأكيد الإلغاء',
+                    '????? ???????',
                     style: TextStyle(fontFamily: 'Amiri', color: Colors.white),
                   ),
                 ),
@@ -2682,11 +2682,11 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
 
     try {
       final String reason = reasonCtrl.text.trim();
-      String customerName = "زبون";
+      String customerName = "????";
       final userData = await ApiClient.get('/api/users/${user?.uid}') as Map<String, dynamic>?;
       if (userData != null) {
         customerName =
-            userData['name'] ?? userData['userName'] ?? "زبون";
+            userData['name'] ?? userData['userName'] ?? "????";
       }
 
       await ApiClient.put('/api/orders/${widget.docId}', {
@@ -2700,8 +2700,8 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
   await ApiClient.post('/api/notifications', {
     'toId': widget.order.driverId,
     'orderId': widget.docId,
-    'title': '❌ قام الزبون بإلغاء الطلبية',
-    'body': 'سبب الإلغاء: $reason',
+    'title': '? ??? ?????? ?????? ???????',
+    'body': '??? ???????: $reason',
     'type': 'order_cancelled',
     'createdAt': DateTime.now().toIso8601String(),
     'isRead': false,
@@ -2710,11 +2710,11 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
   try {
     await ApiClient.post('/api/notify-driver', {
       'driverId': widget.order.driverId,
-      'title': '❌ قام الزبون بإلغاء الطلبية',
-      'body': 'سبب الإلغاء: $reason',
+      'title': '? ??? ?????? ?????? ???????',
+      'body': '??? ???????: $reason',
       'data': {'orderId': widget.docId, 'type': 'order_cancelled'},
     });
-  } catch (_) {}
+  } catch (_) { /* ignored */ }
   }
 
       if (mounted) {
@@ -2723,7 +2723,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-              'تم إلغاء الطلبية وإشعار السائق',
+              '?? ????? ??????? ?????? ??????',
               style: TextStyle(fontFamily: 'Amiri'),
             ),
             backgroundColor: kPrimaryColor,
@@ -2738,7 +2738,7 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
       if (mounted) {
         setState(() => _cancelling = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red),
         );
       }
     }
@@ -2848,7 +2848,7 @@ Future<void> _confirmReceiptByCustomer() async {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('فشل تأكيد الاستلام: $e', style: const TextStyle(fontFamily: 'Amiri')),
+          content: Text('??? ????? ????????: $e', style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -2859,7 +2859,7 @@ Future<void> _confirmReceiptByCustomer() async {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('تم استلام الطلبية، شكراً لك!',
+          content: Text('?? ?????? ???????? ????? ??!',
             style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: kPrimaryColor,
           behavior: SnackBarBehavior.floating,
@@ -2880,7 +2880,7 @@ Future<void> _confirmReceiptByCustomer() async {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            alreadyVerified ? 'تم استلام الطلبية، شكراً لك!' : 'تم توثيق حسابك بنجاح، لن يظهر رقمك للسائقين بعد الآن',
+            alreadyVerified ? '?? ?????? ???????? ????? ??!' : '?? ????? ????? ?????? ?? ???? ???? ???????? ??? ????',
             style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: alreadyVerified ? kPrimaryColor : kSuccessColor,
           behavior: SnackBarBehavior.floating,
@@ -2891,7 +2891,7 @@ Future<void> _confirmReceiptByCustomer() async {
     if (mounted && !orderUpdated) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('فشل تحديث الولاء: $e', style: const TextStyle(fontFamily: 'Amiri')),
+          content: Text('??? ????? ??????: $e', style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: Colors.orange.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -2941,7 +2941,7 @@ Future<void> _confirmReceiptByCustomer() async {
                 const Row(
                   children: [
                     Text(
-                      'طلبيتي',
+                      '??????',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -2950,7 +2950,7 @@ Future<void> _confirmReceiptByCustomer() async {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text('🛍️', style: TextStyle(fontSize: 22)),
+                    Text('???', style: TextStyle(fontSize: 22)),
                   ],
                 ),
               ],
@@ -2962,7 +2962,7 @@ Future<void> _confirmReceiptByCustomer() async {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
               child: Column(
                 children: [
-                  // ── المنتجات ─────────────────────────────────────────
+                  // -- ???????? -----------------------------------------
                   _glassBox(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -2999,7 +2999,7 @@ Future<void> _confirmReceiptByCustomer() async {
                                       ),
                                       SizedBox(width: 4),
                                       Text(
-                                        'إضافة منتج',
+                                        '????? ????',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 11,
@@ -3014,7 +3014,7 @@ Future<void> _confirmReceiptByCustomer() async {
                             else
                               const SizedBox(),
                             const Text(
-                              'المنتجات',
+                              '????????',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -3049,18 +3049,18 @@ Future<void> _confirmReceiptByCustomer() async {
                   ),
                   const SizedBox(height: 14),
 
-                  // ── الأسعار ──────────────────────────────────────────
+                  // -- ??????? ------------------------------------------
                   _glassBox(
                     child: Column(
                       children: [
                         _priceRow(
-                          'سعر المنتجات',
+                          '??? ????????',
                           '${_order.subtotal.toStringAsFixed(0)} DZD',
                           kTextColor,
                         ),
                         const SizedBox(height: 10),
                         _priceRow(
-                          'سعر التوصيل',
+                          '??? ???????',
                           '${_order.deliveryFee.toStringAsFixed(0)} DZD',
                           Colors.black54,
                         ),
@@ -3072,7 +3072,7 @@ Future<void> _confirmReceiptByCustomer() async {
                           ),
                         ),
                         _priceRow(
-                          'الإجمالي',
+                          '????????',
                           '${_order.total.toStringAsFixed(0)} DZD',
                           kPrimaryColor,
                           bold: true,
@@ -3082,7 +3082,7 @@ Future<void> _confirmReceiptByCustomer() async {
                   ),
                   const SizedBox(height: 14),
 
-                  // ── العنوان ──────────────────────────────────────────
+                  // -- ??????? ------------------------------------------
                   _glassBox(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3116,7 +3116,7 @@ Future<void> _confirmReceiptByCustomer() async {
                                       ),
                                       SizedBox(width: 4),
                                       Text(
-                                        'تعديل',
+                                        '?????',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,
@@ -3140,7 +3140,7 @@ Future<void> _confirmReceiptByCustomer() async {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 const Text(
-                                  'موقع التوصيل',
+                                  '???? ???????',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFF6E6B7B),
@@ -3152,7 +3152,7 @@ Future<void> _confirmReceiptByCustomer() async {
                                 Text(
                                   _order.address.isNotEmpty
                                       ? _order.address
-                                      : 'غير محدد',
+                                      : '??? ????',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: kTextColor,
@@ -3179,7 +3179,7 @@ Future<void> _confirmReceiptByCustomer() async {
 
                   if (_order.status == OrderStatus.pending) ...[
                     _ActionButton(
-                      label: 'تغيير السائق',
+                      label: '????? ??????',
                       icon: CupertinoIcons.arrow_2_circlepath,
                       gradient: [kPrimaryColor, kAccentColor],
                       onTap: _showChangeDriver,
@@ -3191,7 +3191,7 @@ Future<void> _confirmReceiptByCustomer() async {
   Padding(
     padding: const EdgeInsets.only(top: 10),
     child: _ActionButton(
-      label: _isConfirming ? 'جاري التأكيد...' : 'لقد استلمت الطلبية ✅',
+      label: _isConfirming ? '???? ???????...' : '??? ?????? ??????? ?',
       icon: _isConfirming ? CupertinoIcons.hourglass : CupertinoIcons.check_mark_circled_solid,
       gradient: _isConfirming 
         ? [Color(0xFF95A5A6), Color(0xFF7F8C8D), Color(0xFF636E72)]
@@ -3224,7 +3224,7 @@ Future<void> _confirmReceiptByCustomer() async {
                             ),
                             SizedBox(width: 8),
                             Text(
-                              'الإبلاغ عن السائق',
+                              '??????? ?? ??????',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -3271,7 +3271,7 @@ Future<void> _confirmReceiptByCustomer() async {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'إلغاء الطلبية',
+                                    '????? ???????',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -3301,7 +3301,7 @@ Future<void> _confirmReceiptByCustomer() async {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'لا يمكن إلغاء الطلبية بعد قبول السائق',
+                            '?? ???? ????? ??????? ??? ???? ??????',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.black38,
@@ -3372,9 +3372,9 @@ Future<void> _confirmReceiptByCustomer() async {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _ActionButton
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -3431,9 +3431,9 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  DriverTrackingScreen
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class DriverTrackingScreen extends StatefulWidget {
   final String orderId;
   final double? userLat, userLng, driverLat, driverLng;
@@ -3502,7 +3502,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
               dName = '${driverData['firstName'] ?? ''} ${driverData['lastName'] ?? ''}'.trim();
               dPhoto = driverData['photoUrl'] as String? ?? '';
             }
-          } catch (_) {}
+          } catch (_) { /* ignored */ }
         }
         if (mounted) {
           setState(() {
@@ -3519,7 +3519,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
           _checkDistance();
         }
       }
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   void _resolveTarget() {
@@ -3609,7 +3609,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       _trackedDriverId = driverId;
       SocketClient.join('track_driver_$driverId');
 
-      // جلب موقع السائق الحالي من وثيقة السائق
+      // ??? ???? ?????? ?????? ?? ????? ??????
       try {
         final driverData = await ApiClient.get('/api/drivers/$driverId');
         if (mounted && driverData != null) {
@@ -3623,9 +3623,9 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
             _checkDistance();
           }
         }
-      } catch (_) {}
+      } catch (_) { /* ignored */ }
 
-      // تحديث دوري كاحتياطي في حال انقطاع socket
+      // ????? ???? ???????? ?? ??? ?????? socket
       _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
         if (!mounted) return;
         try {
@@ -3641,11 +3641,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
               _checkDistance();
             }
           }
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       });
 
       SocketClient.on('driver:location_updated', _onDriverLocationUpdated);
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   void _updateMapElements() {
@@ -3661,7 +3661,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueViolet,
           ),
-          infoWindow: const InfoWindow(title: 'السائق'),
+          infoWindow: const InfoWindow(title: '??????'),
         ),
       );
     if (_targetPos != null && _userPos != null &&
@@ -3672,7 +3672,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
           markerId: const MarkerId('target'),
           position: _targetPos!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-          infoWindow: const InfoWindow(title: 'المتجر الحالي'),
+          infoWindow: const InfoWindow(title: '?????? ??????'),
         ),
       );
     }
@@ -3682,7 +3682,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
           markerId: const MarkerId('user'),
           position: _userPos!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'موقع التوصيل'),
+          infoWindow: const InfoWindow(title: '???? ???????'),
         ),
       );
     if (_driverPos != null && _targetPos != null) {
@@ -3739,16 +3739,16 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   }
 
   String _formatDistance() => _distanceMeters < 1000
-      ? '${_distanceMeters.toStringAsFixed(0)} م'
-      : '${(_distanceMeters / 1000).toStringAsFixed(1)} كم';
+      ? '${_distanceMeters.toStringAsFixed(0)} ?'
+      : '${(_distanceMeters / 1000).toStringAsFixed(1)} ??';
 
   String _formatETA() {
     if (_distanceMeters <= 0) return '...';
-    if (_etaMinutes < 1) return 'أقل من دقيقة';
-    if (_etaMinutes < 60) return '≈ $_etaMinutes دقيقة';
+    if (_etaMinutes < 1) return '??? ?? ?????';
+    if (_etaMinutes < 60) return '� $_etaMinutes ?????';
     final h = _etaMinutes ~/ 60;
     final m = _etaMinutes % 60;
-    return '≈ $h س $m د';
+    return '� $h ? $m ?';
   }
 
   String _estimatedArrival() {
@@ -3756,7 +3756,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     final arrival = DateTime.now().add(Duration(minutes: _etaMinutes));
     final h = arrival.hour.toString().padLeft(2, '0');
     final m = arrival.minute.toString().padLeft(2, '0');
-    return 'يصل حوالي $h:$m';
+    return '??? ????? $h:$m';
   }
 
   void _onMapOrderUpdated(_) {
@@ -3790,7 +3790,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   Widget build(BuildContext context) {
     final initialPos = _driverPos ?? _userPos ?? const LatLng(36.7538, 3.0588);
     final statusSteps = ['accepted', 'purchased', 'onway', 'delivered'];
-    final stepLabels = ['قبول', 'شراء', 'توصيل', 'استلام'];
+    final stepLabels = ['????', '????', '?????', '??????'];
     final currentIdx = statusSteps.indexOf('onway');
     return Scaffold(
       backgroundColor: kBgColor,
@@ -3809,7 +3809,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
               _updateMapElements();
             },
           ),
-          // ── Top bar ──────────────────────────────────────────
+          // -- Top bar ------------------------------------------
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 16,
@@ -3848,7 +3848,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
-                          'تتبع السائق',
+                          '???? ??????',
                           style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold,
                             fontFamily: 'Amiri', color: kTextColor,
@@ -3894,7 +3894,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                       ),
                       const SizedBox(width: 6),
                       const Text(
-                        'مباشر',
+                        '?????',
                         style: TextStyle(fontSize: 11, color: Colors.green, fontFamily: 'Amiri'),
                       ),
                     ],
@@ -3903,7 +3903,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
               ),
             ),
           ),
-          // ── Bottom panel ─────────────────────────────────────
+          // -- Bottom panel -------------------------------------
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: ClipRRect(
@@ -3971,7 +3971,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _storeName.isNotEmpty ? _storeName : 'الطلبية',
+                              _storeName.isNotEmpty ? _storeName : '???????',
                               style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.bold,
                                 color: kTextColor, fontFamily: 'Amiri',
@@ -4050,11 +4050,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                         ),
                         child: Row(
                           children: [
-                            _infoTile('المسافة', _distanceMeters > 0 ? _formatDistance() : '...', CupertinoIcons.location_fill, kPrimaryColor),
+                            _infoTile('???????', _distanceMeters > 0 ? _formatDistance() : '...', CupertinoIcons.location_fill, kPrimaryColor),
                             Container(width: 1, height: 44, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 8)),
-                            _infoTile('الوقت المتبقي', _distanceMeters > 0 ? _formatETA() : '...', CupertinoIcons.clock_fill, Colors.orange),
+                            _infoTile('????? ???????', _distanceMeters > 0 ? _formatETA() : '...', CupertinoIcons.clock_fill, Colors.orange),
                             Container(width: 1, height: 44, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 8)),
-                            _infoTile('وقت الوصول', _distanceMeters > 0 ? _estimatedArrival() : '...', CupertinoIcons.flag_fill, kSuccessColor),
+                            _infoTile('??? ??????', _distanceMeters > 0 ? _estimatedArrival() : '...', CupertinoIcons.flag_fill, kSuccessColor),
                           ],
                         ),
                       ),
@@ -4097,9 +4097,9 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
 
 
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  _CartStyleItemRow — مع badge تعديل السعر
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  _CartStyleItemRow � ?? badge ????? ?????
+// ------------------------------------------------------------------------------
 class _CartStyleItemRow extends StatefulWidget {
   final OrderItem item;
   final bool canEdit;
@@ -4202,7 +4202,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
       items[idx]['alternativeStatus'] = 'rejected';
       await ApiClient.put('/api/orders/${widget.orderId}', {'items': items, 'updatedAt': DateTime.now().toIso8601String()});
       widget.onChanged();
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
   bool get canEdit => widget.canEdit;
   VoidCallback get onChanged => widget.onChanged;
@@ -4276,7 +4276,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                       color: Colors.orange, size: 12),
                   const SizedBox(width: 5),
                   Text(
-                    'تم تعديل السعر: ${widget.item.originalPrice.toInt()} ← ${widget.item.price.toInt()} DZD',
+                    '?? ????? ?????: ${widget.item.originalPrice.toInt()} ? ${widget.item.price.toInt()} DZD',
                     style: const TextStyle(
                       fontSize: 10,
                       color: Colors.orange,
@@ -4303,7 +4303,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                       color: kDangerColor, size: 12),
                   SizedBox(width: 5),
                   Text(
-                    'غير متوفر',
+                    '??? ?????',
                     style: TextStyle(
                       fontSize: 10,
                       color: kDangerColor,
@@ -4335,7 +4335,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('بديل مقترح من السائق',
+              const Text('???? ????? ?? ??????',
                   style: TextStyle(
                       fontSize: 11,
                       color: kWarningColor,
@@ -4347,7 +4347,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                   color: kWarningColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('في انتظار موافقتك',
+                child: const Text('?? ?????? ???????',
                     style: TextStyle(
                         fontSize: 10,
                         color: kWarningColor,
@@ -4358,7 +4358,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
           ),
           const SizedBox(height: 8),
           Text(
-            '"${widget.item.name}" لم يجده السائق، البديل المقترح:',
+            '"${widget.item.name}" ?? ???? ??????? ?????? ???????:',
             style: const TextStyle(
               fontSize: 11,
               color: kTextGrey,
@@ -4436,11 +4436,11 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                     memCacheWidth: 144,
                     fit: BoxFit.contain,
                     errorWidget: (_, __, ___) => const Center(
-                      child: Text('🍕', style: TextStyle(fontSize: 28)),
+                      child: Text('??', style: TextStyle(fontSize: 28)),
                     ),
                   )
                 : const Center(
-                    child: Text('🍕', style: TextStyle(fontSize: 28)),
+                    child: Text('??', style: TextStyle(fontSize: 28)),
                   ),
           ),
         ),
@@ -4471,7 +4471,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '📏 $pizzaSize',
+                    '?? $pizzaSize',
                     style: const TextStyle(
                       fontSize: 11,
                       color: kPrimaryColor,
@@ -4484,7 +4484,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
               if (pizzaTops.isNotEmpty) ...[
                 const SizedBox(height: 3),
                 Text(
-                  '🧀 $pizzaTops',
+                  '?? $pizzaTops',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade600,
@@ -4521,7 +4521,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              'حذف',
+                              '???',
                               style: TextStyle(
                                 color: Colors.redAccent,
                                 fontSize: 11,
@@ -4606,7 +4606,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
-                        'محذوف',
+                        '?????',
                         style: TextStyle(
                           color: kDangerColor,
                           fontSize: 10,
@@ -4622,7 +4622,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
               Column(
                 children: [
                   Text(
-                    '× ${item.quantity}',
+                    '� ${item.quantity}',
                     style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                   ),
                 ],
@@ -4646,7 +4646,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
-                    'بديل',
+                    '????',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 9,
@@ -4744,7 +4744,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'غير متوفر',
+                    '??? ?????',
                     style: const TextStyle(
                       color: kDangerColor,
                       fontSize: 10,
@@ -4760,7 +4760,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
           Column(
             children: [
               Text(
-                '× ${item.quantity}',
+                '� ${item.quantity}',
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
               ),
             ],
@@ -4877,7 +4877,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
               )
             else
               Text(
-                '× ${item.quantity}',
+                '� ${item.quantity}',
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
               ),
             const SizedBox(height: 8),
@@ -4903,7 +4903,7 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'حذف',
+                        '???',
                         style: TextStyle(
                           color: Colors.redAccent,
                           fontSize: 11,
@@ -4935,9 +4935,9 @@ class _CartStyleItemRowState extends State<_CartStyleItemRow> {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _AddProductSheet
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _AddProductSheet extends StatefulWidget {
   final List<OrderItem> existingItems;
   final Function(OrderItem) onAdd;
@@ -5030,7 +5030,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
             const Align(
               alignment: Alignment.centerRight,
               child: Text(
-                'إضافة منتج للطلبية',
+                '????? ???? ???????',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -5053,7 +5053,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 textDirection: TextDirection.rtl,
                 onChanged: _onQueryChanged,
                 decoration: const InputDecoration(
-                  hintText: 'ابحث عن منتج...',
+                  hintText: '???? ?? ????...',
                 hintStyle: TextStyle(color: Color(0xFF6E6B7B), fontSize: 13, fontFamily: 'Amiri'),
                   prefixIcon: Icon(
                     CupertinoIcons.search,
@@ -5078,7 +5078,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
               const Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'لا توجد نتائج',
+                  '?? ???? ?????',
                   style: TextStyle(
                     color: Color(0xFF6E6B7B),
                     fontSize: 14,
@@ -5156,7 +5156,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                                       ],
                               ),
                               child: Text(
-                                already ? 'موجود ✓' : 'إضافة',
+                                already ? '????? ?' : '?????',
                                 style: TextStyle(
                                   color: already
                                       ? Colors.grey.shade600
@@ -5222,9 +5222,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _AddressPickerSheet
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _AddressPickerSheet extends StatefulWidget {
   final String userId, currentAddress, docId;
   final Function(String) onSelected;
@@ -5331,7 +5331,7 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                'تغيير موقع التوصيل',
+                '????? ???? ???????',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -5388,10 +5388,10 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
                   });
               },
               child: _buildAddressCard(
-                label: 'تحديد من الخريطة',
+                label: '????? ?? ???????',
                 address: _useMap && _mapAddress.isNotEmpty
                     ? _mapAddress
-                    : 'اضغط لفتح الخريطة',
+                    : '???? ???? ???????',
                 icon: CupertinoIcons.map_fill,
                 isSelected: _useMap,
               ),
@@ -5413,7 +5413,7 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
                   elevation: 0,
                 ),
                 child: const Text(
-                  'تأكيد الموقع الجديد',
+                  '????? ?????? ??????',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -5517,9 +5517,9 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  _StatusTracker — ✅ يدعم purchased كمرحلة مستقلة
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  _StatusTracker � ? ???? purchased ?????? ??????
+// ------------------------------------------------------------------------------
 class _StatusTracker extends StatelessWidget {
   final OrderStatus status;
   const _StatusTracker({required this.status});
@@ -5531,7 +5531,7 @@ class _StatusTracker extends StatelessWidget {
       case OrderStatus.accepted:
         return 1;
       case OrderStatus.purchased:
-        return 2; // ✅ مرحلة مستقلة
+        return 2; // ? ????? ??????
       case OrderStatus.onway:
         return 3;
       case OrderStatus.delivered:
@@ -5544,11 +5544,11 @@ class _StatusTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final steps = [
-      (CupertinoIcons.clock, 'انتظار'),
-      (CupertinoIcons.checkmark_circle, 'قبول'),
-      (CupertinoIcons.cart_fill, 'شراء'), // ✅ مرحلة purchased
-      (CupertinoIcons.car_fill, 'طريق'),
-      (CupertinoIcons.bag_fill_badge_plus, 'وصول'),
+      (CupertinoIcons.clock, '??????'),
+      (CupertinoIcons.checkmark_circle, '????'),
+      (CupertinoIcons.cart_fill, '????'), // ? ????? purchased
+      (CupertinoIcons.car_fill, '????'),
+      (CupertinoIcons.bag_fill_badge_plus, '????'),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -5611,9 +5611,9 @@ class _StatusTracker extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _UnavailableAlternativesBanner
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _UnavailableAlternativesBanner extends StatefulWidget {
   final List<OrderItem> items;
   final String orderId;
@@ -5716,7 +5716,7 @@ class _UnavailableAlternativesBannerState
         'updatedAt': DateTime.now().toIso8601String(),
       });
       widget.onRefresh();
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
   }
 
   Future<void> _respond(String itemName, bool accepted) async {
@@ -5752,7 +5752,7 @@ class _UnavailableAlternativesBannerState
         'updatedAt': DateTime.now().toIso8601String(),
       });
       widget.onRefresh();
-    } catch (_) {}
+    } catch (_) { /* ignored */ }
     if (mounted) setState(() => _loading = false);
   }
 
@@ -5783,7 +5783,7 @@ class _UnavailableAlternativesBannerState
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                'بدائل مقترحة من السائق في انتظار موافقتك',
+                '????? ?????? ?? ?????? ?? ?????? ???????',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -5816,7 +5816,7 @@ class _UnavailableAlternativesBannerState
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '"${item.name}" لم يجده السائق',
+                        '"${item.name}" ?? ???? ??????',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Colors.black45,
@@ -5920,7 +5920,7 @@ class _UnavailableAlternativesBannerState
                                         ),
                                       ],
                                     ),
-                                    child: const Text('موافق',
+                                    child: const Text('?????',
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 13,
@@ -5949,7 +5949,7 @@ class _UnavailableAlternativesBannerState
                                         ),
                                       ],
                                     ),
-                                    child: const Text('رفض',
+                                    child: const Text('???',
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 13,
@@ -5973,9 +5973,9 @@ class _UnavailableAlternativesBannerState
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _CounterOfferBanner
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _CounterOfferBanner extends StatefulWidget {
   final Map<String, dynamic> counterOffer;
   final String orderId;
@@ -6060,7 +6060,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final driverName = widget.counterOffer['driverName'] as String? ?? 'السائق';
+    final driverName = widget.counterOffer['driverName'] as String? ?? '??????';
     final proposedPrice = (widget.counterOffer['proposedPrice'] as num? ?? 0)
         .toDouble();
 
@@ -6084,7 +6084,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               const Text(
-                'عرض سعر من السائق',
+                '??? ??? ?? ??????',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
@@ -6102,7 +6102,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
           ),
           const SizedBox(height: 8),
           Text(
-            '$driverName يقترح سعر توصيل: ${proposedPrice.toInt()} DA',
+            '$driverName ????? ??? ?????: ${proposedPrice.toInt()} DA',
             style: const TextStyle(
               fontSize: 13,
               color: kTextColor,
@@ -6140,7 +6140,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'قبول السعر الجديد: ${proposedPrice.toInt()} DA',
+                          '???? ????? ??????: ${proposedPrice.toInt()} DA',
                           style: const TextStyle(
                             color: Colors.white,
                             fontFamily: 'Amiri',
@@ -6167,7 +6167,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
                           ),
                           child: const Center(
                             child: Text(
-                              'رفض العرض',
+                              '??? ?????',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontFamily: 'Amiri',
@@ -6192,7 +6192,7 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
                           ),
                           child: const Center(
                             child: Text(
-                              'اختر سائقاً آخر',
+                              '???? ?????? ???',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontFamily: 'Amiri',
@@ -6214,9 +6214,9 @@ class _CounterOfferBannerState extends State<_CounterOfferBanner> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  TransportCard — بطاقة طلبية نقل (تاكسي / هارباني / فورغو)
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  TransportCard � ????? ????? ??? (????? / ??????? / ?????)
+// ------------------------------------------------------------------------------
 
 class TransportCard extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -6239,28 +6239,28 @@ class _TransportCardState extends State<TransportCard> {
 
   Color get _accentColor {
     final type = widget.data['transportType'] as String? ?? '';
-    if (type.contains('سيارة') || type.contains('taxi')) return const Color(0xFFE65100);
-    if (type.contains('هارباني') || type.contains('minibus')) return const Color(0xFF00695C);
-    if (type.contains('فورغو') || type.contains('truck')) return const Color(0xFF4527A0);
+    if (type.contains('?????') || type.contains('taxi')) return const Color(0xFFE65100);
+    if (type.contains('???????') || type.contains('minibus')) return const Color(0xFF00695C);
+    if (type.contains('?????') || type.contains('truck')) return const Color(0xFF4527A0);
     return kPrimaryColor;
   }
 
   IconData get _serviceIcon {
     final type = widget.data['transportType'] as String? ?? '';
-    if (type.contains('سيارة') || type.contains('taxi')) return CupertinoIcons.car_fill;
-    if (type.contains('هارباني') || type.contains('minibus')) return CupertinoIcons.bus;
-    if (type.contains('فورغو') || type.contains('truck')) return CupertinoIcons.cube_box;
+    if (type.contains('?????') || type.contains('taxi')) return CupertinoIcons.car_fill;
+    if (type.contains('???????') || type.contains('minibus')) return CupertinoIcons.bus;
+    if (type.contains('?????') || type.contains('truck')) return CupertinoIcons.cube_box;
     return CupertinoIcons.car_fill;
   }
 
   String _statusLabel(String? s) {
     switch (s) {
-      case 'pending': return 'في الانتظار ⏳';
-      case 'accepted': return 'تم القبول ✓';
-      case 'on_way': return 'في الطريق 🚗';
-      case 'onway': return 'في الطريق 🚗';
-      case 'delivered': return 'تم التوصيل 🎉';
-      case 'cancelled': return 'ملغاة ✗';
+      case 'pending': return '?? ???????? ?';
+      case 'accepted': return '?? ?????? ?';
+      case 'on_way': return '?? ?????? ??';
+      case 'onway': return '?? ?????? ??';
+      case 'delivered': return '?? ??????? ??';
+      case 'cancelled': return '????? ?';
       default: return s ?? '...';
     }
   }
@@ -6284,7 +6284,7 @@ class _TransportCardState extends State<TransportCard> {
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
       final coDriverName = co?['driverName'] as String? ?? '';
-      final userName = d['userName'] as String? ?? 'الزبون';
+      final userName = d['userName'] as String? ?? '??????';
       await ApiClient.put('/api/transport-orders/${widget.docId}', {
         'price': proposedPrice,
         'status': 'accepted',
@@ -6302,18 +6302,18 @@ class _TransportCardState extends State<TransportCard> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '💰 $userName قبل عرض السعر الجديد',
-            'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+            'title': '?? $userName ??? ??? ????? ??????',
+            'body': '????? ??????: ${proposedPrice.toInt()} DZD',
             'data': {'orderId': widget.docId, 'type': 'counter_accepted'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
       widget.onChanged();
       if (mounted) setState(() => _counterLoading = false);
     } catch (e) {
       if (mounted) {
         setState(() => _counterLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red.shade700));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700));
       }
     }
   }
@@ -6324,7 +6324,7 @@ class _TransportCardState extends State<TransportCard> {
       final d = widget.data;
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
-      final userName = d['userName'] as String? ?? 'الزبون';
+      final userName = d['userName'] as String? ?? '??????';
       await ApiClient.put('/api/transport-orders/${widget.docId}', {
         'counterOffer.status': 'rejected',
         'updatedAt': DateTime.now().toIso8601String(),
@@ -6334,18 +6334,18 @@ class _TransportCardState extends State<TransportCard> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '❌ $userName رفض عرض السعر',
+            'title': '? $userName ??? ??? ?????',
             'body': '',
             'data': {'orderId': widget.docId, 'type': 'counter_rejected'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
       widget.onChanged();
       if (mounted) setState(() => _counterLoading = false);
     } catch (e) {
       if (mounted) {
         setState(() => _counterLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red.shade700));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700));
       }
     }
   }
@@ -6361,7 +6361,7 @@ class _TransportCardState extends State<TransportCard> {
     final counterOffer = d['counterOffer'] as Map<String, dynamic>?;
     final hasPendingCounter = counterOffer != null && (counterOffer['status'] as String? ?? '') == 'pending';
     final proposedPrice = (counterOffer?['proposedPrice'] as num? ?? 0).toDouble();
-    final coDriverName = counterOffer?['driverName'] as String? ?? 'السائق';
+    final coDriverName = counterOffer?['driverName'] as String? ?? '??????';
 
     return GestureDetector(
       onTap: () => showModalBottomSheet(
@@ -6501,7 +6501,7 @@ class _TransportCardState extends State<TransportCard> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          rejectionReason ?? 'السائق رفض الطلب',
+                          rejectionReason ?? '?????? ??? ?????',
                           style: TextStyle(fontSize: 12, color: kDangerColor.withOpacity(0.8), fontFamily: 'Amiri'),
                         ),
                         const SizedBox(width: 6),
@@ -6524,7 +6524,7 @@ class _TransportCardState extends State<TransportCard> {
                             Icon(CupertinoIcons.arrow_2_circlepath, color: Colors.white, size: 16),
                             SizedBox(width: 6),
                             Text(
-                              'اختر سائقاً آخر',
+                              '???? ?????? ???',
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Amiri'),
                             ),
                           ],
@@ -6570,7 +6570,7 @@ class _TransportCardState extends State<TransportCard> {
                 ],
               ),
               Text(
-                'عرض سعر من $coDriverName',
+                '??? ??? ?? $coDriverName',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: kTextColor, fontFamily: 'Amiri'),
               ),
             ],
@@ -6598,7 +6598,7 @@ class _TransportCardState extends State<TransportCard> {
                         children: [
                           const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.white, size: 16),
                           const SizedBox(width: 6),
-                          Text('قبول',
+                          Text('????',
                               style: const TextStyle(fontSize: 13, fontFamily: 'Amiri', color: Colors.white, fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -6623,7 +6623,7 @@ class _TransportCardState extends State<TransportCard> {
                         children: [
                           const Icon(CupertinoIcons.xmark_circle_fill, color: kDangerColor, size: 16),
                           const SizedBox(width: 6),
-                          Text('رفض',
+                          Text('???',
                               style: const TextStyle(fontSize: 13, fontFamily: 'Amiri', color: kDangerColor, fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -6670,9 +6670,9 @@ class _TransportCardState extends State<TransportCard> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ServiceOrderCard — بطاقة طلبية توصيل/إحضار
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ServiceOrderCard � ????? ????? ?????/?????
+// ------------------------------------------------------------------------------
 
 class ServiceOrderCard extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -6698,16 +6698,16 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
 
   IconData get _serviceIcon => _isDelivery ? CupertinoIcons.cube_box_fill : CupertinoIcons.bag_fill;
 
-  String _serviceLabel(bool isDelivery) => isDelivery ? 'توصيل' : 'إحضار';
+  String _serviceLabel(bool isDelivery) => isDelivery ? '?????' : '?????';
 
   String _statusLabel(String? s) {
     switch (s) {
-      case 'pending': return 'في الانتظار';
-      case 'accepted': return 'تم القبول';
-      case 'on_way': return 'في الطريق';
-      case 'onway': return 'في الطريق';
-      case 'delivered': return 'تم التوصيل';
-      case 'cancelled': return 'ملغاة';
+      case 'pending': return '?? ????????';
+      case 'accepted': return '?? ??????';
+      case 'on_way': return '?? ??????';
+      case 'onway': return '?? ??????';
+      case 'delivered': return '?? ???????';
+      case 'cancelled': return '?????';
       default: return s ?? '...';
     }
   }
@@ -6731,7 +6731,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
       final coDriverName = co?['driverName'] as String? ?? '';
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
       final serviceType = d['serviceType'] as String? ?? '';
       await ApiClient.put('/api/service-orders/${widget.docId}', {
         'price': proposedPrice,
@@ -6750,18 +6750,18 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '💰 $customerName قبل عرض السعر الجديد',
-            'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+            'title': '?? $customerName ??? ??? ????? ??????',
+            'body': '????? ??????: ${proposedPrice.toInt()} DZD',
             'data': {'orderId': widget.docId, 'type': 'counter_accepted'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
       widget.onChanged();
       if (mounted) setState(() => _counterLoading = false);
     } catch (e) {
       if (mounted) {
         setState(() => _counterLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red.shade700));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700));
       }
     }
   }
@@ -6772,7 +6772,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
       final d = widget.data;
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
       final serviceType = d['serviceType'] as String? ?? '';
       await ApiClient.put('/api/service-orders/${widget.docId}', {
         'counterOffer.status': 'rejected',
@@ -6783,18 +6783,18 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '❌ $customerName رفض عرض السعر',
+            'title': '? $customerName ??? ??? ?????',
             'body': '',
             'data': {'orderId': widget.docId, 'type': 'counter_rejected'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
       widget.onChanged();
       if (mounted) setState(() => _counterLoading = false);
     } catch (e) {
       if (mounted) {
         setState(() => _counterLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red.shade700));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700));
       }
     }
   }
@@ -6807,7 +6807,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
     final counterOffer = d['counterOffer'] as Map<String, dynamic>?;
     final hasPendingCounter = counterOffer != null && (counterOffer['status'] as String? ?? '') == 'pending';
     final proposedPrice = (counterOffer?['proposedPrice'] as num? ?? 0).toDouble();
-    final coDriverName = counterOffer?['driverName'] as String? ?? 'السائق';
+    final coDriverName = counterOffer?['driverName'] as String? ?? '??????';
 
     return GestureDetector(
       onTap: () => showModalBottomSheet(
@@ -6930,7 +6930,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
                             ],
                           ),
                           Text(
-                            'عرض سعر من $coDriverName',
+                            '??? ??? ?? $coDriverName',
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: kTextColor, fontFamily: 'Amiri'),
                           ),
                         ],
@@ -6958,7 +6958,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
                                     children: [
                                       const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.white, size: 16),
                                       const SizedBox(width: 6),
-                                      Text('قبول',
+                                      Text('????',
                                           style: const TextStyle(fontSize: 13, fontFamily: 'Amiri', color: Colors.white, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -6983,7 +6983,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
                                     children: [
                                       const Icon(CupertinoIcons.xmark_circle_fill, color: kDangerColor, size: 16),
                                       const SizedBox(width: 6),
-                                      Text('رفض',
+                                      Text('???',
                                           style: const TextStyle(fontSize: 13, fontFamily: 'Amiri', color: kDangerColor, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -7012,7 +7012,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red.shade700),
+                          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
                         );
                       }
                     }
@@ -7030,7 +7030,7 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
                       children: [
                         Icon(CupertinoIcons.refresh_circled, color: Colors.white, size: 16),
                         SizedBox(width: 6),
-                        Text('إعادة الطلب', style: TextStyle(fontSize: 13, fontFamily: 'Amiri', color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text('????? ?????', style: TextStyle(fontSize: 13, fontFamily: 'Amiri', color: Colors.white, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -7058,9 +7058,9 @@ class _ServiceOrderCardState extends State<ServiceOrderCard> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ServiceOrderDetailsSheet — تفاصيل طلبية توصيل/إحضار
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  ServiceOrderDetailsSheet � ?????? ????? ?????/?????
+// ------------------------------------------------------------------------------
 
 class ServiceOrderDetailsSheet extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -7089,7 +7089,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
     try {
       final d = widget.data;
       final driverId = d['driverId'] as String?;
-      final userName = d['userName'] as String? ?? 'زبون';
+      final userName = d['userName'] as String? ?? '????';
 
       await ApiClient.put('/api/service-orders/${widget.docId}', {
         'status': 'cancelled',
@@ -7101,8 +7101,8 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': driverId,
           'orderId': widget.docId,
-          'title': '❌ قام الزبون بإلغاء الطلبية',
-          'body': 'تم إلغاء طلبية التوصيل/الإحضار.',
+          'title': '? ??? ?????? ?????? ???????',
+          'body': '?? ????? ????? ???????/???????.',
           'type': 'order_cancelled',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7114,11 +7114,11 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': driverId,
-            'title': '❌ قام الزبون بإلغاء الطلبية',
-            'body': 'تم إلغاء طلبية التوصيل/الإحضار.',
+            'title': '? ??? ?????? ?????? ???????',
+            'body': '?? ????? ????? ???????/???????.',
             'data': {'orderId': widget.docId, 'type': 'order_cancelled'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7127,7 +7127,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       if (mounted) {
         setState(() => _cancelling = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700,
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700,
               behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         );
       }
@@ -7141,7 +7141,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
       final coDriverName = co?['driverName'] as String? ?? '';
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
       final serviceType = d['serviceType'] as String? ?? '';
 
       await ApiClient.put('/api/service-orders/${widget.docId}', {
@@ -7163,8 +7163,8 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '💰 $customerName قبل عرض السعر',
-          'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+          'title': '?? $customerName ??? ??? ?????',
+          'body': '????? ??????: ${proposedPrice.toInt()} DZD',
           'type': 'counter_accepted',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7176,11 +7176,11 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '💰 $customerName قبل عرض السعر',
-            'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+            'title': '?? $customerName ??? ??? ?????',
+            'body': '????? ??????: ${proposedPrice.toInt()} DZD',
             'data': {'orderId': widget.docId, 'type': 'counter_accepted'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7189,7 +7189,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7201,7 +7201,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       final d = widget.data;
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
       final serviceType = d['serviceType'] as String? ?? '';
 
       await ApiClient.put('/api/service-orders/${widget.docId}', {
@@ -7215,7 +7215,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '❌ $customerName رفض عرض السعر',
+          'title': '? $customerName ??? ??? ?????',
           'body': '',
           'type': 'counter_rejected',
           'createdAt': DateTime.now().toIso8601String(),
@@ -7228,11 +7228,11 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '❌ $customerName رفض عرض السعر',
+            'title': '? $customerName ??? ??? ?????',
             'body': '',
             'data': {'orderId': widget.docId, 'type': 'counter_rejected'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7241,7 +7241,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7269,8 +7269,8 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '🔄 اختار الزبون سائقاً آخر',
-          'body': 'الزبون اختار سائقاً آخر لطلب التوصيل.',
+          'title': '?? ????? ?????? ?????? ???',
+          'body': '?????? ????? ?????? ??? ???? ???????.',
           'type': 'counter_rejected',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7284,7 +7284,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7333,7 +7333,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
                   child: Text('${price.toInt()} DZD',
                       style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
                 ),
-                Text(_isDelivery ? 'توصيل الطلبيات' : 'إحضار الطلبيات',
+                Text(_isDelivery ? '????? ????????' : '????? ????????',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kTextColor, fontFamily: 'Amiri')),
               ],
             ),
@@ -7346,34 +7346,34 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (status == 'delivered')
-                    _msgBox('تم التوصيل بنجاح', const Color(0xFF00C853))
+                    _msgBox('?? ??????? ?????', const Color(0xFF00C853))
                   else if (status == 'cancelled')
-                    _msgBox('تم إلغاء هذه الطلبية', Colors.redAccent),
+                    _msgBox('?? ????? ??? ???????', Colors.redAccent),
                   if (hasPendingCounter) ...[
                     const SizedBox(height: 12),
                     _counterOfferBanner(counterOffer!),
                   ],
                   if (parcelImage.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _imageBox('صورة الطرد', parcelImage),
+                    _imageBox('???? ?????', parcelImage),
                   ],
                   const SizedBox(height: 12),
-                  _infoBox(CupertinoIcons.location, 'موقع الاستلام', fromAddr),
+                  _infoBox(CupertinoIcons.location, '???? ????????', fromAddr),
                   if (orderName.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _infoBox(CupertinoIcons.bag_fill, 'اسم الطلبية', orderName),
+                    _infoBox(CupertinoIcons.bag_fill, '??? ???????', orderName),
                   ],
                   if (note.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _infoBox(CupertinoIcons.doc_text_fill, 'ملاحظة', note),
+                    _infoBox(CupertinoIcons.doc_text_fill, '??????', note),
                   ],
                   const SizedBox(height: 12),
-                  _infoBox(Icons.location_on, 'موقع التوصيل', toAddr),
+                  _infoBox(Icons.location_on, '???? ???????', toAddr),
                   const SizedBox(height: 12),
-                  _infoBox(CupertinoIcons.money_dollar, 'السعر', '${price.toInt()} DZD'),
+                  _infoBox(CupertinoIcons.money_dollar, '?????', '${price.toInt()} DZD'),
                   if (driverName.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _infoBox(CupertinoIcons.person_fill, 'السائق', driverName),
+                    _infoBox(CupertinoIcons.person_fill, '??????', driverName),
                   ],
                   const SizedBox(height: 20),
                   if (canCancel)
@@ -7394,7 +7394,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
                                 children: [
                                   Icon(CupertinoIcons.xmark_circle, color: Colors.white, size: 18),
                                   SizedBox(width: 8),
-                                  Text('إلغاء الطلبية',
+                                  Text('????? ???????',
                                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
                                 ],
                               ),
@@ -7410,7 +7410,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
   }
 
   Widget _counterOfferBanner(Map<String, dynamic> co) {
-    final driverName = co['driverName'] as String? ?? 'السائق';
+    final driverName = co['driverName'] as String? ?? '??????';
     final proposedPrice = (co['proposedPrice'] as num? ?? 0).toDouble();
     return Container(
       width: double.infinity,
@@ -7428,14 +7428,14 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text('عرض سعر من السائق',
+              Text('??? ??? ?? ??????',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kWarningColor, fontFamily: 'Amiri')),
               const SizedBox(width: 6),
               const Icon(CupertinoIcons.money_dollar_circle_fill, color: kWarningColor, size: 16),
             ],
           ),
           const SizedBox(height: 8),
-          Text('$driverName يقترح سعر توصيل: ${proposedPrice.toInt()} DA',
+          Text('$driverName ????? ??? ?????: ${proposedPrice.toInt()} DA',
               style: const TextStyle(fontSize: 13, color: kTextColor, fontFamily: 'Amiri'), textAlign: TextAlign.right),
           const SizedBox(height: 12),
           if (_counterLoading)
@@ -7456,7 +7456,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
                   children: [
                     const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.white, size: 16),
                     const SizedBox(width: 6),
-                    Text('قبول السعر الجديد: ${proposedPrice.toInt()} DA',
+                    Text('???? ????? ??????: ${proposedPrice.toInt()} DA',
                         style: const TextStyle(color: Colors.white, fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 13)),
                   ],
                 ),
@@ -7476,7 +7476,7 @@ class _ServiceOrderDetailsSheetState extends State<ServiceOrderDetailsSheet> {
                         boxShadow: _neuShadow(blur: 5, offset: 2),
                       ),
                       child: const Center(
-                        child: Text('رفض العرض',
+                        child: Text('??? ?????',
                             style: TextStyle(fontSize: 12, fontFamily: 'Amiri', color: kDangerColor, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -7590,9 +7590,9 @@ Widget _imageBox(String label, String url) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  TransportDetailsSheet — تفاصيل طلبية النقل
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
+//  TransportDetailsSheet � ?????? ????? ?????
+// ------------------------------------------------------------------------------
 
 class TransportDetailsSheet extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -7616,17 +7616,17 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
 
   Color get _accentColor {
     final type = widget.data['transportType'] as String? ?? '';
-    if (type.contains('سيارة') || type.contains('taxi')) return const Color(0xFFE65100);
-    if (type.contains('هارباني') || type.contains('minibus')) return const Color(0xFF00695C);
-    if (type.contains('فورغو') || type.contains('truck')) return const Color(0xFF4527A0);
+    if (type.contains('?????') || type.contains('taxi')) return const Color(0xFFE65100);
+    if (type.contains('???????') || type.contains('minibus')) return const Color(0xFF00695C);
+    if (type.contains('?????') || type.contains('truck')) return const Color(0xFF4527A0);
     return kPrimaryColor;
   }
 
   IconData get _serviceIcon {
     final type = widget.data['transportType'] as String? ?? '';
-    if (type.contains('سيارة') || type.contains('taxi')) return CupertinoIcons.car_fill;
-    if (type.contains('هارباني') || type.contains('minibus')) return CupertinoIcons.bus;
-    if (type.contains('فورغو') || type.contains('truck')) return CupertinoIcons.cube_box;
+    if (type.contains('?????') || type.contains('taxi')) return CupertinoIcons.car_fill;
+    if (type.contains('???????') || type.contains('minibus')) return CupertinoIcons.bus;
+    if (type.contains('?????') || type.contains('truck')) return CupertinoIcons.cube_box;
     return CupertinoIcons.car_fill;
   }
 
@@ -7637,7 +7637,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
       final coDriverName = co?['driverName'] as String? ?? '';
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
 
       await ApiClient.put('/api/transport-orders/${widget.docId}', {
         'price': proposedPrice,
@@ -7658,8 +7658,8 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '💰 $customerName قبل عرض السعر',
-          'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+          'title': '?? $customerName ??? ??? ?????',
+          'body': '????? ??????: ${proposedPrice.toInt()} DZD',
           'type': 'counter_accepted',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7671,11 +7671,11 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '💰 $customerName قبل عرض السعر',
-            'body': 'السعر الجديد: ${proposedPrice.toInt()} DZD',
+            'title': '?? $customerName ??? ??? ?????',
+            'body': '????? ??????: ${proposedPrice.toInt()} DZD',
             'data': {'orderId': widget.docId, 'type': 'counter_accepted'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7684,7 +7684,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7696,7 +7696,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
       final d = widget.data;
       final co = d['counterOffer'] as Map<String, dynamic>?;
       final coDriverId = co?['driverId'] as String?;
-      final customerName = d['userName'] as String? ?? 'الزبون';
+      final customerName = d['userName'] as String? ?? '??????';
 
       await ApiClient.put('/api/transport-orders/${widget.docId}', {
         'counterOffer.status': 'rejected',
@@ -7709,7 +7709,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '❌ $customerName رفض عرض السعر',
+          'title': '? $customerName ??? ??? ?????',
           'body': '',
           'type': 'counter_rejected',
           'createdAt': DateTime.now().toIso8601String(),
@@ -7722,11 +7722,11 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': coDriverId,
-            'title': '❌ $customerName رفض عرض السعر',
+            'title': '? $customerName ??? ??? ?????',
             'body': '',
             'data': {'orderId': widget.docId, 'type': 'counter_rejected'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7735,7 +7735,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7763,8 +7763,8 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': coDriverId,
           'orderId': widget.docId,
-          'title': '🔄 اختار الزبون سائقاً آخر',
-          'body': 'الزبون اختار سائقاً آخر لطلب النقل.',
+          'title': '?? ????? ?????? ?????? ???',
+          'body': '?????? ????? ?????? ??? ???? ?????.',
           'type': 'counter_rejected',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7778,7 +7778,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
       if (mounted) {
         setState(() => _counterLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ: $e'), backgroundColor: Colors.red.shade700),
+          SnackBar(content: Text('??? ???? ???? ???????? ??? ????'), backgroundColor: Colors.red.shade700),
         );
       }
     }
@@ -7800,8 +7800,8 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         await ApiClient.post('/api/notifications', {
           'toId': driverId,
           'orderId': widget.docId,
-          'title': '❌ قام الزبون بإلغاء طلبية النقل',
-          'body': 'تم إلغاء طلبية النقل.',
+          'title': '? ??? ?????? ?????? ????? ?????',
+          'body': '?? ????? ????? ?????.',
           'type': 'order_cancelled',
           'createdAt': DateTime.now().toIso8601String(),
           'isRead': false,
@@ -7813,11 +7813,11 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         try {
           await ApiClient.post('/api/notify-driver', {
             'driverId': driverId,
-            'title': '❌ قام الزبون بإلغاء الطلبية',
-            'body': 'تم إلغاء طلبية النقل.',
+            'title': '? ??? ?????? ?????? ???????',
+            'body': '?? ????? ????? ?????.',
             'data': {'orderId': widget.docId, 'type': 'order_cancelled'},
           });
-        } catch (_) {}
+        } catch (_) { /* ignored */ }
       }
 
       widget.onChanged();
@@ -7827,7 +7827,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
         setState(() => _cancelling = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ خطأ: $e'),
+            content: Text('? ???: $e'),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -7907,28 +7907,28 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _detailBox(CupertinoIcons.location, 'نقطة الانطلاق', d['fromAddress'] as String? ?? ''),
+                  _detailBox(CupertinoIcons.location, '???? ????????', d['fromAddress'] as String? ?? ''),
                   const SizedBox(height: 12),
-                  _detailBox(CupertinoIcons.location_fill, 'نقطة الوصول', d['toAddress'] as String? ?? ''),
+                  _detailBox(CupertinoIcons.location_fill, '???? ??????', d['toAddress'] as String? ?? ''),
                   if (d['fromImage'] != null) ...[
                     const SizedBox(height: 12),
-                    _imageBox('صورة الانطلاق', d['fromImage'] as String),
+                    _imageBox('???? ????????', d['fromImage'] as String),
                   ],
                   if (d['toImage'] != null) ...[
                     const SizedBox(height: 12),
-                    _imageBox('صورة الوصول', d['toImage'] as String),
+                    _imageBox('???? ??????', d['toImage'] as String),
                   ],
                   if (d['parcelImageUrl'] != null) ...[
                     const SizedBox(height: 12),
-                    _imageBox('صورة الطلبية', d['parcelImageUrl'] as String),
+                    _imageBox('???? ???????', d['parcelImageUrl'] as String),
                   ],
                   if ((d['note'] as String? ?? '').isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    _detailBox(CupertinoIcons.text_bubble, 'ملاحظة', d['note'] as String),
+                    _detailBox(CupertinoIcons.text_bubble, '??????', d['note'] as String),
                   ],
                   if (driverName != null) ...[
                     const SizedBox(height: 12),
-                    _detailBox(CupertinoIcons.person_fill, 'السائق', driverName),
+                    _detailBox(CupertinoIcons.person_fill, '??????', driverName),
                   ],
                   if (hasPendingCounter) ...[
                     const SizedBox(height: 12),
@@ -7953,7 +7953,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
                                 children: [
                                   Icon(CupertinoIcons.xmark_circle, color: Colors.white, size: 18),
                                   SizedBox(width: 8),
-                                  Text('إلغاء الطلبية', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+                                  Text('????? ???????', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
                                 ],
                               ),
                       ),
@@ -7968,7 +7968,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
   }
 
   Widget _transportCounterOfferBanner(Map<String, dynamic> co) {
-    final driverName = co['driverName'] as String? ?? 'السائق';
+    final driverName = co['driverName'] as String? ?? '??????';
     final proposedPrice = (co['proposedPrice'] as num? ?? 0).toDouble();
     return Container(
       width: double.infinity,
@@ -7986,14 +7986,14 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text('عرض سعر من السائق',
+              Text('??? ??? ?? ??????',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kWarningColor, fontFamily: 'Amiri')),
               const SizedBox(width: 6),
               const Icon(CupertinoIcons.money_dollar_circle_fill, color: kWarningColor, size: 16),
             ],
           ),
           const SizedBox(height: 8),
-          Text('$driverName يقترح سعر نقل: ${proposedPrice.toInt()} DA',
+          Text('$driverName ????? ??? ???: ${proposedPrice.toInt()} DA',
               style: const TextStyle(fontSize: 13, color: kTextColor, fontFamily: 'Amiri'), textAlign: TextAlign.right),
           const SizedBox(height: 12),
           if (_counterLoading)
@@ -8014,7 +8014,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
                   children: [
                     const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.white, size: 16),
                     const SizedBox(width: 6),
-                    Text('قبول السعر الجديد: ${proposedPrice.toInt()} DA',
+                    Text('???? ????? ??????: ${proposedPrice.toInt()} DA',
                         style: const TextStyle(color: Colors.white, fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 13)),
                   ],
                 ),
@@ -8034,7 +8034,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
                         boxShadow: _neuShadow(blur: 5, offset: 2),
                       ),
                       child: const Center(
-                        child: Text('رفض العرض',
+                        child: Text('??? ?????',
                             style: TextStyle(fontSize: 12, fontFamily: 'Amiri', color: kDangerColor, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -8052,7 +8052,7 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
                         boxShadow: _neuShadow(blur: 5, offset: 2),
                       ),
                       child: const Center(
-                        child: Text('اختر سائقاً آخر',
+                        child: Text('???? ?????? ???',
                             style: TextStyle(fontSize: 12, fontFamily: 'Amiri', color: kPrimaryColor, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -8103,9 +8103,9 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 //  _ProjectDeliveryCard
-// ══════════════════════════════════════════════════════════════════════════════
+// ------------------------------------------------------------------------------
 class _ProjectDeliveryCard extends StatelessWidget {
   final Map<String, dynamic> doc;
   const _ProjectDeliveryCard({required this.doc});
@@ -8125,35 +8125,35 @@ class _ProjectDeliveryCard extends StatelessWidget {
     IconData statusIcon;
 
     if (counterOffer != null) {
-      statusText = 'عرض سعر جديد 💜';
+      statusText = '??? ??? ???? ??';
       statusColor = kWarningColor;
       statusIcon = CupertinoIcons.money_dollar;
     } else if (status == 'accepted') {
-      statusText = 'تم القبول ✓';
+      statusText = '?? ?????? ?';
       statusColor = kSuccessColor;
       statusIcon = CupertinoIcons.check_mark_circled;
     } else if (status == 'onway_to_store') {
-      statusText = 'السائق في الطريق للمتجر 🚗';
+      statusText = '?????? ?? ?????? ?????? ??';
       statusColor = kWarningColor;
       statusIcon = CupertinoIcons.car_fill;
     } else if (status == 'picked_up') {
-      statusText = 'تم الاستلام من المتجر 📦';
+      statusText = '?? ???????? ?? ?????? ??';
       statusColor = kSuccessColor;
       statusIcon = CupertinoIcons.checkmark_seal_fill;
     } else if (status == 'onway') {
-      statusText = 'السائق في الطريق إليك 🚚';
+      statusText = '?????? ?? ?????? ???? ??';
       statusColor = kPrimaryColor;
       statusIcon = CupertinoIcons.car_fill;
     } else if (status == 'delivered') {
-      statusText = 'تم التوصيل ✅';
+      statusText = '?? ??????? ?';
       statusColor = kSuccessColor;
       statusIcon = CupertinoIcons.checkmark_alt_circle_fill;
     } else if (rejectedBy.isNotEmpty) {
-      statusText = 'تم الرفض ✗';
+      statusText = '?? ????? ?';
       statusColor = kDangerColor;
       statusIcon = CupertinoIcons.xmark_circle;
     } else {
-      statusText = 'قيد المعالجة ⏳';
+      statusText = '??? ???????? ?';
       statusColor = kWarningColor;
       statusIcon = CupertinoIcons.clock;
     }
@@ -8203,12 +8203,12 @@ class _ProjectDeliveryCard extends StatelessWidget {
                 ),
                 if (counterOffer != null)
                   Text(
-                    '${(counterOffer['proposedPrice'] as num?)?.toInt() ?? 0} د.ج',
+                    '${(counterOffer['proposedPrice'] as num?)?.toInt() ?? 0} ?.?',
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: kPrimaryColor, fontFamily: 'Amiri'),
                   ),
                 if (driverName != null && status == 'accepted')
                   Text(
-                    'السائق: $driverName',
+                    '??????: $driverName',
                     style: const TextStyle(fontSize: 12, color: kTextGrey, fontFamily: 'Amiri'),
                   ),
               ],
@@ -8247,7 +8247,7 @@ class _ProjectDeliveryCard extends StatelessWidget {
                       Icon(CupertinoIcons.flag, color: kDangerColor, size: 14),
                       SizedBox(width: 6),
                       Text(
-                        'الإبلاغ عن صاحب المشروع',
+                        '??????? ?? ???? ???????',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kDangerColor, fontFamily: 'Amiri'),
                       ),
                     ],
@@ -8270,9 +8270,9 @@ void _showReportOwnerSheet(BuildContext context, Map<String, dynamic> d) {
     builder: (_) => _ReportOwnerSheet(
       deliveryId: d['_id'] ?? '',
       ownerId: d['storeOwnerId'] ?? '',
-      ownerName: d['storeName'] ?? 'صاحب مشروع',
+      ownerName: d['storeName'] ?? '???? ?????',
       userId: d['userId'] ?? '',
-      customerName: d['customerName'] ?? 'زبون',
+      customerName: d['customerName'] ?? '????',
     ),
   );
 }
@@ -8317,7 +8317,7 @@ class _ReportOwnerSheetState extends State<_ReportOwnerSheet> {
         'ownerId': widget.ownerId,
         'ownerName': widget.ownerName,
         'orderId': widget.deliveryId,
-        'reason': 'شكوى',
+        'reason': '????',
         'note': _noteCtrl.text.trim(),
         'createdAt': DateTime.now().toIso8601String(),
       });
@@ -8325,7 +8325,7 @@ class _ReportOwnerSheetState extends State<_ReportOwnerSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(' تم إرسال البلاغ بنجاح للإدارة', style: TextStyle(fontFamily: 'Amiri')),
+            content: Text(' ?? ????? ?????? ????? ???????', style: TextStyle(fontFamily: 'Amiri')),
             backgroundColor: Color(0xFF27AE60),
             behavior: SnackBarBehavior.floating,
           ),
@@ -8356,7 +8356,7 @@ class _ReportOwnerSheetState extends State<_ReportOwnerSheet> {
               const Icon(CupertinoIcons.flag_fill, color: kDangerColor, size: 18),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('الإبلاغ عن ${widget.ownerName}',
+                child: Text('??????? ?? ${widget.ownerName}',
                     textAlign: TextAlign.end,
                     style: const TextStyle(fontFamily: 'Amiri', fontSize: 16, fontWeight: FontWeight.bold, color: kTextColor)),
               ),
@@ -8375,7 +8375,7 @@ class _ReportOwnerSheetState extends State<_ReportOwnerSheet> {
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
               decoration: const InputDecoration(
-                hintText: 'اكتب تفاصيل البلاغ...',
+                hintText: '???? ?????? ??????...',
                 hintStyle: TextStyle(color: Colors.black38, fontSize: 13, fontFamily: 'Amiri'),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(14),
@@ -8395,7 +8395,7 @@ class _ReportOwnerSheetState extends State<_ReportOwnerSheet> {
               child: Center(
                 child: _sending
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('إرسال البلاغ', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                    : const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
               ),
             ),
           ),
