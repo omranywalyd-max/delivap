@@ -1,0 +1,78 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.rar
+*.zip
+*.mp3
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+pubspec.lock
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/build/
+/android/.kotlin/
+
+# Security — sensitive files
+*.keystore
+*.jks
+key.properties
+.env
+google-services.json
+local.properties
+serviceAccountKey.json
+
+# Debug & temp files
+*.log
+flutter_*.log
+okhrej.mp3
+devtools_options.yaml
+
+# Project-specific
+assets/icons/facebook.png
+AGENTS.md
+
+# Non-Android platforms (not publishing)
+/ios/
+/linux/
+/macos/
+/web/
+/windows/
+
+# Agents
+/.agents/
