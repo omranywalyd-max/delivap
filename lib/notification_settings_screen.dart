@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/Services/api_client.dart';
-
 import 'driver_arrival_overlay.dart';
 import 'user_local.dart';
 
@@ -180,7 +179,7 @@ class _NotificationSettingsScreenState
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'عندما يصل السائق إلى موقع التوصيل، ستظهر شاشة تنبيه كاملة على هاتفك مع رنّة الهاتف لتعلمك بوصوله.',
+                                  'عندما يصل السائق إلى موقع التوصيل، سيضغط على زر الرنّة في تطبيقه، وستظهر شاشة تنبيه كاملة على هاتفك مع رنّة الهاتف لتعلمك بوصوله.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Amiri',

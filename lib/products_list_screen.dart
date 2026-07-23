@@ -1,14 +1,14 @@
-// ------------------------------------------------------------------------------
+﻿// ══════════════════════════════════════════════════════════════════════════════
 //  products_list_screen.dart
-//  UIStyle 1 ? ??? ???? (3 ?? ?????)
-//  UIStyle 2 ? ??? ????? (2 ?? ?????) + PizzaDetailSheet + PizzaBoxAnimation
-//  UIStyle 3 ? ??? ??????? (2 ?? ?????) + ProductDetailSheet
-//  UIStyle 4 ? ??? ?????? (2 ?? ?????) + ???/???? Sheet
-//  UIStyle 5 ? ???????? (2 ?? ?????) + ?????? Sheet
-//  UIStyle 6 ? ?????? ??? ????? (2 ?? ?????) + ???? ??? Sheet
-//  UIStyle 7 ? ??????? ????? ??????? (2 ?? ?????) + ????? Sheet
-//  UIStyle 8 ? ?????? ??? + ??? ????? + ????? ???????? (2 ?? ?????) + ?????? Sheet
-// ------------------------------------------------------------------------------
+//  UIStyle 1 → عرض عادي (3 في السطر)
+//  UIStyle 2 → عرض بيتزا (2 في السطر) + PizzaDetailSheet + PizzaBoxAnimation
+//  UIStyle 3 → عرض باتيسري (2 في السطر) + ProductDetailSheet
+//  UIStyle 4 → خضر وفواكه (2 في السطر) + وزن/مبلغ Sheet
+//  UIStyle 5 → كوسميتيك (2 في السطر) + تفاصيل Sheet
+//  UIStyle 6 → مشاريع حسب الطلب (2 في السطر) + معرض صور Sheet
+//  UIStyle 7 → فارماسي متعدد الأحجام (2 في السطر) + أحجام Sheet
+//  UIStyle 8 → منتجات صور + سعر أساسي + أحجام اختيارية (2 في السطر) + تفاصيل Sheet
+// ══════════════════════════════════════════════════════════════════════════════
 import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
@@ -29,25 +29,25 @@ import 'product_detail_sheet.dart';
 import 'user_local.dart';
 import 'main_page.dart';
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  Design Tokens
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 const Color kPrimary = Color(0xFF7D29C6);
-const Color kBg = Color(0xFFF1F0F5); // ??? ?????????
-const Color kCardColor = Color(0xFFDCDAE6); // ??? ????? ???
-const Color kSuccess = Color(0xFF27AE60); // ?????? ?????? ???? ???????? ??????
+const Color kBg = Color(0xFFF1F0F5); // لون الداشبورد
+const Color kCardColor = Color(0xFFDCDAE6); // لون ستوري فيو
+const Color kSuccess = Color(0xFF27AE60); // الأخضر لعلامة الصح والتحديد الناجح
 final Color kNeumShadow = const Color(0xFFB8B1C8).withOpacity(0.6);
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  Domain Models
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 class Product {
   final String imagePath, name, capacite, priceAffiche, description, productId, storeId, storeName, templateName, categoryName, categoryId;
   final double price;
   final double? storeLat;
   final double? storeLng;
-    final bool hasPiecePrice; // ????
-  final double pricePerPiece; // ????
+    final bool hasPiecePrice; // جديد
+  final double pricePerPiece; // جديد
   final int order;
   int quantity;
   final List<dynamic> models;
@@ -130,9 +130,9 @@ class Product {
   );
 }
 
-// ------------------------------------------------------------------------------
-//  ? PizzaTopping � ?????? ???? ????? ??????? ?????? ???
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ PizzaTopping — النكهة تحمل قائمة الأحجام الخاصة بها
+// ══════════════════════════════════════════════════════════════════════════════
 class PizzaSize {
   final String label;
   final double price;
@@ -188,9 +188,9 @@ class DrinkItem {
   String get image => flavors.isNotEmpty ? flavors[0].image : '';
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  CartProvider + GlobalCart
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 class CartProvider extends ChangeNotifier {
   final List<Product> _items = [];
   final Set<String> _itemKeys = {};
@@ -218,11 +218,11 @@ class CartProvider extends ChangeNotifier {
         final existingStyle = _items.first.uiStyle;
         final newStyle = product.uiStyle;
         if ((newStyle == 6 || newStyle == 7) && existingStyle != newStyle) {
-          lastError = '?????? ??? ????? ?? ???????? ?? ???? ?????? ?? ?????? ???? ?? ?????. ???? ????? ????? ?????.';
+          lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
           return false;
         }
         if ((existingStyle == 6 || existingStyle == 7) && existingStyle != newStyle) {
-          lastError = '?????? ??? ????? ?? ???????? ?? ???? ?????? ?? ?????? ???? ?? ?????. ???? ????? ????? ?????.';
+          lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
           return false;
         }
       }
@@ -276,7 +276,7 @@ class GlobalCart {
     if (!provider.toggle(product)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('?????? ??? ????? ?? ???????? ?? ???? ?????? ?? ?????? ???? ?? ?????. ???? ????? ????? ?????.',
+          content: const Text('عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.',
               textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Amiri')),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
@@ -289,9 +289,9 @@ class GlobalCart {
   }
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  Cache Layer
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 class _CacheEntry {
   final List<Product> data;
   final DateTime time;
@@ -352,9 +352,9 @@ class DrinkCache {
   }
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  ProductsListScreen
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 class ProductsListScreen extends StatefulWidget {
   final String categoryName, categoryId, storeId, storeName, categoryImagePath, heroTag;
   final int uiStyle;
@@ -362,6 +362,8 @@ class ProductsListScreen extends StatefulWidget {
    final double? storeLat; 
   final double? storeLng;
   final String templateName;
+  final String openTime;
+  final String closeTime;
 
   const ProductsListScreen({
     super.key,
@@ -374,7 +376,9 @@ class ProductsListScreen extends StatefulWidget {
     this.uiStyle = 1,
     this.storeLat, 
     this.storeLng,
-    this.templateName = '', 
+    this.templateName = '',
+    this.openTime = '',
+    this.closeTime = '',
     required Color storeColor,
   }) : storeColor = storeColor;
 
@@ -382,9 +386,9 @@ class ProductsListScreen extends StatefulWidget {
   State<ProductsListScreen> createState() => _ProductsListScreenState();
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  Sort Enum
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 enum _SortMode { none, priceAsc, priceDesc }
 
 class _ProductsListScreenState extends State<ProductsListScreen>
@@ -415,6 +419,24 @@ class _ProductsListScreenState extends State<ProductsListScreen>
   _SortMode _sortMode = _SortMode.none;
   List<Map<String, dynamic>> _favorites = [];
   String? _selectedFavoriteId;
+  bool _isOpenNow() {
+    try {
+      final now = TimeOfDay.now();
+      final current = now.hour * 60 + now.minute;
+      final openParts = widget.openTime.split(':');
+      final closeParts = widget.closeTime.split(':');
+      if (openParts.length < 2 || closeParts.length < 2) return true;
+      final open = int.parse(openParts[0]) * 60 + int.parse(openParts[1]);
+      final close = int.parse(closeParts[0]) * 60 + int.parse(closeParts[1]);
+      if (close > open) {
+        return current >= open && current <= close;
+      } else {
+        return current >= open || current <= close;
+      }
+    } catch (_) {
+      return true;
+    }
+  }
   bool _loadingFavorites = true;
   bool _twoColumnView = false;
 
@@ -439,7 +461,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     _searchCtrl.addListener(_onSearch);
     _fetchFirstPage();
 
-    // ? ??? ????????? ????????? 2 ? 3
+    // ✅ جلب المشروبات للستايلات 2 و 3
     if (_isPizzaStyle || _isPatisserieStyle) _fetchDrinks();
 
     _fetchFavorites();
@@ -490,7 +512,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           fresh.map((p) => p.imagePath).where((i) => i.isNotEmpty).toList(),
         );
       }
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   }
 
   bool _dataChanged(List<Product> oldList, List<Product> newList) {
@@ -559,7 +581,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     }
   }
 
-  // ? ?????: ??? ????????? ?? ??????? ??????
+  // ✅ تصليح: جلب المشروبات مع التخزين المؤقت
   Future<void> _fetchDrinks() async {
     if (DrinkCache.has(widget.storeId)) {
       if (mounted) setState(() => _drinks = DrinkCache.get(widget.storeId)!);
@@ -570,7 +592,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       final drinks = drinksData.map((d) => DrinkItem.fromMap(d as Map<String, dynamic>)).toList();
       DrinkCache.set(widget.storeId, drinks);
       if (mounted) setState(() => _drinks = drinks);
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   }
 
   void _onScroll() {
@@ -594,7 +616,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           models: d['models'] ?? [],
           toppings: d['toppings'] ?? [],
           storeId: widget.storeId,
-          storeName: widget.storeName, // ??? ????? ??? ????? ?????? ????? ??????
+          storeName: widget.storeName, // هذا سيضمن أخذ الاسم الصحيح للمحل دائماً
           templateName: widget.templateName,
           categoryName: widget.categoryName,
           storeLat: widget.storeLat,
@@ -716,13 +738,13 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
           children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color.fromARGB(255, 119, 118, 118), borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 16),
-            const Text('????? ???', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Colors.black87)),
+            const Text('ترتيب حسب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Colors.black87)),
             const SizedBox(height: 16),
-            _sortTile('?????????', CupertinoIcons.list_bullet, _SortMode.none),
+            _sortTile('الافتراضي', CupertinoIcons.list_bullet, _SortMode.none),
             const SizedBox(height: 10),
-            _sortTile('??? ???', CupertinoIcons.arrow_down, _SortMode.priceAsc),
+            _sortTile('أقل سعر', CupertinoIcons.arrow_down, _SortMode.priceAsc),
             const SizedBox(height: 10),
-            _sortTile('???? ???', CupertinoIcons.arrow_up, _SortMode.priceDesc),
+            _sortTile('أكبر سعر', CupertinoIcons.arrow_up, _SortMode.priceDesc),
           ],
         ),
       ),
@@ -761,39 +783,39 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // ? ?????? ?? ????? ????? ?? ??? uiStyle ??????
+  // ✅ التحقق من توافق السلة مع الـ uiStyle الحالي
   bool _cartCompatibleWithCurrentStyle() {
     bool hasStyle6 = GlobalCart.provider.items.any((p) => p.uiStyle == 6);
     bool hasStyle7 = GlobalCart.provider.items.any((p) => p.uiStyle == 7);
     bool hasOther = GlobalCart.provider.items.any((p) => p.uiStyle != 6 && p.uiStyle != 7);
 
-    // ????? 7 � ???? ???? ???? ?? ?????
+    // ستايل 7 — لازم يكون وحده في السلة
     if (widget.uiStyle == 7 && GlobalCart.provider.count > 0) {
       if (hasStyle6 || hasOther) {
-        _showCartIncompatibleDialog('????? ??? ?????',
-            '?????? ???????? (??? ?????) ??? ?? ???? ????? ?? ?????.\n'
-            '???? ????? ????? ????? ?? ????? ???? ??????.');
+        _showCartIncompatibleDialog('مشروع حسب الطلب',
+            'منتجات المشاريع (حسب الطلب) يجب أن تكون وحدها في السلة.\n'
+            'يرجى إفراغ السلة أولاً أو إكمال طلبك الحالي.');
         return false;
       }
     }
 
-    // ????? 6 � ???? ???? ???? ?? ?????
+    // ستايل 6 — لازم يكون وحده في السلة
     if (widget.uiStyle == 6 && GlobalCart.provider.count > 0 && !hasStyle6) {
-      _showCartIncompatibleDialog('????? ??? ?????',
-          '?????? ???????? (??? ?????) ??? ?? ???? ????? ?? ?????.\n'
-          '???? ????? ????? ????? ?? ????? ???? ??????.');
+      _showCartIncompatibleDialog('مشروع حسب الطلب',
+          'منتجات المشاريع (حسب الطلب) يجب أن تكون وحدها في السلة.\n'
+          'يرجى إفراغ السلة أولاً أو إكمال طلبك الحالي.');
       return false;
     }
 
-    // ???? ????? 6 ?? 7 ?? ????? ?????? ???? ???? ????
+    // يوجد ستايل 6 أو 7 في السلة ونحاول نضيف منتج عادي
     if (widget.uiStyle != 6 && widget.uiStyle != 7 && (hasStyle6 || hasStyle7)) {
-      _showCartIncompatibleDialog('?????? ?????',
-          '?? ???? ????? ??? ?????? ?? ?????? ???????? (??? ?????) ?? ??? ?????.\n'
-          '???? ????? ????? ?? ????? ??? ???????? ?????.');
+      _showCartIncompatibleDialog('منتجات عادية',
+          'لا يمكن إضافة هذا المنتج مع منتجات المشاريع (حسب الطلب) في نفس السلة.\n'
+          'يرجى إفراغ السلة أو إكمال طلب المشاريع أولاً.');
       return false;
     }
 
-    // ????? ???? ????? 7 ???? ????? 7 ????
+    // نحاول نضيف ستايل 7 وفيه ستايل 7 غادي
     if (widget.uiStyle == 7 && hasStyle7) return true;
 
     return true;
@@ -803,7 +825,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     showCupertinoDialog(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('???? ???????',
+        title: const Text('تعذر الإضافة',
             style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
         content: Padding(
           padding: const EdgeInsets.only(top: 10),
@@ -813,7 +835,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('?????',
+            child: const Text('حسناً',
                 style: TextStyle(fontFamily: 'Amiri', color: Color(0xFF7D29C6))),
             onPressed: () => Navigator.pop(ctx),
           ),
@@ -892,7 +914,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     }
   }
 
-  // ? ?????: ??? ??? ????????? ?? ????? ????????? ???? ????
+  // ✅ تصليح: فتح شيت الباتيسري مع تمرير المشروبات بشكل صحيح
   void _openPatisserieDetailSheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -900,7 +922,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
       backgroundColor: Colors.transparent,
       builder: (_) => ProductDetailSheet(
         product: product,
-        drinks: _drinks, // ? ????? ????????? ???????
+        drinks: _drinks, // ✅ تمرير المشروبات المحملة
         isInCart: GlobalCart.provider.containsProduct(product.productId),
         onAddToCart: () {
           if (!GlobalCart.safeToggle(product, context)) return;
@@ -934,7 +956,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // --- ??? ??? ????? 4 (??? ??????) -----------------------------------
+  // ═══ فتح شيت ستايل 4 (خضر وفواكه) ═══════════════════════════════════
   void _openStyle4Sheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -944,7 +966,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // --- ??? ??? ????? 5 (????????) -------------------------------------
+  // ═══ فتح شيت ستايل 5 (كوسميتيك) ═════════════════════════════════════
   void _openStyle5Sheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -954,7 +976,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // --- ??? ????? ??? ????? ??? ????? -----------------------------------
+  // ═══ فتح نموذج طلب مشروع حسب الطلب ═══════════════════════════════════
   void _openCustomProjectSheet() {
     _requireAuth(() {
       showModalBottomSheet(
@@ -977,12 +999,12 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
-          content: const Text('???? ???? ???? ?????', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Amiri', fontSize: 15)),
+          title: const Text('تسجيل الدخول', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
+          content: const Text('لازم تكون مسجل دخولك', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Amiri', fontSize: 15)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('????', style: TextStyle(fontFamily: 'Amiri')),
+              child: const Text('رجوع', style: TextStyle(fontFamily: 'Amiri')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -992,7 +1014,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
                   (_) => false,
                 );
               },
-              child: const Text('????? ??????', style: TextStyle(fontFamily: 'Amiri')),
+              child: const Text('تسجيل الدخول', style: TextStyle(fontFamily: 'Amiri')),
             ),
           ],
         ),
@@ -1002,7 +1024,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     }
   }
 
-  // --- ??? ??? ????? 6 (??????) ---------------------------------------
+  // ═══ فتح شيت ستايل 6 (مشاريع) ═══════════════════════════════════════
   void _openStyle6Sheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -1012,7 +1034,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // --- ??? ??? ????? 7 (???????) --------------------------------------
+  // ═══ فتح شيت ستايل 7 (فارماسي) ══════════════════════════════════════
   void _openStyle7Sheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -1022,7 +1044,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // --- ??? ??? ????? 8 (?????? ???) -----------------------------------
+  // ═══ فتح شيت ستايل 8 (منتجات صور) ═══════════════════════════════════
   void _openStyle8Sheet(Product product) {
     showModalBottomSheet(
       context: context,
@@ -1109,6 +1131,34 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(widget.categoryName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87), textAlign: TextAlign.center),
+                  if (widget.openTime.isNotEmpty || widget.closeTime.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.clock, size: 12, color: _isOpenNow() ? Colors.green : Colors.red),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.openTime} - ${widget.closeTime}',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontFamily: 'Amiri'),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: _isOpenNow() ? Colors.green.shade50 : Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _isOpenNow() ? 'مفتوح' : 'مغلق',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _isOpenNow() ? Colors.green : Colors.red, fontFamily: 'Amiri'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   if (widget.uiStyle == 6)
                     GestureDetector(
                       onTap: _openCustomProjectSheet,
@@ -1119,7 +1169,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
                           gradient: const LinearGradient(colors: [Color(0xFF9232E8), Color(0xFF6D22AC)]),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('??? ?????', style: TextStyle(fontSize: 10, color: Colors.white, fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
+                        child: const Text('حسب الطلب', style: TextStyle(fontSize: 10, color: Colors.white, fontFamily: 'Amiri', fontWeight: FontWeight.bold)),
                       ),
                     ),
                 ],
@@ -1172,7 +1222,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
                             color: _sortMode != _SortMode.none ? _color : Colors.black54,
                           ),
                           const SizedBox(width: 6),
-                          Text('????? ???', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: _sortMode != _SortMode.none ? _color : Colors.black54)),
+                          Text('ترتيب حسب', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: _sortMode != _SortMode.none ? _color : Colors.black54)),
                         ],
                       ),
                     ),
@@ -1204,7 +1254,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
         itemBuilder: (context, i) {
           if (i == 0) {
             final bool sel = _selectedFavoriteId == null;
-            return _FavChip(label: '????', selected: sel, color: _color, onTap: () => setState(() { _selectedFavoriteId = null; _applyLocalFilter(); }));
+            return _FavChip(label: 'الكل', selected: sel, color: _color, onTap: () => setState(() { _selectedFavoriteId = null; _applyLocalFilter(); }));
           }
           final fav = _favorites[i - 1];
           final bool sel = _selectedFavoriteId == fav['id'];
@@ -1299,7 +1349,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
     );
   }
 
-  // ? ?????: ???? ????????? ???? ????? ??????? ??? ???? ??????? ???????
+  // ✅ تحسين: كارد الباتيسري بنفس تصميم البيتزا لكن بدون أنيميشن الصندوق
   Widget _buildPizzaGrid() {
     final items = List<Product>.from(_filteredProducts);
     if (items.isEmpty) return _buildEmptySliver();
@@ -1330,7 +1380,7 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
           children: [
             Icon(CupertinoIcons.search, size: 50, color: Colors.grey.shade400),
             const SizedBox(height: 12),
-            Text(_isSearchMode ? '?? ???? ????? ?????' : '?? ???? ?????? ?? ??? ??????', style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            Text(_isSearchMode ? 'لا توجد نتائج للبحث' : 'لا توجد منتجات في هذا النطاق', style: const TextStyle(color: Colors.grey, fontSize: 14)),
           ],
         ),
       ),
@@ -1362,12 +1412,12 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
                     children: [
                       Text('${total.toInt()} Da', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17, fontFamily: 'Amiri')),
                       const Expanded(
-                        child: Text('??? ?????', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Amiri')),
+                        child: Text('عرض السلة', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Amiri')),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.3))),
-                        child: Text('$count ????', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+                        child: Text('$count منتج', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
                       ),
                     ],
                   ),
@@ -1381,9 +1431,9 @@ pricePerPiece: (d['pricePerPiece'] ?? 0).toDouble(),
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? UIStyle2/3 � ???? ???????/??????? (?????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ UIStyle2/3 — كارد البيتزا/باتيسري (مشترك)
+// ══════════════════════════════════════════════════════════════════════════════
 class _PizzaOverflowCard extends StatefulWidget {
   final Product product;
   final int index;
@@ -1504,7 +1554,7 @@ class _PizzaOverflowCardState extends State<_PizzaOverflowCard>
                                     children: [
                                       Icon(inCart ? Icons.check_circle_outline_rounded : CupertinoIcons.cart_badge_plus, color: Colors.white, size: 12),
                                       const SizedBox(width: 4),
-                                      Text(inCart ? '?? ?????' : '????', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+                                      Text(inCart ? 'في السلة' : 'اختر', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
                                     ],
                                   ),
                                 ),
@@ -1559,7 +1609,7 @@ class _PizzaOverflowCardState extends State<_PizzaOverflowCard>
                             children: [
                               Icon(Icons.check, color: Colors.white, size: 10),
                               SizedBox(width: 3),
-                              Text('?????', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+                              Text('مختار', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
                             ],
                           ),
                         ),
@@ -1575,9 +1625,9 @@ class _PizzaOverflowCardState extends State<_PizzaOverflowCard>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? ??????? ?????? ??? ????? (??????? ???)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ أنيميشن المنتج عند الضغط (للبيتزا فقط)
+// ══════════════════════════════════════════════════════════════════════════════
 class _PizzaProductAnimationEntry extends StatefulWidget {
   final Product product;
   final Widget child;
@@ -1649,9 +1699,9 @@ class _PizzaProductAnimationEntryState extends State<_PizzaProductAnimationEntry
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? PizzaDetailSheet (??????? ??? - ?? ??????? ???????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ PizzaDetailSheet (للبيتزا فقط - مع أنيميشن الصندوق)
+// ══════════════════════════════════════════════════════════════════════════════
 class PizzaDetailSheet extends StatefulWidget {
   final Product product;
   final String storeId;
@@ -1783,11 +1833,11 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
   void _addToCart() {
   if (!_canOrder) return;
 
-  // 1. ????? ??? ??????? (????? ?????? + ??????)
-  // ???? ???????: "????? ???? - ????"
+  // 1. تجهيز اسم البيتزا (الاسم الأصلي + النكهة)
+  // مثال النتيجة: "بيتزا كاري - دجاج"
   final String pizzaNameWithTopping = '${widget.product.name} - ${_selectedTopping!.label}';
 
-  // 2. ????? ??????? ????? ?????
+  // 2. إضافة البيتزا كمنتج منفصل
   final bool hasSize = _selectedSize != null;
   final String sizeLabel = hasSize ? _selectedSize!.label : '';
   final double productPrice = hasSize ? _selectedSize!.price : widget.product.price;
@@ -1813,13 +1863,13 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
   );
   if (!GlobalCart.safeToggle(pizzaProduct, context)) return;
 
-  // 3. ????? ????????? ??????? ?????? ??????
+  // 3. إضافة المشروبات كمنتجات منفصلة تماماً
   _selectedDrinks.forEach((drinkId, data) {
     int qty = data['qty'] ?? 0;
     if (qty > 0) {
       final drinkItem = widget.drinks.firstWhere((d) => d.id == drinkId);
       
-      // ??? ??????? ?? ?????? (???: ???? ?????? - ???????)
+      // اسم المشروب مع النكهة (مثل: حمود بوعلام - سيليكتو)
       String fullDrinkName = "${drinkItem.name} ${data['flavorLabel']}".trim();
       
       final drinkProduct = Product(
@@ -1842,7 +1892,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
     }
   });
 
-  // ????? ????????? ?????? ?????
+  // تشغيل الأنيميشن وإغلاق الشيت
   setState(() => _showBoxAnimation = true);
   HapticFeedback.mediumImpact();
   
@@ -1881,13 +1931,13 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                             const Padding(padding: EdgeInsets.symmetric(vertical: 32), child: Center(child: CupertinoActivityIndicator(color: kPrimary)))
                           else ...[
                             if (_toppings.isNotEmpty) ...[
-                              _sectionHeader('??????', CupertinoIcons.star_fill),
+                              _sectionHeader('النكهة', CupertinoIcons.star_fill),
                               const SizedBox(height: 12),
                               _buildToppings(),
                               _buildDivider(),
                             ],
                             if (_selectedTopping != null && _selectedTopping!.sizes.isNotEmpty) ...[
-                              _sectionHeader('?????', CupertinoIcons.resize),
+                              _sectionHeader('الحجم', CupertinoIcons.resize),
                               const SizedBox(height: 12),
                               _buildSizes(),
                               _buildDivider(),
@@ -1896,7 +1946,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                           _buildQuantitySelector(),
                           _buildDivider(),
                           if (widget.drinks.isNotEmpty) ...[
-                            _sectionHeader('?????????', CupertinoIcons.drop_fill, optional: true),
+                            _sectionHeader('المشروبات', CupertinoIcons.drop_fill, optional: true),
                             const SizedBox(height: 12),
                             _buildDrinksRow(),
                             const SizedBox(height: 16),
@@ -1977,7 +2027,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                 ),
               ),
               const SizedBox(width: 10),
-              const Text('?????', style: TextStyle(fontSize: 11, color: Color.fromARGB(255, 43, 43, 43), fontFamily: 'Amiri')),
+              const Text('السعر', style: TextStyle(fontSize: 11, color: Color.fromARGB(255, 43, 43, 43), fontFamily: 'Amiri')),
             ],
           ),
           const SizedBox(width: 12),
@@ -2012,7 +2062,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
           ),
           Row(
             children: [
-              const Text('??????', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Amiri')),
+              const Text('الكمية', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87, fontFamily: 'Amiri')),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
@@ -2042,7 +2092,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
-            child: Text('???????', style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontFamily: 'Amiri')),
+            child: Text('اختياري', style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontFamily: 'Amiri')),
           )
         else
           const SizedBox(),
@@ -2134,7 +2184,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
     );
   }
 
-  // ? ?????: ??? ????????? ?? ?????? ?????? ??????
+  // ✅ تصليح: عرض المشروبات مع اختيار النكهة والحجم
   Widget _buildDrinksRow() {
     return SizedBox(
       height: 155,
@@ -2224,7 +2274,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(color: _c.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: _c.withOpacity(0.3))),
-                      child: Text('???', style: TextStyle(fontSize: 10, color: _c, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+                      child: Text('أضف', style: TextStyle(fontSize: 10, color: _c, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
                     ),
                 ],
               ),
@@ -2268,14 +2318,14 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                     Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(10)))),
                     const SizedBox(height: 16),
                     Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      Text('???? ${drink.name}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Colors.black87)),
+                      Text('اختر ${drink.name}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Colors.black87)),
                       const SizedBox(width: 8),
                       Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: _c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                         child: Icon(CupertinoIcons.drop_fill, color: _c, size: 14)),
                     ]),
                     const SizedBox(height: 16),
                     if (drink.flavors.isNotEmpty) ...[
-                      Align(alignment: Alignment.centerRight, child: Text('??????', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontFamily: 'Amiri'))),
+                      Align(alignment: Alignment.centerRight, child: Text('النكهة', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontFamily: 'Amiri'))),
                       const SizedBox(height: 10),
                       Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.end,
                         children: drink.flavors.map((f) {
@@ -2297,7 +2347,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                       const SizedBox(height: 16),
                     ],
                     if (pickedFlavor != null && pickedFlavor!.sizes.isNotEmpty) ...[
-                      Align(alignment: Alignment.centerRight, child: Text('?????', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontFamily: 'Amiri'))),
+                      Align(alignment: Alignment.centerRight, child: Text('الحجم', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontFamily: 'Amiri'))),
                       const SizedBox(height: 10),
                       Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.end,
                         children: pickedFlavor!.sizes.map((s) {
@@ -2341,7 +2391,7 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.6), blurRadius: 12, offset: const Offset(0, 5))],
                           ),
-                          child: const Center(child: Text('????? ?????', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri'))),
+                          child: const Center(child: Text('إضافة للطلب', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri'))),
                         ),
                       ),
                     ),
@@ -2408,10 +2458,10 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
                     Icon(_canOrder ? CupertinoIcons.cart_badge_plus : CupertinoIcons.lock, color: _canOrder ? Colors.white : Colors.grey.shade500, size: 18),
                     const SizedBox(width: 8),
                     Text(_canOrder
-                        ? '??? ?????'
+                        ? 'أضف للسلة'
                         : _selectedTopping == null
-                            ? '???? ??????'
-                            : '???? ?????',
+                            ? 'اختر النكهة'
+                            : 'اختر الحجم',
                       style: TextStyle(color: _canOrder ? Colors.white : Colors.grey.shade500, fontWeight: FontWeight.bold, fontSize: 14, fontFamily: 'Amiri')),
                   ],
                 ),
@@ -2424,9 +2474,9 @@ class _PizzaDetailSheetState extends State<PizzaDetailSheet>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  UIStyle 4 � Bottom Sheet ????? ???????? (??? / ????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  UIStyle 4 — Bottom Sheet للخضر والفواكه (وزن / مبلغ)
+// ══════════════════════════════════════════════════════════════════════════════
 const Color _purple = Color(0xFF7D29C6);
 const Color _purpleLight = Color(0xFF9232E8);
 const Color _purpleDark = Color(0xFF6D22AC);
@@ -2470,9 +2520,9 @@ class Style4DetailSheet extends StatefulWidget {
 
 class _Style4DetailSheetState extends State<Style4DetailSheet>
     with TickerProviderStateMixin, SheetEntryAnimation {
-  int _method = 0; // 0=???, 1=????
+  int _method = 0; // 0=وزن, 1=مبلغ
   double _weight = 0.5;
-    int _pieceCount = 1; // ????: ???? ??????
+    int _pieceCount = 1; // جديد: عداد الحبات
   final _amountCtrl = TextEditingController();
   final TextEditingController _noteCtrl = TextEditingController();
 
@@ -2480,21 +2530,21 @@ class _Style4DetailSheetState extends State<Style4DetailSheet>
 double get _totalPrice {
     if (_method == 0) return _weight * _pricePerKg;
     if (_method == 1) return (double.tryParse(_amountCtrl.text) ?? 0);
-    return _pieceCount * widget.product.pricePerPiece; // ???? ??? ??????
+    return _pieceCount * widget.product.pricePerPiece; // حساب سعر الحبات
   }
   
 String get _weightDisplay {
-  if (_method == 2) return '$_pieceCount ???'; // ??? ???? ??????
+  if (_method == 2) return '$_pieceCount حبة'; // إذا كانت بالحبة
 
-  // ???? ????? ???????? ??????????? ?????
+  // حساب الوزن الإجمالي بالكيلوغرام أولاً
   double weightInKg = (_method == 0) ? _weight : (_totalPrice / _pricePerKg);
 
   if (weightInKg < 1.0) {
-    // ??? ??? ??? ?? 1 ????? ?????? ?????? (?????: 0.3 ?? ???? 300 ????)
-    return '${(weightInKg * 1000).toInt()} ????';
+    // إذا كان أقل من 1 كيلو، نحولوه للغرام (مثلاً: 0.3 كغ تولي 300 غرام)
+    return '${(weightInKg * 1000).toInt()} غرام';
   } else {
-    // ??? ??? 1 ???? ?? ????
-    return '${weightInKg.toStringAsFixed(1)} ????';
+    // إذا كان 1 كيلو أو أكثر
+    return '${weightInKg.toStringAsFixed(1)} كيلو';
   }
 }
   @override
@@ -2515,9 +2565,9 @@ String get _weightDisplay {
   void _addToCart() {
     if (_totalPrice <= 0) return;
     String detail = "";
-    if (_method == 0) detail = "??? ${_weight.toStringAsFixed(1)} ??";
-    else if (_method == 1) detail = "???? ${_amountCtrl.text} DA";
-    else detail = "$_pieceCount ???";
+    if (_method == 0) detail = "وزن ${_weight.toStringAsFixed(1)} كغ";
+    else if (_method == 1) detail = "مبلغ ${_amountCtrl.text} DA";
+    else detail = "$_pieceCount حبة";
     
     final p = Product(
       productId: '${widget.product.productId}_${_method}_${DateTime.now().millisecondsSinceEpoch}',
@@ -2618,7 +2668,7 @@ String get _weightDisplay {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [BoxShadow(color: _purple.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
               ),
-              child: Text('${_pricePerKg.toInt()} DA / ??',
+              child: Text('${_pricePerKg.toInt()} DA / كغ',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Colors.white)),
             ),
           ],
@@ -2638,16 +2688,16 @@ Widget _buildMethodSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('????? ?????', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+        const Text('طريقة الطلب', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
         const SizedBox(height: 10),
-        Row( // ???????? Row ???? ????? ???????
+        Row( // استعملنا Row عادي ونحسب المساحة
           children: [
-            _methodBtn(1, '??? ??????'),
+            _methodBtn(1, 'حسب المبلغ'),
             const SizedBox(width: 8),
-            _methodBtn(0, '??? ?????'),
-            if (widget.product.hasPiecePrice) ...[ // ???? ??? ??? ????? ??????
+            _methodBtn(0, 'حسب الوزن'),
+            if (widget.product.hasPiecePrice) ...[ // تظهر فقط إذا فعلها التاجر
               const SizedBox(width: 8),
-              _methodBtn(2, '??????'),
+              _methodBtn(2, 'بالحبة'),
             ],
           ],
         ),
@@ -2655,7 +2705,7 @@ Widget _buildMethodSelector() {
     );
   }
 
-  // ???? ?????? ???? ???? (???? ?? ???? ?????)
+  // دالة مساعدة لصنع الزر (عشان ما نكرر الكود)
   Widget _methodBtn(int m, String label) {
     bool isSel = _method == m;
     return Expanded(
@@ -2691,7 +2741,7 @@ Widget _buildMethodSelector() {
       ),
       child: _method == 0 
           ? _buildWeightMode() 
-          : (_method == 1 ? _buildAmountMode() : _buildPieceMode()), // ????? ??? ??????
+          : (_method == 1 ? _buildAmountMode() : _buildPieceMode()), // إضافة شرط الحبات
     );
   }
 
@@ -2699,7 +2749,7 @@ Widget _buildMethodSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('??? ??????', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+        const Text('عدد الحبات', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2711,7 +2761,7 @@ Widget _buildMethodSelector() {
             _qtyBtn(CupertinoIcons.plus, () => setState(() => _pieceCount++)),
           ],
         ),
-        Center(child: Text('??? ?????: ${widget.product.pricePerPiece.toInt()} DA', style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Amiri'))),
+        Center(child: Text('سعر الحبة: ${widget.product.pricePerPiece.toInt()} DA', style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Amiri'))),
       ],
     );
   }
@@ -2731,7 +2781,7 @@ Widget _buildMethodSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('?????', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+        const Text('الوزن', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2782,7 +2832,7 @@ Widget _buildMethodSelector() {
         ),
         const SizedBox(height: 8),
         Center(
-          child: Text('=  ${_weight.toStringAsFixed(1)}  ??',
+          child: Text('=  ${_weight.toStringAsFixed(1)}  كغ',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF6E6B7B))),
         ),
       ],
@@ -2793,7 +2843,7 @@ Widget _buildMethodSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('??????', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+        const Text('المبلغ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -2813,7 +2863,7 @@ Widget _buildMethodSelector() {
                   keyboardType: TextInputType.number,
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: _purple),
                   decoration: const InputDecoration(
-                    hintText: '???? ??????',
+                    hintText: 'أدخل المبلغ',
                     hintStyle: TextStyle(fontSize: 14, color: Color(0xFFB8B1C8)),
                     border: InputBorder.none,
                     isDense: true,
@@ -2825,7 +2875,7 @@ Widget _buildMethodSelector() {
         ),
         const SizedBox(height: 8),
         Center(
-          child: Text('�  $_weightDisplay',
+          child: Text('≈  $_weightDisplay',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: Color(0xFF6E6B7B))),
         ),
       ],
@@ -2849,7 +2899,7 @@ Widget _buildMethodSelector() {
               children: const [
                 Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18),
                 SizedBox(width: 8),
-                Text("??? ?????", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+                Text("أضف للسلة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
               ],
             ),
           ),
@@ -2858,7 +2908,7 @@ Widget _buildMethodSelector() {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Text('?????', style: TextStyle(fontSize: 11, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
+            const Text('السعر', style: TextStyle(fontSize: 11, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Text(key: ValueKey(_totalPrice.toInt()), '${_totalPrice.toInt()} DA',
@@ -2871,9 +2921,9 @@ Widget _buildMethodSelector() {
   }
 }
 
-// ------------------------------------------------------------------------------
-//  UIStyle 5 � Bottom Sheet ??????????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  UIStyle 5 — Bottom Sheet للكوسميتيك
+// ══════════════════════════════════════════════════════════════════════════════
 class Style5DetailSheet extends StatefulWidget {
   final Product product;
   final void Function(Product)? onProductAddedToTemplate;
@@ -3026,7 +3076,7 @@ class _Style5DetailSheetState extends State<Style5DetailSheet>
         children: [
           Icon(CupertinoIcons.resize, color: _purple, size: 16),
           const SizedBox(width: 8),
-          Text('?????: ', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: _purple)),
+          Text('الحجم: ', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: _purple)),
           Text(widget.product.capacite,
               textDirection: getTextDirection(widget.product.capacite),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Amiri', color: _purple)),
@@ -3051,7 +3101,7 @@ class _Style5DetailSheetState extends State<Style5DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text('?????', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+              const Text('الوصف', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
@@ -3064,7 +3114,7 @@ class _Style5DetailSheetState extends State<Style5DetailSheet>
             ],
           ),
           const SizedBox(height: 8),
-          Text(widget.product.description.isNotEmpty ? widget.product.description : '?? ???? ??? ???? ??????.',
+          Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
         ],
@@ -3088,7 +3138,7 @@ class _Style5DetailSheetState extends State<Style5DetailSheet>
           children: [
             Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18),
             SizedBox(width: 8),
-            Text("??? ?????", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+            Text("أضف للسلة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
           ],
         ),
       ),
@@ -3096,9 +3146,9 @@ class _Style5DetailSheetState extends State<Style5DetailSheet>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  UIStyle 6 � Bottom Sheet ??????? ??? ????? (???? ??? + ????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  UIStyle 6 — Bottom Sheet لمشاريع حسب الطلب (معرض صور + كمية)
+// ══════════════════════════════════════════════════════════════════════════════
 class Style6DetailSheet extends StatefulWidget {
   final Product product;
   final void Function(Product)? onProductAddedToTemplate;
@@ -3342,7 +3392,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(widget.product.description.isNotEmpty ? widget.product.description : '?? ???? ??? ???? ??????.',
+              Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
             ],
@@ -3356,7 +3406,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('???? ?????', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+        const Text('اختر الحجم', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
         const SizedBox(height: 12),
         Wrap(
           spacing: 10,
@@ -3394,7 +3444,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
                       child: _buildNetworkImage(sizeImage, fit: BoxFit.contain),
                     ),
                     const SizedBox(height: 4),
-                    Text(size.label.isNotEmpty ? size.label : '???',
+                    Text(size.label.isNotEmpty ? size.label : 'حجم',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Amiri',
                             color: sel ? Colors.white : const Color(0xFF2D2A3A))),
@@ -3460,7 +3510,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
           ),
           Row(
             children: [
-              const Text('??????', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+              const Text('الكمية', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -3494,7 +3544,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
               children: [
                 Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18),
                 SizedBox(width: 8),
-                Text("??? ?????", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+                Text("أضف للسلة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
               ],
             ),
           ),
@@ -3503,7 +3553,7 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('${_quantity} � ${_unitPrice.toInt()} DA',
+            Text('${_quantity} × ${_unitPrice.toInt()} DA',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -3518,9 +3568,9 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
 
 }
 
-// ------------------------------------------------------------------------------
-//  Custom Project Order Form � ????? ??? ?? ?? AppBar (??? ?????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  Custom Project Order Form — يُفتح فقط من زر AppBar (حسب الطلب)
+// ══════════════════════════════════════════════════════════════════════════════
 class _CustomProjectSheet extends StatefulWidget {
   final String storeId;
   final String storeName;
@@ -3619,16 +3669,16 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
 
   bool _validate() {
     final missing = <String>[];
-    if (_firstNameCtrl.text.trim().isEmpty) missing.add('?????');
-    if (_lastNameCtrl.text.trim().isEmpty) missing.add('?????');
-    if (_phoneCtrl.text.trim().isEmpty) missing.add('??? ??????');
-    if (_detailsCtrl.text.trim().isEmpty) missing.add('?????? ???????');
-    if (_finalAddress.isEmpty) missing.add('????? ???????');
+    if (_firstNameCtrl.text.trim().isEmpty) missing.add('الاسم');
+    if (_lastNameCtrl.text.trim().isEmpty) missing.add('اللقب');
+    if (_phoneCtrl.text.trim().isEmpty) missing.add('رقم الهاتف');
+    if (_detailsCtrl.text.trim().isEmpty) missing.add('تفاصيل الطلبية');
+    if (_finalAddress.isEmpty) missing.add('عنوان التوصيل');
 
     if (missing.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('?????? ??? ?????? ???????: ${missing.join("? ")}',
+          content: Text('الرجاء ملء الحقول التالية: ${missing.join("، ")}',
             style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
@@ -3693,14 +3743,14 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('?? ????? ??? ??????? ?????'),
+            content: Text('تم إرسال طلب المشروع بنجاح'),
             duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('??? ???? ???? ???????? ??? ????')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('حدث خطأ: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -3730,7 +3780,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
                     const SizedBox(height: 24),
                     _buildNameRow(),
                     const SizedBox(height: 16),
-                    _buildTextField(_phoneCtrl, '??? ??????', CupertinoIcons.phone_fill, keyboardType: TextInputType.phone),
+                    _buildTextField(_phoneCtrl, 'رقم الهاتف', CupertinoIcons.phone_fill, keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
                     _buildAddressSection(),
                     const SizedBox(height: 16),
@@ -3774,11 +3824,11 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
               child: const Icon(CupertinoIcons.hammer_fill, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text('??? ??? ?????', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+            const Text('طلب حسب الطلب', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
           ],
         ),
         const SizedBox(height: 8),
-        const Text('???? ????????? ?????? ?? ??????', style: TextStyle(fontSize: 12, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
+        const Text('املأ المعلومات وانتظر رد السائق', style: TextStyle(fontSize: 12, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
       ],
     );
   }
@@ -3787,11 +3837,11 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
     return Row(
       children: [
         Expanded(
-          child: _buildTextField(_firstNameCtrl, '?????', CupertinoIcons.person_fill),
+          child: _buildTextField(_firstNameCtrl, 'الاسم', CupertinoIcons.person_fill),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildTextField(_lastNameCtrl, '?????', CupertinoIcons.person_fill),
+          child: _buildTextField(_lastNameCtrl, 'اللقب', CupertinoIcons.person_fill),
         ),
       ],
     );
@@ -3834,7 +3884,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
             style: const TextStyle(fontSize: 14, color: Color(0xFF2D2A3A), fontFamily: 'Amiri'),
             cursorColor: kPrimary,
             decoration: InputDecoration(
-              hintText: '???? $label',
+              hintText: 'أدخل $label',
               hintStyle: const TextStyle(fontSize: 12, color: Color(0xFFB8B1C8), fontFamily: 'Amiri'),
               border: InputBorder.none,
               isDense: true,
@@ -3853,7 +3903,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('????? ???????', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+            Text('عنوان التوصيل', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -3861,7 +3911,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
                 color: Colors.red.shade100,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text('??????', style: TextStyle(fontSize: 9, color: Colors.red, fontFamily: 'Amiri')),
+              child: const Text('إجباري', style: TextStyle(fontSize: 9, color: Colors.red, fontFamily: 'Amiri')),
             ),
           ],
         ),
@@ -3988,10 +4038,10 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text("????? ?? ???????",
+                          Text("تحديد من الخريطة",
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold,
                               color: _useMap ? Colors.white : const Color(0xFF2D2A3A), fontFamily: 'Amiri')),
-                          Text(_useMap && _mapAddress.isNotEmpty ? _mapAddress : "???? ???? ???????",
+                          Text(_useMap && _mapAddress.isNotEmpty ? _mapAddress : "اضغط لفتح الخريطة",
                             style: TextStyle(fontSize: 11,
                               color: _useMap ? Colors.white70 : Colors.black45, fontFamily: 'Amiri')),
                         ],
@@ -4024,7 +4074,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text('?????? ???????', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+              const Text('تفاصيل الطلبية', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
@@ -4045,7 +4095,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
             style: const TextStyle(fontSize: 14, color: Color(0xFF2D2A3A), fontFamily: 'Amiri'),
             cursorColor: kPrimary,
             decoration: const InputDecoration(
-              hintText: '???? ??? ??????? ???????? (????????? ??????? ????????...)',
+              hintText: 'اكتب وصف الطلبية بالتفصيل (المنتجات، الكمية، المقاسات...)',
               hintStyle: TextStyle(fontSize: 12, color: Color(0xFFB8B1C8), fontFamily: 'Amiri'),
               border: InputBorder.none,
               isDense: true,
@@ -4064,7 +4114,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text('??? ???????', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+            const Text('صور الطلبية', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -4072,7 +4122,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
                 color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text('???????', style: TextStyle(fontSize: 9, color: Colors.grey, fontFamily: 'Amiri')),
+              child: const Text('اختياري', style: TextStyle(fontSize: 9, color: Colors.grey, fontFamily: 'Amiri')),
             ),
           ],
         ),
@@ -4122,7 +4172,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_selectedImages.isNotEmpty ? '????? ?????? ?? ?????' : '????? ??? ??????',
+                Text(_selectedImages.isNotEmpty ? 'إضافة المزيد من الصور' : 'إضافة صور للمنتج',
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
                 const SizedBox(width: 8),
                 Container(
@@ -4157,7 +4207,7 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
           children: [
             Icon(_isUploading ? CupertinoIcons.hourglass : CupertinoIcons.paperplane_fill, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text(_isUploading ? '???? ?????...' : '????? ?????', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+            Text(_isUploading ? 'جاري الرفع...' : 'إرسال الطلب', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
           ],
         ),
       ),
@@ -4165,9 +4215,9 @@ class _CustomProjectSheetState extends State<_CustomProjectSheet>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  UIStyle 7 � Bottom Sheet ????????? (????? ???????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  UIStyle 7 — Bottom Sheet للفارماسي (متعدد الأحجام)
+// ══════════════════════════════════════════════════════════════════════════════
 class Style7DetailSheet extends StatefulWidget {
   final Product product;
   final void Function(Product)? onProductAddedToTemplate;
@@ -4394,7 +4444,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(widget.product.description.isNotEmpty ? widget.product.description : '?? ???? ??? ???? ??????.',
+              Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
             ],
@@ -4408,7 +4458,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Text('???? ?????', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+        const Text('اختر الحجم', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
         const SizedBox(height: 12),
         SizedBox(
           height: 130,
@@ -4447,7 +4497,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
                         child: _buildNetworkImage(vImg, fit: BoxFit.contain),
                       ),
                       const SizedBox(height: 4),
-                      Text(vLabel.isNotEmpty ? '$vLabel $vUnit' : '???',
+                      Text(vLabel.isNotEmpty ? '$vLabel $vUnit' : 'حجم',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Amiri',
                               color: sel ? Colors.white : const Color(0xFF2D2A3A))),
@@ -4514,7 +4564,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
           ),
           Row(
             children: [
-              const Text('??????', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
+              const Text('الكمية', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -4549,7 +4599,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
               children: [
                 Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18),
                 SizedBox(width: 8),
-                Text("??? ?????", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
+                Text("أضف للسلة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri')),
               ],
             ),
           ),
@@ -4558,7 +4608,7 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('${_quantity} � ${_currentPrice.toInt()} DA',
+            Text('${_quantity} × ${_currentPrice.toInt()} DA',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF6E6B7B), fontFamily: 'Amiri')),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -4572,9 +4622,9 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  uiStyle == 8 � ?????? ??? + ??? ????? + ????? ???????? + ???
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  uiStyle == 8 — منتجات صور + سعر أساسي + أحجام اختيارية + وصف
+// ══════════════════════════════════════════════════════════════════════════════
 class Style8DetailSheet extends StatefulWidget {
   final Product product;
   final void Function(Product)? onProductAddedToTemplate;
@@ -4706,7 +4756,7 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
                     _buildAboutSection(),
                     const SizedBox(height: 18),
                     if (_sizes.isNotEmpty) ...[
-                      _buildSectionTitle('???? ?????', CupertinoIcons.resize),
+                      _buildSectionTitle('اختر الحجم', CupertinoIcons.resize),
                       const SizedBox(height: 12),
                       _buildSizeSelector(),
                       const SizedBox(height: 18),
@@ -4840,7 +4890,7 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text('?? ??????',
+              const Text('عن المنتج',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Amiri', color: Color(0xFF2D2A3A))),
               const SizedBox(width: 8),
               Container(
@@ -4855,7 +4905,7 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
           Text(
             widget.product.description.isNotEmpty
                 ? widget.product.description
-                : '?? ???? ??? ???? ???? ??????.',
+                : 'لا يوجد وصف حالي لهذا المنتج.',
             textAlign: TextAlign.right,
             style: const TextStyle(fontSize: 13.5, color: Color(0xFF6E6B7B), height: 1.9, fontFamily: 'Amiri')),
         ]));
@@ -4906,7 +4956,7 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
                 if (_selectedSizeIndex == -1)
                   Icon(CupertinoIcons.checkmark_circle_fill, color: kSuccess, size: 18),
                 const SizedBox(width: 5),
-                Text('????', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 13, color: _selectedSizeIndex == -1 ? _purple : const Color(0xFF2D2A3A))),
+                Text('بدون', style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 13, color: _selectedSizeIndex == -1 ? _purple : const Color(0xFF2D2A3A))),
               ])),
         ),
         ..._sizes.asMap().entries.map((e) {
@@ -4988,7 +5038,7 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
               ])),
           Row(
             children: [
-              const Text('??????',
+              const Text('الكمية',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF2D2A3A), fontFamily: 'Amiri')),
               const SizedBox(width: 10),
               Container(
@@ -5057,14 +5107,14 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
                 children: [
                   Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18),
                   SizedBox(width: 8),
-                  Text("??? ?????", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri', letterSpacing: 0.3)),
+                  Text("أضف للسلة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'Amiri', letterSpacing: 0.3)),
                 ])),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('????? ????????',
+              Text('السعر الإجمالي',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontFamily: 'Amiri')),
               const SizedBox(height: 2),
               AnimatedSwitcher(
@@ -5074,16 +5124,16 @@ class _Style8DetailSheetState extends State<Style8DetailSheet>
                     style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: _purple, fontFamily: 'Amiri', height: 1)),
               ),
               if (_quantity > 1)
-                Text('� $_quantity ????',
+                Text('× $_quantity قطعة',
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade400, fontFamily: 'Amiri')),
             ]),
         ]));
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? ??????? ??????? (??????? ???)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ أنيميشن الصندوق (للبيتزا فقط)
+// ══════════════════════════════════════════════════════════════════════════════
 class _PizzaBoxAnimationOverlay extends StatefulWidget {
   final String pizzaImage;
   final String pizzaName;
@@ -5278,13 +5328,13 @@ class _PizzaBoxAnimationOverlayState extends State<_PizzaBoxAnimationOverlay>
       borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       boxShadow: [BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.6), blurRadius: 4, offset: const Offset(0, -2))],
     ),
-    child: const Center(child: Text('??', style: TextStyle(fontSize: 18))),
+    child: const Center(child: Text('🍕', style: TextStyle(fontSize: 18))),
   );
 }
 
-// ------------------------------------------------------------------------------
-//  ?? ??????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  زر الكمية
+// ══════════════════════════════════════════════════════════════════════════════
 class _QtyButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -5332,9 +5382,9 @@ class _DrinkQtyBtn extends StatelessWidget {
   );
 }
 
-// ------------------------------------------------------------------------------
-//  UIStyle 1 � Normal Product Card
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  UIStyle 1 — Normal Product Card
+// ══════════════════════════════════════════════════════════════════════════════
 class _StaggeredProductCard extends StatefulWidget {
   final Product product;
   final int index;
@@ -5558,9 +5608,9 @@ class _StaggeredNetworkImageState extends State<_StaggeredNetworkImage> {
   }
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  Shared Widgets
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 Widget _buildNetworkImage(String url, {BoxFit fit = BoxFit.contain}) {
   if (url.isEmpty) {
     return Container(
@@ -5685,9 +5735,9 @@ class _NeumorphicButton extends StatelessWidget {
   );
 }
 
-// ------------------------------------------------------------------------------
-//  _FavChip � ?????? ???????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  _FavChip — مستطيل المفضلة
+// ══════════════════════════════════════════════════════════════════════════════
 class _FavChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -5764,7 +5814,7 @@ class _CategorySearchBar extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A1A), fontFamily: 'Amiri'),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  hintText: '???? ???? ???????...',
+                  hintText: 'ابحث داخل التصنيف...',
                   hintStyle: TextStyle(color: Color(0xFF9E9E9E), fontSize: 13, fontFamily: 'Amiri'),
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),

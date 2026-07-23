@@ -56,14 +56,18 @@ class _CachedCategory {
   final String storeId;
   final double? distance;
   final double? lat, lng;
+  final String openTime;
+  final String closeTime;
   const _CachedCategory({
     required this.id,
     required this.name,
     required this.image,
     this.distance,
     required this.storeId,
-    this.lat, // ✅ أضف هذا
+    this.lat,
     this.lng,
+    this.openTime = '',
+    this.closeTime = '',
   });
 }
 
@@ -224,7 +228,9 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
                 storeId:
                     specificStoreId,
                 lat: catLat,
-                lng: catLng));
+                lng: catLng,
+                openTime: d['openTime'] ?? '',
+                closeTime: d['closeTime'] ?? ''));
           }
         } else {
           validCats.add(
@@ -234,7 +240,9 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
               image: d['image'] ?? '',
               storeId: specificStoreId,
               lat: catLat,
-              lng: catLng));
+              lng: catLng,
+              openTime: d['openTime'] ?? '',
+              closeTime: d['closeTime'] ?? ''));
         }
       }
       // ✅ نخزن فال cache (حتى لو كان قديم، نحدثو)
@@ -342,7 +350,9 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
                 lng: cat.lng,
                 uiStyle: _uiStyle,
                 storeColor: _storeColor,
-                distance: cat.distance);
+                distance: cat.distance,
+                openTime: cat.openTime,
+                closeTime: cat.closeTime);
             }),
       ]);
   }
@@ -1164,6 +1174,8 @@ class CategoryCardWidget extends StatefulWidget {
   final Color storeColor;
   final double? distance;
   final double? lat, lng;
+  final String openTime;
+  final String closeTime;
 
   const CategoryCardWidget({
     super.key,
@@ -1176,8 +1188,10 @@ class CategoryCardWidget extends StatefulWidget {
     required this.storeColor,
     required this.templateName,
     this.distance,
-    this.lat, // أضف هذا
-    this.lng, // أضف هذا
+    this.lat,
+    this.lng,
+    this.openTime = '',
+    this.closeTime = '',
   });
 
   @override
@@ -1202,7 +1216,9 @@ class _CategoryCardWidgetState extends State<CategoryCardWidget> {
             storeColor: widget.storeColor,
             storeLat: widget.lat,
             storeLng: widget.lng,
-            templateName: widget.templateName))),
+            templateName: widget.templateName,
+            openTime: widget.openTime,
+            closeTime: widget.closeTime))),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

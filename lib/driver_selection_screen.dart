@@ -1,9 +1,9 @@
-// ------------------------------------------------------------------------------
-//  driver_selection_screen.dart � ???? ?????? ?????? (????? ?????)
-//  ? ??? ??????: ??? + ??? + ??????? ??????? ?? Firestore
-//  ? ???????: ????? + ????? + ??? (???? ??? ????)
-//  ? ???? ?????? ??? ????? (assets/images/avatar.png ?? avatarf.png)
-// ------------------------------------------------------------------------------
+﻿// ══════════════════════════════════════════════════════════════════════════════
+//  driver_selection_screen.dart — شاشة اختيار السائق (رادار مباشر)
+//  ✅ شيت السائق: اسم + رقم + تعليقات الزبائن من Firestore
+//  ✅ تعليقات: إضافة + تعديل + حذف (خاصة بكل زبون)
+//  ✅ صورة الزبون حسب الجنس (assets/images/avatar.png أو avatarf.png)
+// ══════════════════════════════════════════════════════════════════════════════
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,7 +18,7 @@ import 'package:flutter_application_1/products_list_screen.dart';
 
 
 
-// --- ????? ??????? ------------------------------------------------------------
+// ─── ثوابت الألوان ────────────────────────────────────────────────────────────
 const _kPrimary = Color(0xFF7D29C6);
 const _kPrimaryLt = Color(0xFF9232E8);
 const _kBg = Color(0xFFF1F0F5);
@@ -41,7 +41,7 @@ List<BoxShadow> _neu({double b = 8, double o = 3}) => [
     offset: Offset(-o, -o)),
 ];
 
-// --- ????? ??????? ------------------------------------------------------------
+// ─── مواضع الرادار ────────────────────────────────────────────────────────────
 const List<_SlotConfig> _kSlots = [
   _SlotConfig(angle: -90, radius: 0.36),
   _SlotConfig(angle: -30, radius: 0.22),
@@ -61,7 +61,7 @@ class _SlotConfig {
   const _SlotConfig({required this.angle, required this.radius});
 }
 
-// --- ????? ?????? -------------------------------------------------------------
+// ─── نموذج السائق ─────────────────────────────────────────────────────────────
 class DriverModel {
   final String uid, firstName, lastName, phone;
   final String? photoUrl, gender, vehicleType;
@@ -84,7 +84,7 @@ class DriverModel {
   });
 
   String get fullName => '$firstName $lastName'.trim();
-  bool get isFemale => gender == 'female' || gender == '????';
+  bool get isFemale => gender == 'female' || gender == 'أنثى';
 
   factory DriverModel.fromMap(Map<String, dynamic> d) {
     return DriverModel(
@@ -105,9 +105,9 @@ class DriverModel {
   }
 }
 
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 //  DriverSelectionScreen
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
 class DriverSelectionScreen extends StatefulWidget {
   final Map<String, dynamic> orderData;
   final String? transportType;
@@ -195,7 +195,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
           _selectedCity = autoSelect;
         });
       }
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   }
 
   Future<void> _loadUserFreeDeliveries() async {
@@ -211,7 +211,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
           _driverLoyalties = driverLoyalty;
         });
       }
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   }
 
   Future<void> _loadDrivers() async {
@@ -245,7 +245,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
     _cardCtrl.forward(from: 0);
   }
 
-  // ? ??? ??? ?????????
+  // ✅ فتح شيت التعليقات
   void _openDriverSheet(DriverModel driver) {
     showModalBottomSheet(
       context: context,
@@ -277,17 +277,17 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
       if (isTransport) {
         final created = await ApiClient.post('/api/transport-orders', orderData);
         orderId = (created['_id'] as String?) ?? '';
-        if (orderId.isEmpty) throw Exception('?? ??? ??? ???????? ???? ??????');
+        if (orderId.isEmpty) throw Exception('لم يتم حفظ الطلبية، حاول مجدداً');
         await ApiClient.post('/api/notify-driver', {
           'driverId': _selectedDriver!.uid,
-          'title': '?? ??? ??? ????',
-          'body': '??: ${widget.orderData['pickup']?['address'] as String? ?? ''} | ?????: ${widget.orderData['price'] as String? ?? '0'} DZD',
+          'title': '🚗 طلب نقل جديد',
+          'body': 'من: ${widget.orderData['pickup']?['address'] as String? ?? ''} | السعر: ${widget.orderData['price'] as String? ?? '0'} DZD',
           'data': {'orderId': orderId, 'type': 'new_transport_order'},
         });
       } else {
         final created = await ApiClient.post('/api/orders', orderData);
         orderId = (created['_id'] as String?) ?? '';
-        if (orderId.isEmpty) throw Exception('?? ??? ??? ???????? ???? ??????');
+        if (orderId.isEmpty) throw Exception('لم يتم حفظ الطلبية، حاول مجدداً');
 
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
@@ -305,12 +305,12 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
         }
 
         final feeText = (orderData['deliveryFee'] as num? ?? 0) == 0
-            ? '????? ?????'
+            ? 'توصيل مجاني'
             : '${(orderData['deliveryFee'] as num? ?? 0).toInt()} DZD';
         await ApiClient.post('/api/notify-driver', {
           'driverId': _selectedDriver!.uid,
-          'title': '?? ????? ?????',
-          'body': '??: ${widget.orderData['address'] as String? ?? ''} | ??????: ${(orderData['total'] as num? ?? 0).toInt()} DZD | $feeText',
+          'title': '📦 طلبية جديدة',
+          'body': 'من: ${widget.orderData['address'] as String? ?? ''} | المبلغ: ${(orderData['total'] as num? ?? 0).toInt()} DZD | $feeText',
           'data': {'orderId': orderId, 'type': 'new_order'},
         });
       }
@@ -326,7 +326,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
         setState(() => _confirming = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('? ???: $e'),
+            content: Text('❌ خطأ: $e'),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -398,7 +398,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: _selectedCity,
-                hint: const Text('????? ??? ???????', style: TextStyle(fontFamily: 'Amiri', fontSize: 13, color: kTextGrey)),
+                hint: const Text('فلترة حسب المدينة', style: TextStyle(fontFamily: 'Amiri', fontSize: 13, color: kTextGrey)),
                 underline: const SizedBox(),
                 dropdownColor: Colors.white,
                 borderRadius: BorderRadius.circular(14),
@@ -417,7 +417,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
     );
   }
 
-  // --- AppBar ---------------------------------------------------------------
+  // ─── AppBar ───────────────────────────────────────────────────────────────
   AppBar _buildAppBar() => AppBar(
     backgroundColor: Colors.transparent,
     elevation: 0,
@@ -435,14 +435,14 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
           color: _kPrimary,
           size: 20))),
     title: const Text(
-      '???? ?????',
+      'اختر سائقك',
       style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: _kTextDark,
         fontFamily: 'Amiri')));
 
-  // --- ????? ???????? -------------------------------------------------------
+  // ─── رادار السائقين ───────────────────────────────────────────────────────
   Widget _buildRadar(List<DriverModel> drivers) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -481,7 +481,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                 top: dy - 39,
                 child: GestureDetector(
                   onTap: () => _selectDriver(driver),
-                  // ? ??? ???? ???? ??? ?????????
+                  // ✅ ضغط طويل يفتح شيت التعليقات
                   onLongPress: () => _openDriverSheet(driver),
                   child: DriverModelPin(driver: driver, isSelected: isSelected)));
             }),
@@ -489,7 +489,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
       });
   }
 
-  // --- ?????? ---------------------------------------------------------------
+  // ─── المركز ───────────────────────────────────────────────────────────────
   Widget _buildCenterDot() => Container(
     width: 72,
     height: 72,
@@ -518,7 +518,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
           color: Colors.white,
           size: 22))));
 
-  // --- ?? ???? ?????? -------------------------------------------------------
+  // ─── لا يوجد سائقون ───────────────────────────────────────────────────────
   Widget _buildNoDrivers() => Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -536,7 +536,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
             size: 44)),
         const SizedBox(height: 24),
         const Text(
-          '?? ???? ?????? ?????? ????',
+          'لا يوجد سائقون متاحون الآن',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -544,7 +544,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
             fontFamily: 'Amiri')),
         const SizedBox(height: 8),
         Text(
-          '???? ??? ???? ??? ????',
+          'حاول مرة أخرى بعد قليل',
           style: TextStyle(
             fontSize: 13,
             color: Colors.grey.shade500,
@@ -564,7 +564,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                 Icon(CupertinoIcons.refresh, color: _kPrimary, size: 18),
                 SizedBox(width: 8),
                 Text(
-                  '????? ????????',
+                  'إعادة المحاولة',
                   style: TextStyle(
                     color: _kPrimary,
                     fontWeight: FontWeight.bold,
@@ -572,14 +572,14 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
               ]))),
       ]));
 
-  // --- ????? ?????? ??????? (????? ????? ???? ?????????) -------------------
+  // ─── بطاقة السائق المختار (قابلة للضغط لفتح التعليقات) ───────────────────
   Widget _buildDriverCard(DriverModel driver) {
     return SlideTransition(
       position: _cardSlide,
       child: FadeTransition(
         opacity: _cardFade,
         child: GestureDetector(
-          // ? ??? ??? ?????? ???? ??? ?????????
+          // ✅ ضغط على الكارد يفتح شيت التعليقات
           onTap: () => _openDriverSheet(driver),
           child: Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -603,12 +603,12 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
               border: Border.all(color: _kPrimary.withOpacity(0.1))),
             child: Row(
               children: [
-                // ? ???? "???? ?????? ?????????"
+                // ✅ مؤشر "اضغط لقراءة التعليقات"
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // ??? ??????
+                      // اسم السائق
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -625,7 +625,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                                 colors: [_kSuccess, _kSuccess.withOpacity(0.7)]),
                               borderRadius: BorderRadius.circular(8)),
                             child: const Text(
-                              '???? ??',
+                              'هدية 🎁',
                               style: TextStyle(
                                 fontSize: 9,
                                 color: Colors.white,
@@ -645,7 +645,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                                   border: Border.all(
                                     color: Colors.amber.shade700.withOpacity(0.3))),
                                 child: Text(
-                                  '$loyalty/5 ??',
+                                  '$loyalty/5 🎁',
                                   style: TextStyle(
                                     fontSize: 9,
                                     color: Colors.amber.shade900,
@@ -671,7 +671,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                                   size: 10),
                                 SizedBox(width: 4),
                                 Text(
-                                  '???? ?????? ?????????',
+                                  'اضغط لقراءة التعليقات',
                                   style: TextStyle(
                                     fontSize: 9,
                                     color: _kPrimary,
@@ -741,7 +741,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
           height: 68,
           fit: BoxFit.cover);
 
-  // --- ?? ??????? -----------------------------------------------------------
+  // ─── زر التأكيد ───────────────────────────────────────────────────────────
   Widget _buildConfirmButton() {
     final isEnabled = _selectedDriver != null && !_confirming;
     return Padding(
@@ -763,10 +763,10 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('??', style: TextStyle(fontSize: 16)),
+                  Text('🎁', style: TextStyle(fontSize: 16)),
                   SizedBox(width: 6),
                   Text(
-                    '????? ????? ?? ??? ??????!',
+                    'توصيل مجاني مع هذا السائق!',
                     style: TextStyle(
                       fontSize: 13,
                       color: _kSuccess,
@@ -821,7 +821,7 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
                           size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          isEnabled ? '????? ??????' : '???? ?????? ?? ???????',
+                          isEnabled ? 'تأكيد السائق' : 'اختر سائقاً من الرادار',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -836,9 +836,9 @@ class DriverModelSelectionScreenState extends State<DriverSelectionScreen>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? ??? ????????? � ??????? ?????? + ??????? ???????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ شيت التعليقات — معلومات السائق + تعليقات الزبائن
+// ══════════════════════════════════════════════════════════════════════════════
 class DriverModelCommentsSheet extends StatefulWidget {
   final DriverModel driver;
   const DriverModelCommentsSheet({required this.driver});
@@ -885,7 +885,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
       end: Offset.zero).animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
     _entryCtrl.forward();
     _loadComments();
-    // ?????? ????????? ????????
+    // استماع للتحديثات المباشرة
     SocketClient.on('comment:updated', _onCommentUpdated);
   }
 
@@ -923,24 +923,24 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
 
     setState(() => _sending = true);
     try {
-      // ??? ?????? ??????
+      // جلب بيانات الزبون
       final ud = await ApiClient.get('/api/users/${user.uid}') as Map<String, dynamic>? ?? {};
       final apiName = '${ud['firstName'] ?? ''} ${ud['lastName'] ?? ''}'
           .trim();
-      final userName = apiName.isNotEmpty ? apiName : (FirebaseAuth.instance.currentUser?.displayName ?? '????');
+      final userName = apiName.isNotEmpty ? apiName : (FirebaseAuth.instance.currentUser?.displayName ?? 'زبون');
       final userGender = ud['gender'] as String? ?? '';
       final userPhoto = ud['photoUrl'] as String? ?? '';
 
      if (_editingCommentId != null) {
-    // ???????: ???? ?????? /api/comments/:id
+    // للتعديل: نبعث للرابط /api/comments/:id
     await ApiClient.put('/api/comments/${_editingCommentId!}', {
       'text': text,
       'updatedAt': DateTime.now().toIso8601String(),
     });
   } else {
-    // ???????: ???? ?????? /api/comments ?????? ??? driverId ?? ????? (Body)
+    // للإضافة: نبعث للرابط /api/comments ونزيدو الـ driverId في الجسم (Body)
     await ApiClient.post('/api/comments', {
-      'driverId': widget.driver.uid, // ? ????? ?????? ??? ?? ??? Body
+      'driverId': widget.driver.uid, // ✅ ضروري نزيدوه هنا في الـ Body
       'text': text,
       'userId': user.uid,
       'userName': userName,
@@ -956,7 +956,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '???: $e',
+              'خطأ: $e',
               style: const TextStyle(fontFamily: 'Amiri')),
             backgroundColor: _kDanger,
             behavior: SnackBarBehavior.floating,
@@ -975,7 +975,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
     try {
       final ud = await ApiClient.get('/api/users/${user.uid}') as Map<String, dynamic>? ?? {};
       final apiName = '${ud['firstName'] ?? ''} ${ud['lastName'] ?? ''}'.trim();
-      final userName = apiName.isNotEmpty ? apiName : (user.displayName ?? '????');
+      final userName = apiName.isNotEmpty ? apiName : (user.displayName ?? 'زبون');
       await ApiClient.post('/api/comments/$commentId/reply', {
         'text': text,
         'userId': user.uid,
@@ -987,7 +987,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('???: $e', style: const TextStyle(fontFamily: 'Amiri')),
+          content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Amiri')),
           backgroundColor: _kDanger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
@@ -1026,7 +1026,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                 _startEdit(commentId, text);
               },
               child: const Text(
-                '????? ???????',
+                'تعديل التعليق',
                 style: TextStyle(fontFamily: 'Amiri', color: _kPrimary))),
             CupertinoActionSheetAction(
               isDestructiveAction: true,
@@ -1035,14 +1035,14 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                 _deleteComment(commentId);
               },
               child: const Text(
-                '??? ???????',
+                'حذف التعليق',
                 style: TextStyle(fontFamily: 'Amiri'))),
           ],
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('?????', style: TextStyle(fontFamily: 'Amiri')))));
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Amiri')))));
     } else {
-      // ????? ??? ???? ? ?????
+      // تعليق غير تاعي → تبليغ
       showCupertinoModalPopup(
         context: context,
         builder: (_) => CupertinoActionSheet(
@@ -1054,12 +1054,12 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                 _reportComment(commentId, text, userName);
               },
               child: const Text(
-                '??????? ?? ??? ???????',
+                'الإبلاغ عن هذا التعليق',
                 style: TextStyle(fontFamily: 'Amiri'))),
           ],
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('?????', style: TextStyle(fontFamily: 'Amiri')))));
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Amiri')))));
     }
   }
 
@@ -1069,13 +1069,13 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
     try {
       await ApiClient.post('/api/comments/$commentId/report', {
         'userId': user.uid,
-        'userName': user.displayName ?? '????',
-        'reason': '????? ??? ????',
+        'userName': user.displayName ?? 'زبون',
+        'reason': 'محتوى غير لائق',
         'note': text,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('?? ??????? ?????', style: TextStyle(fontFamily: 'Amiri')),
+          content: const Text('تم الإبلاغ بنجاح', style: TextStyle(fontFamily: 'Amiri')),
           backgroundColor: _kSuccess,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
@@ -1083,7 +1083,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('???: $e', style: TextStyle(fontFamily: 'Amiri')),
+          content: Text('خطأ: $e', style: TextStyle(fontFamily: 'Amiri')),
           backgroundColor: _kDanger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
@@ -1115,14 +1115,14 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                 color: Colors.grey.shade400)),
             const SizedBox(height: 14),
             const Text(
-              '?? ???? ??????? ???',
+              'لا توجد تعليقات بعد',
               style: TextStyle(
                 color: Colors.black45,
                 fontFamily: 'Amiri',
                 fontSize: 14)),
             const SizedBox(height: 4),
             const Text(
-              '?? ??? ?? ???? ???????!',
+              'كن أول من يكتب تعليقاً!',
               style: TextStyle(
                 color: Colors.black26,
                 fontFamily: 'Amiri',
@@ -1137,12 +1137,12 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
         final d = _comments[i];
         final commentId = d['_id'] as String;
         final isMyComment = d['userId'] == currentUserId;
-        final userName = d['userName'] as String? ?? '????';
+        final userName = d['userName'] as String? ?? 'زبون';
         final text = d['text'] as String? ?? '';
         final userGender = d['userGender'] as String? ?? '';
         final userPhoto = d['userPhoto'] as String? ?? '';
         final isFemale =
-            userGender == '????' || userGender == 'female';
+            userGender == 'أنثى' || userGender == 'female';
         final timeStr = _formatTime(d['createdAt']);
         final isEdited = d['updatedAt'] != null;
         final replies = (d['replies'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
@@ -1179,7 +1179,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
             borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
           child: Column(
             children: [
-              // -- Handle ----------------------------------------------
+              // ── Handle ──────────────────────────────────────────────
               Container(
                 width: 40,
                 height: 4,
@@ -1188,7 +1188,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                   color: Colors.grey.shade400,
                   borderRadius: BorderRadius.circular(10))),
 
-              // -- ???? ?????? (???? ??????) --------------------------
+              // ── هيدر السائق (تدرج بنفسجي) ──────────────────────────
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 padding: const EdgeInsets.all(18),
@@ -1208,7 +1208,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                     color: Colors.white.withOpacity(0.15))),
                 child: Row(
                   children: [
-                    // ???????
+                    // معلومات
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1216,7 +1216,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                           Text(
                             widget.driver.fullName.isNotEmpty
                                 ? widget.driver.fullName
-                                : '??????',
+                                : 'السائق',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -1242,7 +1242,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                             ]),
                         ])),
                     const SizedBox(width: 14),
-                    // ???? ??????
+                    // صورة السائق
                     Container(
                       width: 65,
                       height: 65,
@@ -1279,14 +1279,14 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
 
               const SizedBox(height: 12),
 
-              // -- ????? ????????? -------------------------------------
+              // ── عنوان التعليقات ─────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const Text(
-                      '??????? ???????',
+                      'تعليقات الزبائن',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -1305,11 +1305,11 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                   ])),
               const SizedBox(height: 8),
 
-              // -- ????? ????????? -------------------------------------
+              // ── قائمة التعليقات ─────────────────────────────────────
               Expanded(
                 child: _buildCommentsList(currentUserId)),
 
-              // -- ??? ????? ????? -------------------------------------
+              // ── حقل إضافة تعليق ─────────────────────────────────────
               Container(
                 padding: EdgeInsets.fromLTRB(
                   16,
@@ -1327,7 +1327,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ???? ???????
+                    // شريط التعديل
                     if (_editingCommentId != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -1337,14 +1337,14 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                             GestureDetector(
                               onTap: _cancelEdit,
                               child: const Text(
-                                '?????',
+                                'إلغاء',
                                 style: TextStyle(
                                   color: _kDanger,
                                   fontSize: 12,
                                   fontFamily: 'Amiri'))),
                             const SizedBox(width: 10),
                             const Text(
-                              '????? ???????',
+                              'تعديل التعليق',
                               style: TextStyle(
                                 color: _kTextGrey,
                                 fontSize: 12,
@@ -1359,7 +1359,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                     Row(
                       children: [
                         const SizedBox(width: 8),
-                        // ?? ???????
+                        // زر الإرسال
                         GestureDetector(
                           onTap: _sending ? null : _sendComment,
                           child: AnimatedContainer(
@@ -1397,7 +1397,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                                       color: Colors.white,
                                       size: 18)))),
                         const SizedBox(width: 10),
-                        // ??? ????
+                        // حقل النص
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
@@ -1414,7 +1414,7 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
                                 color: _kTextDark,
                                 fontFamily: 'Amiri'),
                               decoration: const InputDecoration(
-                                hintText: '???? ?????? ??? ??? ??????...',
+                                hintText: 'اكتب تعليقك على هذا السائق...',
                                 hintStyle: TextStyle(
                                   color: Colors.black38,
                                   fontSize: 12,
@@ -1429,9 +1429,9 @@ class DriverModelCommentsSheetState extends State<DriverModelCommentsSheet>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ? ???? ??????? (????? ????????? ????)
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  ✅ كارد التعليق (تصميم نيومورفيك مليح)
+// ══════════════════════════════════════════════════════════════════════════════
 class _CommentTile extends StatefulWidget {
   final String commentId, text, userName, userPhoto, timeStr;
   final bool isFemale, isMyComment, isEdited;
@@ -1521,10 +1521,10 @@ class _CommentTileState extends State<_CommentTile>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // -- ??????: ???? + ??? + ??? + 3 ???? ------------------
+              // ── الهيدر: صورة + اسم + وقت + 3 نقاط ──────────────────
               Row(
                 children: [
-                  // 3 ???? (?????? ?????? ????? ???)
+                  // 3 نقاط (لتعليق الزبون الخاص فقط)
                   if (widget.isMyComment)
                     GestureDetector(
                       onTap: widget.onOptions,
@@ -1543,7 +1543,7 @@ class _CommentTileState extends State<_CommentTile>
 
                   const Spacer(),
 
-                  // ??? + ???
+                  // اسم + وقت
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -1559,7 +1559,7 @@ class _CommentTileState extends State<_CommentTile>
                                 color: _kPrimary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8)),
                               child: const Text(
-                                '???',
+                                'أنت',
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: _kPrimary,
@@ -1583,7 +1583,7 @@ class _CommentTileState extends State<_CommentTile>
                           children: [
                             if (widget.isEdited)
                               const Text(
-                                '(?????) ',
+                                '(معدّل) ',
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: Colors.black38,
@@ -1598,7 +1598,7 @@ class _CommentTileState extends State<_CommentTile>
 
                   const SizedBox(width: 10),
 
-                  // ???? ??????
+                  // صورة الزبون
                   Container(
                     width: 38,
                     height: 38,
@@ -1621,7 +1621,7 @@ class _CommentTileState extends State<_CommentTile>
 
               const SizedBox(height: 10),
 
-              // -- ?? ??????? ----------------------------------------
+              // ── نص التعليق ────────────────────────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -1642,7 +1642,7 @@ class _CommentTileState extends State<_CommentTile>
                     height: 1.5),
                   textAlign: TextAlign.right)),
 
-              // -- ?? ???? ----------------------------------------------
+              // ── زر الرد ──────────────────────────────────────────────
               if (widget.replies.isNotEmpty || _showReplies)
                 const SizedBox(height: 6),
               Row(
@@ -1661,7 +1661,7 @@ class _CommentTileState extends State<_CommentTile>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _showReplies ? '????? ??????' : '??',
+                            _showReplies ? 'إخفاء الردود' : 'رد',
                             style: const TextStyle(
                               fontSize: 11,
                               color: _kPrimary,
@@ -1686,14 +1686,14 @@ class _CommentTileState extends State<_CommentTile>
                   ),
                 ]),
 
-              // -- ?????? ??????? --------------------------------------
+              // ── الردود المموعة ──────────────────────────────────────
               if (_showReplies && widget.replies.isNotEmpty)
                 ...widget.replies.map((r) => Padding(
                   padding: const EdgeInsets.only(
                       top: 6, right: 20),
                   child: _buildReplyTile(r))),
 
-              // -- ??? ????? ?? -----------------------------------------
+              // ── حقل كتابة رد ─────────────────────────────────────────
               if (_showReplies)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -1714,7 +1714,7 @@ class _CommentTileState extends State<_CommentTile>
                                 fontSize: 12,
                                 fontFamily: 'Amiri'),
                             decoration: const InputDecoration(
-                              hintText: '???? ????...',
+                              hintText: 'اكتب رداً...',
                               hintStyle: TextStyle(
                                   fontSize: 12,
                                   fontFamily: 'Amiri'),
@@ -1746,11 +1746,11 @@ class _CommentTileState extends State<_CommentTile>
   }
 
   Widget _buildReplyTile(Map<String, dynamic> r) {
-    final rName = r['userName'] as String? ?? '????';
+    final rName = r['userName'] as String? ?? 'زبون';
     final rText = r['text'] as String? ?? '';
     final rPhoto = r['userPhoto'] as String? ?? '';
     final rGender = r['userGender'] as String? ?? '';
-    final rFemale = rGender == '????' || rGender == 'female';
+    final rFemale = rGender == 'أنثى' || rGender == 'female';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1793,9 +1793,9 @@ class _CommentTileState extends State<_CommentTile>
   }
 }
 
-// ------------------------------------------------------------------------------
-//  ???? ?????? ?? ???????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  دبوس السائق في الرادار
+// ══════════════════════════════════════════════════════════════════════════════
 class DriverModelPin extends StatelessWidget {
   final DriverModel driver;
   final bool isSelected;
@@ -1889,9 +1889,9 @@ class DriverModelPin extends StatelessWidget {
           fit: BoxFit.cover);
 }
 
-// ------------------------------------------------------------------------------
-//  ???? ????? ???????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  رسام دوائر الرادار
+// ══════════════════════════════════════════════════════════════════════════════
 class _RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -1922,9 +1922,9 @@ class _RadarPainter extends CustomPainter {
   bool shouldRepaint(_) => false;
 }
 
-// ------------------------------------------------------------------------------
-//  ???? ????? ?????
-// ------------------------------------------------------------------------------
+// ══════════════════════════════════════════════════════════════════════════════
+//  رسام موجات النبض
+// ══════════════════════════════════════════════════════════════════════════════
 class _PulsePainter extends CustomPainter {
   final double pulse1, pulse2, pulse3, maxRadius;
   const _PulsePainter({

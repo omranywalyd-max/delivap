@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Services/api_client.dart';
@@ -9,7 +9,7 @@ import 'package:flutter_application_1/dashboard_screen.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
-// ? ????? ??????? ??????? ?? ??????? ???????? ?????? ??????
+// ✅ تحديث الألوان لتتناسب مع الستايل البنفسجي البارد الجديد
 const kPrimary = Color(0xFF7D29C6);
 const kSecondary = Color(0xFF9232E8);
 const kLavenderGrey = Color(0xFFB8B1C8);
@@ -118,7 +118,7 @@ class _DashboardSearchBarState extends State<DashboardSearchBar>
     for (final d in data) {
     }
 
-    // ????? ???????? ??? ??????? ??????? (distance)
+    // فلترة المنتجات حسب المحلات المرئية (distance)
     final locProv = LocationProvider();
     final storeList = _allStores.isNotEmpty ? _allStores : widget.stores.cast<Map<String, dynamic>>().toList();
     final visibleStoreIds = <String>{};
@@ -167,7 +167,7 @@ class _DashboardSearchBarState extends State<DashboardSearchBar>
             sName = (found['nom'] as String?) ?? (found['name'] as String?) ?? '';
           }
         }
-        if (sName.isEmpty) sName = '????';
+        if (sName.isEmpty) sName = 'متجر';
         return _ProductResult(
       productId: d['_id'] ?? d['id'] ?? '',
       storeId: d['storeId'] ?? '',
@@ -226,7 +226,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     try {
       final stores = await ApiClient.getList('/api/stores');
       if (mounted) setState(() => _allStores = stores.cast<Map<String, dynamic>>());
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   }
 
   @override
@@ -261,7 +261,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // 1. ?????? ??????? ?????? (??? ???????)
+              // 1. الإطار المتدرج الدوار (حين التركيز)
               if (_isFocused || _hasText)
                 Container(
                   width: double.infinity,
@@ -282,22 +282,22 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
                   ),
                 ),
 
-              // 2. ??? ?????? ??? (??????? ???????)
+              // 2. جسم السيرش بار (المتدرج واللامع)
               Container(
                 margin: const EdgeInsets.all(3),
                 height: 48,
                 decoration: BoxDecoration(
-                  // ? ???? ????? ???? ????? ????????
+                  // ✅ تدرج ألوان بارد بلمعة احترافية
                   gradient: LinearGradient(
                     begin: Alignment.centerRight,
                     end: Alignment.centerLeft,
                     colors: [
                       const Color(0xFFF1F0F5),
-                      const Color(0xFFE6E4F0), // ???? ?????
+                      const Color(0xFFE6E4F0), // لمعة خفيفة
                     ],
                   ),
                   borderRadius: BorderRadius.circular(25),
-                  // ? ???? ???? ????? ???? ??????
+                  // ✅ إطار خفيف ليعطي مظهر الزجاج
                   border: Border.all(
                     color: Colors.white.withOpacity(0.4),
                     width: 1,
@@ -337,7 +337,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
                         textDirection: TextDirection.rtl,
                         style: const TextStyle(fontSize: 14, color: kTextColor, fontWeight: FontWeight.bold, fontFamily: 'Amiri'),
                         decoration: const InputDecoration(
-                          hintText: '???? ?? ???? ????...',
+                          hintText: 'ابحث عن منتج محدد...',
                           hintStyle: TextStyle(color: kLavenderGrey, fontSize: 13, fontWeight: FontWeight.normal, fontFamily: 'Amiri'),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -388,14 +388,14 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
             try {
               final temp = await ApiClient.get('/api/stores/$templateId');
               if (temp is Map) templateName = (temp['nom'] as String?) ?? '';
-            } catch (_) { /* ignored */ }
+            } catch (_) {}
           }
         }
       }
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
     if (templateName.isEmpty) templateName = storeDisplayName;
     if (storeDisplayName.isEmpty) storeDisplayName = p.storeName;
-    if (storeDisplayName.isEmpty) storeDisplayName = '????';
+    if (storeDisplayName.isEmpty) storeDisplayName = 'متجر';
     if (p.categoryName.isNotEmpty) storeDisplayName = p.categoryName;
 
     final product = Product(
@@ -431,7 +431,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
           final data = await ApiClient.getList('/api/drinks?storeId=${p.storeId}');
           drinks = data.map((d) => DrinkItem.fromMap(d as Map<String, dynamic>)).toList();
           DrinkCache.set(p.storeId, drinks);
-        } catch (_) { /* ignored */ }
+        } catch (_) {}
       }
       if (!mounted) return;
       showModalBottomSheet(
@@ -460,7 +460,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
           final data = await ApiClient.getList('/api/drinks?storeId=${p.storeId}');
           drinks = data.map((d) => DrinkItem.fromMap(d as Map<String, dynamic>)).toList();
           DrinkCache.set(p.storeId, drinks);
-        } catch (_) { /* ignored */ }
+        } catch (_) {}
       }
       if (!mounted) return;
       showModalBottomSheet(
@@ -542,7 +542,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('??? ???????: ${variantProduct.displayName}', style: const TextStyle(fontFamily: 'Amiri')),
+                  content: Text('تمت الإضافة: ${variantProduct.displayName}', style: const TextStyle(fontFamily: 'Amiri')),
                   backgroundColor: const Color(0xFF27AE60),
                   behavior: SnackBarBehavior.floating,
                   duration: const Duration(seconds: 2),
@@ -560,7 +560,7 @@ double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
   }
 }
 
-// ? ????? ????? ??????? ??????? ?? ??????? ???????
+// ✅ تعديل قائمة النتائج لتتناسب مع الخلفية الجديدة
 class _ResultsList extends StatelessWidget {
   final List<_ProductResult> results;
   final String query;
@@ -634,7 +634,7 @@ class _ProductTile extends StatelessWidget {
                   color: kPrimary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text('???????', style: TextStyle(fontSize: 9, color: kPrimary, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
+                child: const Text('موديلات', style: TextStyle(fontSize: 9, color: kPrimary, fontWeight: FontWeight.bold, fontFamily: 'Amiri')),
               ),
             Text("${product.price.toInt()} DZD - ${product.categoryName.isNotEmpty ? product.categoryName : product.storeName}", textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, color: kLavenderGrey, fontFamily: 'Amiri')),
           ],
@@ -668,7 +668,7 @@ class _EmptyResult extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Text('?? ???? ????? ?? "$query"', style: const TextStyle(color: kLavenderGrey, fontFamily: 'Amiri', fontSize: 13)),
+      child: Text('لا توجد نتائج لـ "$query"', style: const TextStyle(color: kLavenderGrey, fontFamily: 'Amiri', fontSize: 13)),
     );
   }
 }

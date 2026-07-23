@@ -113,7 +113,7 @@ class _ProductAlternativeOverlayState extends State<ProductAlternativeOverlay> {
       });
 
       widget.onRefresh();
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
     if (mounted) setState(() => _loading = false);
   }
 

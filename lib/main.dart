@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +25,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 
-  // ring: MyFirebaseMessagingService ?????? ???? ?? ??????? ??? fullScreenIntent
+  // ring: Kotlin MyFirebaseMessagingService يتعامل معها → OverlayService
   if (message.data['sound'] == 'ring') return;
 
   const AndroidInitializationSettings androidSettings =
@@ -40,7 +40,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (title == null && body == null) return;
   final soundName = message.data['sound'] as String?;
   final channelId = soundName != null ? 'user_channel_$soundName' : 'user_channel';
-  final channelName = soundName != null ? '??????? $soundName' : '??????? ????????';
+  final channelName = soundName != null ? 'إشعارات $soundName' : 'إشعارات المستخدم';
   flutterLocalNotificationsPlugin.show(
     id: message.hashCode,
     title: title,
@@ -49,7 +49,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       android: AndroidNotificationDetails(
         channelId,
         channelName,
-        channelDescription: '??????? ??????? ????????',
+        channelDescription: 'إشعارات الطلبات والتوصيل',
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
@@ -71,6 +71,10 @@ void main() {
 Future<void> _initDeferredServices() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+  const MethodChannel('com.deliv.customer/ringtone')
+      .invokeMethod('requestFullScreenIntent')
+      .catchError((_) {});
+
   final messaging = FirebaseMessaging.instance;
   messaging.requestPermission(
     alert: true,
@@ -90,20 +94,20 @@ Future<void> _initDeferredServices() async {
         try {
           final data = jsonDecode(response.payload!);
           _handleNotificationNavigation(data);
-        } catch (_) { /* ignored */ }
+        } catch (_) {}
       }
     },
   );
 
-  // ????? ????? ??????? ????? ?? ??????? ?????
+  // إنشاء قنوات الإشعار بوضوح مع إعدادات الصوت
   final androidPlugin = flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
   if (androidPlugin != null) {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel',
-        '??????? ????????',
-        description: '??????? ??????? ????????',
+        'إشعارات المستخدم',
+        description: 'إشعارات الطلبات والتوصيل',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -112,8 +116,8 @@ Future<void> _initDeferredServices() async {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel_okhrej',
-        '????? ???? ??????',
-        description: '????? ??? ???? ??????',
+        'إشعار وصول السائق',
+        description: 'إشعار صوت وصول السائق',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -123,8 +127,8 @@ Future<void> _initDeferredServices() async {
     await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
         'user_channel_ring',
-        '???? ??????',
-        description: '???? ?????? ?? ??????',
+        'رنين الزبون',
+        description: 'رنين الزبون من السائق',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
@@ -136,21 +140,11 @@ Future<void> _initDeferredServices() async {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     final sound = message.data['sound'];
     if (sound == 'ring') {
-      if (!DriverArrivalOverlay.isEnabled) return;
-      void attempt(int retries) {
-        final ctx = navigatorKey.currentContext;
-        if (ctx != null) {
-          DriverArrivalOverlay.trigger(
-            context: ctx,
-            driverName: message.data['driverName'] as String?,
-            driverPhoto: message.data['driverPhoto'] as String?,
-            orderId: message.data['orderId'] as String?,
-          );
-        } else if (retries > 0) {
-          Future.delayed(const Duration(milliseconds: 800), () => attempt(retries - 1));
-        }
-      }
-      attempt(5);
+      _tryTriggerArrivalOverlay(
+        driverName: message.data['driverName'] as String?,
+        driverPhoto: message.data['driverPhoto'] as String?,
+        orderId: message.data['orderId'] as String?,
+      );
     } else {
       _showLocalNotification(message);
     }
@@ -161,21 +155,11 @@ Future<void> _initDeferredServices() async {
 
     final sound = message.data['sound'];
     if (sound == 'ring') {
-      if (!DriverArrivalOverlay.isEnabled) return;
-      void attempt(int retries) {
-        final ctx = navigatorKey.currentContext;
-        if (ctx != null) {
-          DriverArrivalOverlay.trigger(
-            context: ctx,
-            driverName: message.data['driverName'] as String?,
-            driverPhoto: message.data['driverPhoto'] as String?,
-            orderId: message.data['orderId'] as String?,
-          );
-        } else if (retries > 0) {
-          Future.delayed(const Duration(milliseconds: 800), () => attempt(retries - 1));
-        }
-      }
-      attempt(5);
+      _tryTriggerArrivalOverlay(
+        driverName: message.data['driverName'] as String?,
+        driverPhoto: message.data['driverPhoto'] as String?,
+        orderId: message.data['orderId'] as String?,
+      );
     }
   });
 
@@ -186,21 +170,11 @@ Future<void> _initDeferredServices() async {
 
         final sound = initialMessage.data['sound'];
         if (sound == 'ring') {
-          if (!DriverArrivalOverlay.isEnabled) return;
-          void attempt(int retries) {
-            final ctx = navigatorKey.currentContext;
-            if (ctx != null) {
-              DriverArrivalOverlay.trigger(
-                context: ctx,
-                driverName: initialMessage.data['driverName'] as String?,
-                driverPhoto: initialMessage.data['driverPhoto'] as String?,
-                orderId: initialMessage.data['orderId'] as String?,
-              );
-            } else if (retries > 0) {
-              Future.delayed(const Duration(milliseconds: 800), () => attempt(retries - 1));
-            }
-          }
-          attempt(5);
+          _tryTriggerArrivalOverlay(
+            driverName: initialMessage.data['driverName'] as String?,
+            driverPhoto: initialMessage.data['driverPhoto'] as String?,
+            orderId: initialMessage.data['orderId'] as String?,
+          );
         }
       });
     }
@@ -216,7 +190,7 @@ Future<void> _initDeferredServices() async {
         final idToken = await user.getIdToken();
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('fb_id_token', idToken!);
-      } catch (_) { /* ignored */ }
+      } catch (_) {}
     }
   }).catchError((_) {});
 
@@ -228,7 +202,7 @@ Future<void> _initDeferredServices() async {
         final idToken = await u.getIdToken();
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('fb_id_token', idToken!);
-      } catch (_) { /* ignored */ }
+      } catch (_) {}
     }
   });
 
@@ -241,8 +215,30 @@ Future<void> _initDeferredServices() async {
         final idToken = await user.getIdToken();
         await prefs.setString('fb_id_token', idToken!);
       }
-    } catch (_) { /* ignored */ }
+    } catch (_) {}
   });
+}
+
+void _tryTriggerArrivalOverlay({
+  String? driverName,
+  String? driverPhoto,
+  String? orderId,
+}) {
+  if (!DriverArrivalOverlay.isEnabled) return;
+  void attempt(int retries) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      DriverArrivalOverlay.trigger(
+        context: ctx,
+        driverName: driverName,
+        driverPhoto: driverPhoto,
+        orderId: orderId,
+      );
+    } else if (retries > 0) {
+      Future.delayed(const Duration(milliseconds: 800), () => attempt(retries - 1));
+    }
+  }
+  attempt(5);
 }
 
 Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -251,12 +247,12 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
   if (title == null && body == null) return;
   final soundName = message.data['sound'] as String?;
   final channelId = soundName != null ? 'user_channel_$soundName' : 'user_channel';
-  final channelName = soundName != null ? '??????? $soundName' : '??????? ????????';
+  final channelName = soundName != null ? 'إشعارات $soundName' : 'إشعارات المستخدم';
 
   final androidDetails = AndroidNotificationDetails(
     channelId,
     channelName,
-    channelDescription: '??????? ??????? ????????',
+    channelDescription: 'إشعارات الطلبات والتوصيل',
     importance: Importance.max,
     priority: Priority.high,
     playSound: true,
