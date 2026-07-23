@@ -2931,6 +2931,7 @@ Future<void> _confirmReceiptByCustomer() async {
     widget.onRefresh();
   }
 }
+}
 
   @override
   Widget build(BuildContext context) {
