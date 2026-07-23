@@ -2063,17 +2063,18 @@ class _CartScreenState extends State<CartScreen> {
       child: SizedBox(
         width: double.infinity,
         child: GestureDetector(
-          onTap: () => _showCheckoutSheet(subtotal),
+          onTap: _loadingPrecomputed ? null : () => _showCheckoutSheet(subtotal),
           child: Container(
             height: 56,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
+              gradient: _loadingPrecomputed ? null : const LinearGradient(
                 colors: [kPrimaryDark, kPrimary, kAccent],
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
               ),
-              boxShadow: [
+              color: _loadingPrecomputed ? Colors.grey.shade300 : null,
+              boxShadow: _loadingPrecomputed ? [] : [
                 BoxShadow(
                   color: kPrimary.withOpacity(0.4),
                   blurRadius: 16,
@@ -2084,26 +2085,50 @@ class _CartScreenState extends State<CartScreen> {
             child: Stack(
               children: [
                 Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        CupertinoIcons.checkmark_shield,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _isProjectStyle ? "تقديم طلب المشروع" : "تأكيد الطلب",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Amiri',
+                  child: _loadingPrecomputed
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.grey.shade500,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "جاري حساب سعر التوصيل...",
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Amiri',
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              CupertinoIcons.checkmark_shield,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isProjectStyle ? "تقديم طلب المشروع" : "تأكيد الطلب",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Amiri',
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
                 Positioned(
                   left: 18,
@@ -2337,6 +2362,7 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
   bool get _canConfirm =>
       _finalAddress.isNotEmpty &&
       !_isLoading &&
+      !_loadingPricing &&
       _pricingInfo != null &&
       (_isProjectOrder ||
           _driversAvailable == true ||
@@ -3290,12 +3316,12 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                         : [],
                   ),
                   child: Center(
-                    child: _isLoading
-                        ? const SizedBox(
+                    child: (_isLoading || _loadingPricing)
+                        ? SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: Colors.grey.shade500,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -3316,6 +3342,8 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                               Text(
                                 _isProjectOrder
                                     ? "إرسال طلب المشروع"
+                                    : _loadingPricing
+                                    ? "جاري حساب سعر التوصيل..."
                                     : _driversAvailable == false
                                     ? "لا يوجد سائقون في منطقتك"
                                     : _canConfirm
