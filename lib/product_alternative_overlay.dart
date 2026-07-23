@@ -98,12 +98,11 @@ class _ProductAlternativeOverlayState extends State<ProductAlternativeOverlay> {
       }
 
       double newSubtotal = items.fold(0.0, (sum, item) {
-        if (item['purchaseStatus'] == 'purchased') {
-          final p = (item['finalPrice'] ?? item['price'] ?? 0.0) as num;
-          final q = (item['quantity'] ?? 1) as int;
-          return sum + p.toDouble() * q;
-        }
-        return sum;
+        final ps = item['purchaseStatus'] as String? ?? '';
+        if (ps == 'unavailable') return sum;
+        final p = (item['finalPrice'] ?? item['price'] ?? item['prix'] ?? 0.0) as num;
+        final q = (item['quantity'] ?? 1) as int;
+        return sum + p.toDouble() * q;
       });
 
       await ApiClient.put('/api/orders/${widget.orderId}', {
