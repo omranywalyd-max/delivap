@@ -117,7 +117,6 @@ class DeliveredActivity : Activity() {
 
                         val loyaltyBody = JSONObject().apply {
                             put("driverId", intent.getStringExtra("driverId") ?: "")
-                            put("orderId", orderId)
                         }
                         loyaltyConn.outputStream.use { os ->
                             os.write(loyaltyBody.toString().toByteArray())

@@ -798,7 +798,6 @@ class _OrderCardState extends State<OrderCard> {
           try {
             final userData = await ApiClient.put('/api/users/${widget.userId}/loyalty', {
               'driverId': widget.order.driverId,
-              'orderId': widget.docId,
             }) as Map<String, dynamic>? ?? {};
             alreadyVerified = userData['isVerified'] ?? false;
           } catch (_) {}
@@ -2899,7 +2898,6 @@ Future<void> _confirmReceiptByCustomer() async {
     try {
       final userData = await ApiClient.put('/api/users/${widget.userId}/loyalty', {
         'driverId': _order.driverId,
-        'orderId': widget.docId,
       }) as Map<String, dynamic>? ?? {};
       final bool alreadyVerified = userData['isVerified'] ?? false;
       loyaltyUpdated = true;
