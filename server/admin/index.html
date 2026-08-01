@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المحتوى الشامل | Delivery App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #7C29C5;
+            --primary-light: #9d50e6;
+            --primary-dark: #5B1C94;
+            --bg: #F1F0F5;
+            --card: #ffffff;
+            --text: #2D2A3A;
+            --muted: #6E6B7B;
+            --success: #27AE60;
+            --danger: #EB5757;
+            --warning: #F2994A;
+            --shadow: rgba(124, 41, 197, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px; background: #fff; padding: 25px 15px;
+            display: flex; flex-direction: column; position: fixed;
+            height: 100vh; right: 0; box-shadow: -5px 0 20px rgba(0,0,0,0.03);
+            z-index: 1000; overflow-y: auto;
+        }
+
+        .sidebar-brand { 
+            font-weight: 900; font-size: 22px; color: var(--primary); 
+            text-align: center; margin-bottom: 25px; padding-bottom: 20px;
+            border-bottom: 2px solid var(--bg);
+        }
+
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li { margin-bottom: 5px; }
+        .sidebar-menu a {
+            display: flex; align-items: center; padding: 12px 18px;
+            color: var(--muted); text-decoration: none; border-radius: 12px;
+            transition: 0.3s; font-weight: 600; gap: 12px; cursor: pointer;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active { 
+            background: var(--primary); color: #fff; 
+            box-shadow: 0 8px 15px var(--shadow); 
+        }
+
+        .menu-section {
+            font-size: 11px; text-transform: uppercase; color: #bbb;
+            margin: 20px 10px 10px 0; font-weight: 800; letter-spacing: 1px;
+        }
+
+        /* Main Content */
+        .main-content { margin-right: 260px; flex: 1; padding: 30px; width: calc(100% - 260px); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-weight: 800; font-size: 26px; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { 
+            background: #fff; padding: 20px; border-radius: 20px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.02);
+        }
+        .stat-card h3 { font-size: 26px; font-weight: 900; color: var(--primary); }
+        .stat-card p { font-size: 13px; color: var(--muted); font-weight: 700; margin-top: 5px; }
+
+        /* Data Cards */
+        .data-card { background: #fff; border-radius: 28px; padding: 25px; box-shadow: 0 4px 25px rgba(0,0,0,0.03); margin-bottom: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: right; padding: 15px; color: var(--muted); font-size: 12px; border-bottom: 2px solid var(--bg); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid var(--bg); font-size: 14px; color: var(--text); }
+        
+        .img-circle { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; background: #f0f0f0; }
+        
+        /* Badges */
+        .badge { padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+        .badge-user { background: rgba(124, 41, 197, 0.1); color: var(--primary); }
+        .badge-owner { background: rgba(39, 174, 96, 0.1); color: var(--success); }
+        .badge-pending { background: rgba(242, 153, 74, 0.1); color: var(--warning); }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 18px; border-radius: 12px; border: none; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            font-family: 'Cairo'; transition: 0.2s; font-size: 13px;
+        }
+        .btn-add { background: var(--primary); color: #fff; }
+        .btn-del { background: rgba(235, 87, 87, 0.1); color: var(--danger); }
+        .btn-edit { background: rgba(124, 41, 197, 0.1); color: var(--primary); }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #fff; width: 90%; max-width: 500px; padding: 30px; border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 700; font-size: 13px; }
+        input, select, textarea {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: 2px solid var(--bg);
+            font-family: 'Cairo'; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .page { display: none; animation: fadeIn 0.4s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 992px) {
+            .sidebar { width: 80px; }
+            .sidebar-brand, .sidebar-menu a span, .menu-section { display: none; }
+            .main-content { margin-right: 80px; width: calc(100% - 80px); }
+            .sidebar-menu a { justify-content: center; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand"><i class="fas fa-rocket"></i> D-Admin</div>
+    <ul class="sidebar-menu">
+        <li><a class="active" onclick="showPage('dashboard', this)"><i class="fas fa-chart-line"></i> <span>الإحصائيات</span></a></li>
+        
+        <div class="menu-section">إدارة الأشخاص</div>
+        <li><a onclick="showPage('customers', this)"><i class="fas fa-user-friends"></i> <span>الزبائن</span></a></li>
+        <li><a onclick="showPage('merchants', this)"><i class="fas fa-store-alt"></i> <span>التجار</span></a></li>
+        
+        <div class="menu-section">إدارة المحلات</div>
+        <li><a onclick="showPage('templates', this)"><i class="fas fa-layer-group"></i> <span>قوالب المتاجر</span></a></li>
+        <li><a onclick="showPage('active-stores', this)"><i class="fas fa-check-circle"></i> <span>المتاجر النشطة</span></a></li>
+        
+        <div class="menu-section">الطلبيات</div>
+        <li><a onclick="showPage('orders', this)"><i class="fas fa-truck"></i> <span>الطلبيات</span></a></li>
+
+        <div class="menu-section">التبليغات</div>
+        <li><a onclick="showPage('reports', this)"><i class="fas fa-flag"></i> <span>البلاغات</span></a></li>
+
+        <div class="menu-section">المخزون والعروض</div>
+        <li><a onclick="showPage('categories', this)"><i class="fas fa-th-large"></i> <span>الأقسام</span></a></li>
+        <li><a onclick="showPage('products', this)"><i class="fas fa-box-open"></i> <span>المنتجات</span></a></li>
+        <li><a onclick="showPage('offers', this)"><i class="fas fa-tags"></i> <span>العروض</span></a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="header">
+        <h1 id="pageTitle">لوحة التحكم</h1>
+        <button class="btn btn-edit" onclick="location.reload()"><i class="fas fa-sync-alt"></i> تحديث</button>
+    </div>
+
+    <!-- 1. Dashboard Page -->
+    <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+            <div class="stat-card"><h3 id="stat-customers">0</h3><p>زبون</p></div>
+            <div class="stat-card"><h3 id="stat-merchants">0</h3><p>تاجر</p></div>
+            <div class="stat-card"><h3 id="stat-templates">0</h3><p>قالب</p></div>
+            <div class="stat-card"><h3 id="stat-stores">0</h3><p>متجر نشط</p></div>
+        </div>
+        <div class="data-card">
+            <h2>مرحباً بك يا أدمن!</h2>
+            <p style="color: var(--muted); margin-top: 10px;">اختر أي قسم من القائمة الجانبية لإدارة محتواه بشكل منفصل.</p>
+        </div>
+    </div>
+
+    <!-- 2. Customers Page (ALL fields) -->
+    <div class="page" id="page-customers">
+        <div class="data-card">
+            <div class="card-header"><h2>قائمة الزبائن (Users) — جميع البيانات</h2></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>الاسم</th><th>الهاتف</th><th>البريد</th><th>الجنس</th><th>الموقع</th><th>uid</th><th>موثق</th><th>توصيل مجاني</th><th>ولاء</th><th>تاريخ الانضمام</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="customers-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Merchants Page (with toggle active) -->
+    <div class="page" id="page-merchants">
+        <div class="data-card">
+            <div class="card-header"><h2>قائمة التجار (Owners)</h2></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>اسم المستخدم</th><th>المحل</th><th>كلمة السر</th><th>الهاتف</th><th>uid</th><th>magasinId</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="merchants-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Templates Page -->
+    <div class="page" id="page-templates">
+        <div class="data-card">
+            <div class="card-header">
+                <h2>قوالب المتاجر (Master Templates)</h2>
+                <button class="btn btn-add" onclick="openStoreModal(true)"><i class="fas fa-plus"></i> إضافة قالب جديد</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>الاسم</th><th>Style</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="templates-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Active Stores Page -->
+    <div class="page" id="page-active-stores">
+        <div class="data-card">
+            <div class="card-header"><h2>المتاجر النشطة (مربوطة بتجار)</h2></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>اسم المتجر</th><th>المالك</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="active-stores-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Categories Page -->
+    <div class="page" id="page-categories">
+        <div class="data-card">
+            <div class="card-header">
+                <h2>إدارة الأقسام</h2>
+                <button class="btn btn-add" onclick="openCatModal()"><i class="fas fa-plus"></i> إضافة قسم</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>الاسم</th><th>رابط المحل</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="categories-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Products Page -->
+    <div class="page" id="page-products">
+        <div class="data-card">
+            <div class="card-header"><h2>جميع المنتجات</h2></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>الاسم</th><th>السعر</th><th>المتجر</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="products-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Offers Page -->
+    <div class="page" id="page-offers">
+        <div class="data-card">
+            <div class="card-header"><h2>العروض الحالية</h2></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>الصورة</th><th>العرض</th><th>المتجر</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="offers-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Orders Page (grouped by driver) -->
+    <div class="page" id="page-orders">
+        <div class="data-card">
+            <div class="card-header">
+                <h2>جميع الطلبيات — حسب المركب</h2>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <select id="order-status-filter" onchange="loadOrders()" style="width:auto;padding:8px 12px;">
+                        <option value="">كل الحالات</option>
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="accepted">مقبولة</option>
+                        <option value="preparing">قيد التحضير</option>
+                        <option value="picked_up">تم الاستلام</option>
+                        <option value="delivered">موصلة</option>
+                        <option value="cancelled">ملغية</option>
+                    </select>
+                    <button class="btn btn-edit" onclick="loadOrders()"><i class="fas fa-sync-alt"></i> تحديث</button>
+                </div>
+            </div>
+            <div id="orders-container"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Global Modal -->
+<div class="modal" id="globalModal">
+    <div class="modal-content">
+        <h2 id="modalTitle">إضافة بيانات</h2>
+        <hr style="margin: 15px 0; opacity: 0.1;">
+        <div id="modalBody"></div>
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button class="btn btn-add" style="flex: 2;" id="saveBtn" onclick="handleSave()">حفظ البيانات</button>
+            <button class="btn btn-del" style="flex: 1;" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = window.location.origin + '/api';
+    let currentMode = '';
+
+    // --- Core Logic ---
+    function showPage(pageId, element) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+        
+        document.getElementById('page-' + pageId).classList.add('active');
+        element.classList.add('active');
+        document.getElementById('pageTitle').innerText = element.innerText;
+
+        // Load specific data
+        if(pageId === 'customers' || pageId === 'merchants') loadUsers();
+        if(pageId === 'templates' || pageId === 'active-stores') loadStores();
+        if(pageId === 'categories') loadCategories();
+        if(pageId === 'products') loadProducts();
+        if(pageId === 'offers') loadOffers();
+        if(pageId === 'orders') loadOrders();
+        if(pageId === 'dashboard') loadStats();
+    }
+
+    // --- Data Loaders ---
+    async function loadStats() {
+        const users = await (await fetch(API_URL + '/users')).json();
+        const stores = await (await fetch(API_URL + '/stores')).json();
+        document.getElementById('stat-customers').innerText = users.filter(u => u.role === 'user' || !u.role).length;
+        document.getElementById('stat-merchants').innerText = users.filter(u => u.role === 'owner').length;
+        document.getElementById('stat-templates').innerText = stores.filter(s => !s.ownerId).length;
+        document.getElementById('stat-stores').innerText = stores.filter(s => s.ownerId).length;
+    }
+
+    async function loadUsers() {
+        const res = await fetch(API_URL + '/users');
+        const users = await res.json();
+        const custBody = document.getElementById('customers-list');
+        const mercBody = document.getElementById('merchants-list');
+        custBody.innerHTML = ''; mercBody.innerHTML = '';
+
+        users.forEach(u => {
+            if(u.role === 'owner') {
+                mercBody.innerHTML += `
+                    <tr>
+                        <td><img src="${u.photoUrl || 'https://via.placeholder.com/45'}" class="img-circle"></td>
+                        <td><strong>${u.username || '---'}</strong></td>
+                        <td>${u.storeName || '---'}</td>
+                        <td>${u.password ? '••••••' : '---'}</td>
+                        <td>${u.phone || '---'}</td>
+                        <td style="font-size:11px;direction:ltr">${u.uid || '---'}</td>
+                        <td style="font-size:11px">${u.magasinId || '---'}</td>
+                        <td><span class="badge ${u.isActive?'badge-owner':'badge-pending'}">${u.isActive?'نشط':'بانتظار التفعيل'}</span></td>
+                        <td style="display:flex;gap:5px">
+                            <button class="btn ${u.isActive?'btn-del':'btn-add'}" onclick="toggleActive('${u._id}')">${u.isActive?'إلغاء':'تفعيل'}</button>
+                            <button class="btn btn-del" onclick="deleteItem('/users/${u._id}', loadUsers)"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            } else {
+                custBody.innerHTML += `
+                    <tr>
+                        <td><img src="${u.photoUrl || 'https://via.placeholder.com/45'}" class="img-circle"></td>
+                        <td><strong>${u.firstName || ''} ${u.lastName || ''}</strong></td>
+                        <td>${u.phone || '---'}</td>
+                        <td>${u.email || '---'}</td>
+                        <td>${u.gender === 'male'?'ذكر':u.gender === 'female'?'أنثى':u.gender || '---'}</td>
+                        <td>${u.location || '---'}</td>
+                        <td style="font-size:11px;direction:ltr">${u.uid ? u.uid.substring(0,16)+'…' : '---'}</td>
+                        <td><span class="badge ${u.isVerified?'badge-owner':'badge-pending'}">${u.isVerified?'موثق':'غير موثق'}</span></td>
+                        <td>${u.hasFreeDelivery?'✅':'❌'}</td>
+                        <td>${u.loyaltyCount || 0}</td>
+                        <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-DZ') : '---'}</td>
+                        <td><button class="btn btn-del" onclick="deleteItem('/users/${u._id}', loadUsers)"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+            }
+        });
+    }
+
+    async function toggleActive(id) {
+        const res = await fetch(API_URL + '/admin/users/toggle-active/' + id, { method: 'PUT' });
+        if(res.ok) { loadUsers(); }
+        else { alert('❌ فشل تغيير الحالة'); }
+    }
+
+    async function loadStores() {
+        const res = await fetch(API_URL + '/stores');
+        const stores = await res.json();
+        const templBody = document.getElementById('templates-list');
+        const activeBody = document.getElementById('active-stores-list');
+        templBody.innerHTML = ''; activeBody.innerHTML = '';
+
+        stores.forEach(s => {
+            const html = `
+                <tr>
+                    <td><img src="${s.image}" class="img-circle"></td>
+                    <td><strong>${s.nom}</strong></td>
+                    <td>${s.ownerId ? '<span class="badge badge-owner">نشط</span>' : 'Style ' + s.uiStyle}</td>
+                    <td><button class="btn btn-del" onclick="deleteItem('/stores/${s._id}', loadStores)"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            if(s.ownerId) activeBody.innerHTML += html;
+            else templBody.innerHTML += html;
+        });
+    }
+
+    async function loadCategories() {
+        const res = await fetch(API_URL + '/categories');
+        const cats = await res.json();
+        const body = document.getElementById('categories-list');
+        body.innerHTML = '';
+        cats.forEach(c => {
+            body.innerHTML += `<tr>
+                <td><img src="${c.image}" class="img-circle"></td>
+                <td>${c.nom}</td>
+                <td>${c.storeId || '<span style="color:grey">قالب عام</span>'}</td>
+                <td><button class="btn btn-del" onclick="deleteItem('/categories/${c._id}', loadCategories)"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+        });
+    }
+
+    async function loadProducts() {
+        const res = await fetch(API_URL + '/products');
+        const prods = await res.json();
+        const body = document.getElementById('products-list');
+        body.innerHTML = '';
+        prods.forEach(p => {
+            body.innerHTML += `<tr>
+                <td><img src="${p.image}" class="img-circle"></td>
+                <td>${p.name}</td>
+                <td>${p.prix || p.price} دج</td>
+                <td><small>${p.storeId}</small></td>
+                <td><button class="btn btn-del" onclick="deleteItem('/products/${p._id}', loadProducts)"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+        });
+    }
+
+    async function loadOffers() {
+        const res = await fetch(API_URL + '/promotions');
+        const offers = await res.json();
+        const body = document.getElementById('offers-list');
+        body.innerHTML = '';
+        offers.forEach(o => {
+            body.innerHTML += `<tr>
+                <td><img src="${o.image}" class="img-circle"></td>
+                <td>${o.nom}</td>
+                <td>${o.storeId}</td>
+                <td><button class="btn btn-del" onclick="deleteItem('/promotions/${o._id}', loadOffers)"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+        });
+    }
+
+    // --- Orders (grouped by driver) ---
+    async function loadOrders() {
+        const statusFilter = document.getElementById('order-status-filter').value;
+        let url = API_URL + '/admin/orders';
+        if(statusFilter) url += '?status=' + statusFilter;
+        const res = await fetch(url);
+        const orders = await res.json();
+        const container = document.getElementById('orders-container');
+        container.innerHTML = '';
+
+        if(!orders.length) {
+            container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px;">لا توجد طلبيات</p>';
+            return;
+        }
+
+        // Group by driver
+        const groups = {};
+        orders.forEach(o => {
+            const key = o.driverName || o.driverId || 'بدون مركب';
+            if(!groups[key]) groups[key] = { driverId: o.driverId, driverName: o.driverName, orders: [] };
+            groups[key].orders.push(o);
+        });
+
+        for(const [driverLabel, group] of Object.entries(groups)) {
+            const driverOrders = group.orders;
+            const count = driverOrders.length;
+            const totalRev = driverOrders.reduce((s,o) => s + (o.total || 0), 0);
+            const statusCounts = {};
+            driverOrders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status]||0) + 1; });
+
+            let block = document.createElement('div');
+            block.style.cssText = 'margin-bottom:25px;border:2px solid var(--bg);border-radius:20px;padding:20px;';
+
+            block.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
+                    <div>
+                        <h3 style="font-size:18px;"><i class="fas fa-motorcycle"></i> ${driverLabel}</h3>
+                        <small style="color:var(--muted);">${count} طلبية — المجموع: ${totalRev.toLocaleString()} دج</small>
+                    </div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                        ${Object.entries(statusCounts).map(([s,c]) => 
+                            `<span class="badge ${s==='delivered'?'badge-owner':s==='cancelled'?'badge-pending':'badge-user'}">${s}: ${c}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>#</th><th>الزبون</th><th>الهاتف</th><th>المنتجات</th><th>المجموع</th><th>العنوان</th><th>الحالة</th><th>التاريخ</th><th>ملاحظة السائق</th><th>الإجراءات</th></tr></thead>
+                        <tbody>
+                            ${driverOrders.map((o, i) => `
+                                <tr>
+                                    <td>${i+1}</td>
+                                    <td>${o.userName || '---'}</td>
+                                    <td>${o.userPhone || '---'}</td>
+                                    <td>${(o.items||[]).map(it => it.name).join(', ') || '---'}</td>
+                                    <td><strong>${(o.total||0).toLocaleString()} دج</strong></td>
+                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${o.address || '---'}</td>
+                                    <td><span class="badge ${o.status==='delivered'?'badge-owner':o.status==='cancelled'?'badge-pending':'badge-user'}">${o.status || 'pending'}</span></td>
+                                    <td>${o.createdAt ? new Date(o.createdAt).toLocaleDateString('ar-DZ') : '---'}</td>
+                                    <td>${o.driverNote || '---'}</td>
+                                    <td><button class="btn btn-del" onclick="deleteItem('/admin/orders/${o._id}', loadOrders)"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(block);
+        }
+    }
+
+    // --- Shared Functions ---
+    async function deleteItem(endpoint, callback) {
+        if(!confirm("⚠️ تنبيه: هل أنت متأكد من الحذف نهائياً؟")) return;
+        const res = await fetch(API_URL + endpoint, { method: 'DELETE' });
+        if(res.ok) { alert("✅ تم الحذف بنجاح"); callback(); }
+    }
+
+    function closeModal() { document.getElementById('globalModal').style.display = 'none'; }
+
+    // --- Modal Forms ---
+    function openStoreModal() {
+        currentMode = 'store';
+        document.getElementById('modalTitle').innerText = "إضافة قالب متجر جديد";
+        document.getElementById('modalBody').innerHTML = `
+            <div class="form-group"><label>اسم المحل</label><input type="text" id="m_nom"></div>
+            <div class="form-group"><label>رابط الصورة</label><input type="text" id="m_img"></div>
+            <div class="form-group"><label>الستايل (1-7)</label><input type="number" id="m_style" value="1"></div>
+            <div class="form-group"><label>اللون الأساسي</label><input type="color" id="m_color" value="#7C29C5" style="height:50px"></div>
+        `;
+        document.getElementById('globalModal').style.display = 'flex';
+    }
+
+    function openCatModal() {
+        currentMode = 'cat';
+        document.getElementById('modalTitle').innerText = "إضافة قسم جديد";
+        document.getElementById('modalBody').innerHTML = `
+            <div class="form-group"><label>اسم القسم</label><input type="text" id="c_nom"></div>
+            <div class="form-group"><label>رابط الصورة</label><input type="text" id="c_img"></div>
+            <div class="form-group"><label>معرف المتجر (اختياري)</label><input type="text" id="c_sid" placeholder="اتركه فارغاً للقالب العام"></div>
+        `;
+        document.getElementById('globalModal').style.display = 'flex';
+    }
+
+    async function handleSave() {
+        let data = {}; let endpoint = '';
+        
+        if(currentMode === 'store') {
+            endpoint = '/stores';
+            data = {
+                nom: document.getElementById('m_nom').value,
+                image: document.getElementById('m_img').value,
+                uiStyle: parseInt(document.getElementById('m_style').value),
+                primaryColor: document.getElementById('m_color').value,
+                ownerId: null
+            };
+        } else if(currentMode === 'cat') {
+            endpoint = '/categories';
+            data = {
+                nom: document.getElementById('c_nom').value,
+                image: document.getElementById('c_img').value,
+                storeId: document.getElementById('c_sid').value || null
+            };
+        }
+
+        const res = await fetch(API_URL + endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if(res.ok) { alert("✅ تم الحفظ بنجاح"); closeModal(); location.reload(); }
+    }
+
+    // Init
+    loadStats();
+</script>
+
+</body>
+</html>

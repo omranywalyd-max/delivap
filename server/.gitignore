@@ -1,0 +1,10 @@
+.env
+serviceAccountKey.json
+node_modules/
+uploads/
+data/
+admin/diagnostic.data/
+admin/journal/
+admin/_tmp/
+admin/spilldb/
+*.log
