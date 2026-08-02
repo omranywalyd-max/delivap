@@ -771,6 +771,7 @@ class _SocialSectionState extends State<_SocialSection> {
       setState(() => _error = AuthService.errorMessage(e.code));
     } catch (e) {
       if (!e.toString().toLowerCase().contains('cancel')) {
+        debugPrint('GOOGLE_SIGN_IN_ERROR: $e');
         setState(() => _error = 'فشل تسجيل الدخول بـ Google');
       }
     } finally {
