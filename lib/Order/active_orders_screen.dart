@@ -3859,6 +3859,8 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   DateTime? _prevTime;
   final Map<String, String> _storeNamesByCoord = {};
   Timer? _pollTimer;
+  bool _cameraFitted = false;
+  String _cameraFitStatus = '';
 
   double get _avgSpeedMps => _avgSpeedKmh / 3.6;
 
@@ -3950,8 +3952,10 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       '${lat.toStringAsFixed(6)}_${lng.toStringAsFixed(6)}';
 
   void _resolveTarget() {
-    // السائق في طريقه إلى الزبون → الهدف هو موقع التوصيل فقط (بدون متجر)
-    if (_orderStatus == 'onway' || _orderStatus == 'delivered') {
+    // تم شراء المنتجات أو في الطريق → الهدف هو موقع التوصيل فقط (بدون متجر)
+    if (_orderStatus == 'purchased' ||
+        _orderStatus == 'onway' ||
+        _orderStatus == 'delivered') {
       _targetPos = _userPos;
       return;
     }
@@ -4092,39 +4096,60 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       text: TextSpan(
         text: label,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: Colors.black87,
           fontFamily: 'Amiri',
         ),
       ),
       textDirection: TextDirection.rtl,
       maxLines: 1,
-    )..layout(maxWidth: 200);
+    )..layout(maxWidth: 220);
 
+    const pillH = 24.0;
+    final pillW = tp.width + 20;
     const pinH = 30.0;
-    const pillH = 22.0;
-    final pillW = tp.width + 18;
-    final w = math.max(pillW + 8, 48.0);
-    final h = pinH + pillH + 6;
+    final w = math.max(pillW + 10, 56.0);
+    final h = pinH + pillH + 4;
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    final pinPaint = Paint()..color = color;
-    final path = Path()
-      ..moveTo(w / 2, 0)
-      ..lineTo(w / 2 - 9, pinH - 8)
-      ..quadraticBezierTo(w / 2, pinH + 4, w / 2 + 9, pinH - 8)
+    final pinPaint = Paint()
+      ..color = color
+      ..isAntiAlias = true;
+
+    final pinCenter = Offset(w / 2, pillH + pinH * 0.35);
+    final pinRadius = pinH * 0.42;
+    final tip = Offset(w / 2, h);
+    final left = Offset(pinCenter.dx - pinRadius, pinCenter.dy);
+    final right = Offset(pinCenter.dx + pinRadius, pinCenter.dy);
+    final pinPath = Path()
+      ..moveTo(left.dx, left.dy)
+      ..lineTo(tip.dx, tip.dy)
+      ..lineTo(right.dx, right.dy)
+      ..lineTo(left.dx, left.dy)
       ..close();
-    canvas.drawPath(path, pinPaint);
-    canvas.drawCircle(Offset(w / 2, pinH), 3.5, pinPaint);
+    canvas.drawPath(pinPath, pinPaint);
+    canvas.drawCircle(pinCenter, pinRadius, pinPaint);
+    canvas.drawCircle(
+      pinCenter,
+      pinRadius * 0.32,
+      Paint()..color = Colors.white,
+    );
 
     final pillRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w / 2 - pillW / 2, pinH - 4, pillW, pillH),
-      const Radius.circular(11),
+      Rect.fromLTWH(w / 2 - pillW / 2, 2, pillW, pillH),
+      const Radius.circular(12),
     );
     canvas.drawRRect(pillRect, Paint()..color = Colors.white);
+    canvas.drawRRect(
+      pillRect,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
     tp.paint(
       canvas,
       Offset(w / 2 - tp.width / 2, pillRect.top + (pillH - tp.height) / 2),
@@ -4204,18 +4229,33 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
         ..clear()
         ..addAll(np);
     });
-    if (_mapCtrl != null && driverPos != null && targetPos != null) {
-      final bounds = LatLngBounds(
-        southwest: LatLng(
-          math.min(driverPos.latitude, targetPos.latitude),
-          math.min(driverPos.longitude, targetPos.longitude),
-        ),
-        northeast: LatLng(
-          math.max(driverPos.latitude, targetPos.latitude),
-          math.max(driverPos.longitude, targetPos.longitude),
-        ),
-      );
-      _mapCtrl!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
+    if (_mapCtrl != null && driverPos != null) {
+      // الزوم: قس المسافة حسب حالة الطلب
+      // - تم الشراء أو في الطريق → بين السائق وموقع التوصيل (الزبون)
+      // - مازال مشراش → بين السائق وموقع الشراء (المتجر/الهدف)
+      final fitPos = (_orderStatus == 'purchased' ||
+              _orderStatus == 'onway' ||
+              _orderStatus == 'delivered')
+          ? _userPos
+          : targetPos;
+      if (fitPos != null) {
+        final statusKey = _orderStatus.isEmpty ? 'unknown' : _orderStatus;
+        if (!_cameraFitted || _cameraFitStatus != statusKey) {
+          _cameraFitted = true;
+          _cameraFitStatus = statusKey;
+          final bounds = LatLngBounds(
+            southwest: LatLng(
+              math.min(driverPos.latitude, fitPos.latitude),
+              math.min(driverPos.longitude, fitPos.longitude),
+            ),
+            northeast: LatLng(
+              math.max(driverPos.latitude, fitPos.latitude),
+              math.max(driverPos.longitude, fitPos.longitude),
+            ),
+          );
+          _mapCtrl!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
+        }
+      }
     }
   }
 
