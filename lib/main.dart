@@ -14,7 +14,6 @@ import 'main_page.dart';
 import 'user_local.dart';
 import 'theme.dart';
 import 'Order/active_orders_screen.dart';
-import 'driver_arrival_overlay.dart';
 
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -141,48 +140,17 @@ Future<void> _initDeferredServices() async {
   }
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    final sound = message.data['sound'];
-    if (sound == 'ring') {
-      if (!DriverArrivalOverlay.isEnabled) {
-        _showLocalNotification(message);
-      } else {
-        _tryTriggerArrivalOverlay(
-          driverName: message.data['driverName'] as String?,
-          driverPhoto: message.data['driverPhoto'] as String?,
-          orderId: message.data['orderId'] as String?,
-        );
-      }
-    } else {
-      _showLocalNotification(message);
-    }
+    _showLocalNotification(message);
   });
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     _handleNotificationNavigation(message.data);
-
-    final sound = message.data['sound'];
-    if (sound == 'ring') {
-      _tryTriggerArrivalOverlay(
-        driverName: message.data['driverName'] as String?,
-        driverPhoto: message.data['driverPhoto'] as String?,
-        orderId: message.data['orderId'] as String?,
-      );
-    }
   });
 
   messaging.getInitialMessage().then((initialMessage) {
     if (initialMessage != null) {
       Future.delayed(const Duration(milliseconds: 500), () {
         _handleNotificationNavigation(initialMessage.data);
-
-        final sound = initialMessage.data['sound'];
-        if (sound == 'ring') {
-          _tryTriggerArrivalOverlay(
-            driverName: initialMessage.data['driverName'] as String?,
-            driverPhoto: initialMessage.data['driverPhoto'] as String?,
-            orderId: initialMessage.data['orderId'] as String?,
-          );
-        }
       });
     }
   }).catchError((_) {});
@@ -226,28 +194,6 @@ Future<void> _initDeferredServices() async {
       }
     } catch (_) {}
   });
-}
-
-void _tryTriggerArrivalOverlay({
-  String? driverName,
-  String? driverPhoto,
-  String? orderId,
-}) {
-  if (!DriverArrivalOverlay.isEnabled) return;
-  void attempt(int retries) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx != null) {
-      DriverArrivalOverlay.trigger(
-        context: ctx,
-        driverName: driverName,
-        driverPhoto: driverPhoto,
-        orderId: orderId,
-      );
-    } else if (retries > 0) {
-      Future.delayed(const Duration(milliseconds: 800), () => attempt(retries - 1));
-    }
-  }
-  attempt(5);
 }
 
 Future<void> _showLocalNotification(RemoteMessage message) async {

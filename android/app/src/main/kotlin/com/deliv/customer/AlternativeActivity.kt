@@ -21,7 +21,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import org.json.JSONObject
-import org.json.JSONArray
 
 class AlternativeActivity : Activity() {
 
@@ -99,7 +98,7 @@ class AlternativeActivity : Activity() {
             tvStatus.visibility = View.VISIBLE
             btnAccept.isEnabled = false
             btnReject.isEnabled = false
-            respondToAlternative(orderId, "accepted")
+            respondToAlternative(orderId, productName, true)
         }
 
         btnReject.setOnClickListener {
@@ -109,20 +108,20 @@ class AlternativeActivity : Activity() {
             tvStatus.visibility = View.VISIBLE
             btnAccept.isEnabled = false
             btnReject.isEnabled = false
-            respondToAlternative(orderId, "rejected")
+            respondToAlternative(orderId, productName, false)
         }
 
         startRingtone()
         handler.postDelayed(countdownRunnable, 1000)
     }
 
-    private fun respondToAlternative(orderId: String, status: String) {
+    private fun respondToAlternative(orderId: String, itemName: String, accepted: Boolean) {
         Thread {
             try {
                 val user = FirebaseAuth.getInstance().currentUser
                 val token = user?.getIdToken(false)?.result?.token
 
-                val url = URL("https://api.delivap.com/api/orders/$orderId")
+                val url = URL("https://api.delivap.com/api/orders/$orderId/alternative-response")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "PUT"
                 conn.setRequestProperty("Content-Type", "application/json")
@@ -132,11 +131,8 @@ class AlternativeActivity : Activity() {
                 conn.doOutput = true
 
                 val body = JSONObject().apply {
-                    put("items", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("alternativeStatus", status)
-                        })
-                    })
+                    put("itemName", itemName)
+                    put("accepted", accepted)
                 }
 
                 conn.outputStream.use { os ->
@@ -147,7 +143,7 @@ class AlternativeActivity : Activity() {
                 handler.post {
                     if (responseCode == 200 || responseCode == 201) {
                         val tvStatus = findViewById<TextView>(R.id.tvStatus)
-                        tvStatus.text = if (status == "accepted") "تم القبول ✅" else "تم الرفض ❌"
+                        tvStatus.text = if (accepted) "تم القبول ✅" else "تم الرفض ❌"
                         tvStatus.visibility = View.VISIBLE
                         handler.postDelayed({ dismiss() }, 2000)
                     } else {

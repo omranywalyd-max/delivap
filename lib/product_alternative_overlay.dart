@@ -357,7 +357,7 @@ class _ProductAlternativeOverlayState extends State<ProductAlternativeOverlay> {
 }
 
 class ProductAlternativeOverlayHelper {
-  static bool get isEnabled => true;
+  static bool isEnabled = true;
 
   static void show({
     required BuildContext context,

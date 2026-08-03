@@ -40,6 +40,15 @@ const setupSocket = (io) => {
           { driverLat: lat, driverLng: lng }
         );
 
+        // بث الطلبيات المحدّثة للزبون والسائق (مسار إضافي للتتبع)
+        const activeOrders = await require('../models/Order').find(
+          { driverId, status: { $in: ['accepted', 'purchased', 'onway'] } }
+        );
+        for (const o of activeOrders) {
+          if (o.userId) io.to(`user_${o.userId}`).emit('order:updated', o);
+          io.to(`driver_${driverId}`).emit('order:updated', o);
+        }
+
         // Broadcast ONLY to users tracking this specific driver
         io.to(`track_driver_${driverId}`).emit('driver:location_updated', {
           driverId,

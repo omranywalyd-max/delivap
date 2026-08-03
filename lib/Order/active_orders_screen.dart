@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:ui';
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter_application_1/dashboard_search_bar.dart' hide kTextColor;
 import 'package:flutter_application_1/products_list_screen.dart' show Product, GlobalCart, DrinkItem, DrinkCache, PizzaDetailSheet, Style4DetailSheet, Style5DetailSheet, Style6DetailSheet, Style7DetailSheet, Style8DetailSheet;
@@ -3839,6 +3840,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     with TickerProviderStateMixin {
   GoogleMapController? _mapCtrl;
   LatLng? _driverPos, _userPos, _targetPos;
+  int _mapGen = 0;
   double _distanceMeters = 0;
   int _etaMinutes = 0;
   bool _notifSent = false;
@@ -3846,13 +3848,23 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   final Set<Polyline> _polylines = {};
   late AnimationController _pulseCtrl;
   late Animation<double> _pulse;
-  String _storeName = '', _driverName = '', _driverPhoto = '';
+  String _storeName = '', _driverName = '', _driverPhoto = '', _customerName = 'الزبون';
+  String _orderStatus = '';
   List<Map<String, dynamic>> _items = [];
   double _deliveryFee = 0;
   double _avgSpeedKmh = 30;
+  double _lastSpeedKmh = 0;
+  DateTime? _driverLastSeen;
+  LatLng? _prevPos;
+  DateTime? _prevTime;
+  final Map<String, String> _storeNamesByCoord = {};
   Timer? _pollTimer;
 
   double get _avgSpeedMps => _avgSpeedKmh / 3.6;
+
+  bool get _isFresh =>
+      _driverLastSeen != null &&
+      DateTime.now().difference(_driverLastSeen!) < const Duration(seconds: 60);
 
   @override
   void initState() {
@@ -3900,6 +3912,18 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
             _deliveryFee = (data['deliveryFee'] as num? ?? 0).toDouble();
             _driverName = dName;
             _driverPhoto = dPhoto;
+            _customerName = data['userName'] as String? ?? 'الزبون';
+            _orderStatus = data['status'] as String? ?? '';
+            _storeNamesByCoord
+              ..clear()
+              ..addAll(_buildStoreNames(_items));
+            final dLat = data['driverLat'] as num?;
+            final dLng = data['driverLng'] as num?;
+            if (dLat != null && dLng != null) {
+              final pos = LatLng(dLat.toDouble(), dLng.toDouble());
+              _driverPos = pos;
+              _recordDriverPos(pos);
+            }
             _resolveTarget();
           });
           _updateMapElements();
@@ -3909,7 +3933,28 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     } catch (_) {}
   }
 
+  Map<String, String> _buildStoreNames(List<Map<String, dynamic>> items) {
+    final map = <String, String>{};
+    for (final item in items) {
+      final lat = (item['storeLat'] as num?)?.toDouble();
+      final lng = (item['storeLng'] as num?)?.toDouble();
+      final name = item['storeName'] as String? ?? '';
+      if (lat != null && lng != null && name.isNotEmpty) {
+        map[_storeKey(lat, lng)] = name;
+      }
+    }
+    return map;
+  }
+
+  String _storeKey(double lat, double lng) =>
+      '${lat.toStringAsFixed(6)}_${lng.toStringAsFixed(6)}';
+
   void _resolveTarget() {
+    // السائق في طريقه إلى الزبون → الهدف هو موقع التوصيل فقط (بدون متجر)
+    if (_orderStatus == 'onway' || _orderStatus == 'delivered') {
+      _targetPos = _userPos;
+      return;
+    }
     if (_items.isEmpty || _driverPos == null) {
       _targetPos = _userPos;
       return;
@@ -4003,6 +4048,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
           final lat = driverData['lat'] as num?;
           final lng = driverData['lng'] as num?;
           if (lat != null && lng != null) {
+            _recordDriverPos(LatLng(lat.toDouble(), lng.toDouble()));
             setState(() {
               _driverPos = LatLng(lat.toDouble(), lng.toDouble());
             });
@@ -4021,6 +4067,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
             final lat = driverData['lat'] as num?;
             final lng = driverData['lng'] as num?;
             if (lat != null && lng != null) {
+              _recordDriverPos(LatLng(lat.toDouble(), lng.toDouble()));
               setState(() {
                 _driverPos = LatLng(lat.toDouble(), lng.toDouble());
               });
@@ -4035,54 +4082,120 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     } catch (_) {}
   }
 
-  void _updateMapElements() {
+  final Map<String, BitmapDescriptor> _labelIconCache = {};
+
+  Future<BitmapDescriptor> _labelIcon(String label, Color color) async {
+    final key = '$label|${color.toARGB32()}';
+    final cached = _labelIconCache[key];
+    if (cached != null) return cached;
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontFamily: 'Amiri',
+        ),
+      ),
+      textDirection: TextDirection.rtl,
+      maxLines: 1,
+    )..layout(maxWidth: 200);
+
+    const pinH = 30.0;
+    const pillH = 22.0;
+    final pillW = tp.width + 18;
+    final w = math.max(pillW + 8, 48.0);
+    final h = pinH + pillH + 6;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    final pinPaint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(w / 2, 0)
+      ..lineTo(w / 2 - 9, pinH - 8)
+      ..quadraticBezierTo(w / 2, pinH + 4, w / 2 + 9, pinH - 8)
+      ..close();
+    canvas.drawPath(path, pinPaint);
+    canvas.drawCircle(Offset(w / 2, pinH), 3.5, pinPaint);
+
+    final pillRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w / 2 - pillW / 2, pinH - 4, pillW, pillH),
+      const Radius.circular(11),
+    );
+    canvas.drawRRect(pillRect, Paint()..color = Colors.white);
+    tp.paint(
+      canvas,
+      Offset(w / 2 - tp.width / 2, pillRect.top + (pillH - tp.height) / 2),
+    );
+
+    final image =
+        await recorder.endRecording().toImage(w.ceil(), h.ceil());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final icon = BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+    _labelIconCache[key] = icon;
+    return icon;
+  }
+
+  Future<void> _updateMapElements() async {
     if (!mounted) return;
+    final gen = ++_mapGen;
+    final driverPos = _driverPos;
+    final userPos = _userPos;
     _resolveTarget();
+    final targetPos = _targetPos;
     final nm = <Marker>{};
     final np = <Polyline>{};
-    if (_driverPos != null)
+    if (driverPos != null) {
+      final dName = _driverName.isNotEmpty ? _driverName : 'السائق';
       nm.add(
         Marker(
           markerId: const MarkerId('driver'),
-          position: _driverPos!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueViolet,
-          ),
-          infoWindow: const InfoWindow(title: 'السائق'),
-        ),
-      );
-    if (_targetPos != null && _userPos != null &&
-        (_targetPos!.latitude != _userPos!.latitude ||
-         _targetPos!.longitude != _userPos!.longitude)) {
-      nm.add(
-        Marker(
-          markerId: const MarkerId('target'),
-          position: _targetPos!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-          infoWindow: const InfoWindow(title: 'المتجر الحالي'),
+          position: driverPos,
+          icon: await _labelIcon(dName, const Color(0xFF7D29C6)),
+          infoWindow: InfoWindow(title: dName),
         ),
       );
     }
-    if (_userPos != null)
+    if (targetPos != null && userPos != null &&
+        (targetPos.latitude != userPos.latitude ||
+         targetPos.longitude != userPos.longitude)) {
+      final sName = _storeNamesByCoord[
+              _storeKey(targetPos.latitude, targetPos.longitude)] ??
+          'المتجر';
+      nm.add(
+        Marker(
+          markerId: const MarkerId('target'),
+          position: targetPos,
+          icon: await _labelIcon(sName, const Color(0xFFF57C00)),
+          infoWindow: InfoWindow(title: sName),
+        ),
+      );
+    }
+    if (userPos != null) {
+      final uName = _customerName.isNotEmpty ? _customerName : 'موقع الزبون';
       nm.add(
         Marker(
           markerId: const MarkerId('user'),
-          position: _userPos!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'موقع التوصيل'),
+          position: userPos,
+          icon: await _labelIcon(uName, const Color(0xFF1976D2)),
+          infoWindow: InfoWindow(title: uName),
         ),
       );
-    if (_driverPos != null && _targetPos != null) {
+    }
+    if (driverPos != null && targetPos != null) {
       np.add(
         Polyline(
           polylineId: const PolylineId('route'),
-          points: [_driverPos!, _targetPos!],
+          points: [driverPos, targetPos],
           color: kPrimaryColor,
           width: 4,
           patterns: [PatternItem.dash(20), PatternItem.gap(10)],
         ),
       );
     }
+    if (!mounted || gen != _mapGen) return;
     setState(() {
       _markers
         ..clear()
@@ -4091,19 +4204,46 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
         ..clear()
         ..addAll(np);
     });
-    if (_mapCtrl != null && _driverPos != null && _targetPos != null) {
+    if (_mapCtrl != null && driverPos != null && targetPos != null) {
       final bounds = LatLngBounds(
         southwest: LatLng(
-          math.min(_driverPos!.latitude, _targetPos!.latitude),
-          math.min(_driverPos!.longitude, _targetPos!.longitude),
+          math.min(driverPos.latitude, targetPos.latitude),
+          math.min(driverPos.longitude, targetPos.longitude),
         ),
         northeast: LatLng(
-          math.max(_driverPos!.latitude, _targetPos!.latitude),
-          math.max(_driverPos!.longitude, _targetPos!.longitude),
+          math.max(driverPos.latitude, targetPos.latitude),
+          math.max(driverPos.longitude, targetPos.longitude),
         ),
       );
       _mapCtrl!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
     }
+  }
+
+  void _recordDriverPos(LatLng pos) {
+    final now = DateTime.now();
+    final prev = _prevPos;
+    final prevT = _prevTime;
+    _prevPos = pos;
+    _prevTime = now;
+    _driverLastSeen = now;
+    if (prev == null || prevT == null) return;
+    final elapsedMs = now.difference(prevT).inMilliseconds;
+    if (elapsedMs < 2000) return;
+    final dist = Geolocator.distanceBetween(
+      prev.latitude, prev.longitude, pos.latitude, pos.longitude,
+    );
+    if (dist < 1) return;
+    final speed = dist / (elapsedMs / 1000) * 3.6;
+    _lastSpeedKmh = _lastSpeedKmh == 0
+        ? speed
+        : _lastSpeedKmh * 0.7 + speed * 0.3;
+    _avgSpeedKmh = _lastSpeedKmh;
+  }
+
+  String _formatTime(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   void _checkDistance() {
@@ -4153,6 +4293,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   void _onDriverLocationUpdated(data) {
     if (!mounted || _trackedDriverId == null) return;
     if (data['driverId'] != _trackedDriverId) return;
+    _recordDriverPos(LatLng(data['lat'], data['lng']));
     setState(() {
       _driverPos = LatLng(data['lat'], data['lng']);
     });
@@ -4275,14 +4416,21 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                           scale: _pulse.value,
                           child: Container(
                             width: 10, height: 10,
-                            decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: _isFresh ? Colors.green : Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Text(
-                        'مباشر',
-                        style: TextStyle(fontSize: 11, color: Colors.green, fontFamily: 'Amiri'),
+                      Text(
+                        _isFresh ? 'مباشر' : 'غير متصل',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _isFresh ? Colors.green : Colors.redAccent,
+                          fontFamily: 'Amiri',
+                        ),
                       ),
                     ],
                   ),
@@ -4444,6 +4592,31 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                             _infoTile('وقت الوصول', _distanceMeters > 0 ? _estimatedArrival() : '...', CupertinoIcons.flag_fill, kSuccessColor),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 12,
+                            color: _isFresh ? kSuccessColor : kDangerColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              _driverLastSeen == null
+                                  ? 'بانتظار تحديث موقع السائق...'
+                                  : 'آخر تحديث للموقع: ${_formatTime(_driverLastSeen!)} — ${_isFresh ? 'مباشر' : 'غير محدّث'}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontFamily: 'Amiri',
+                                color: _isFresh ? kSuccessColor : kDangerColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
