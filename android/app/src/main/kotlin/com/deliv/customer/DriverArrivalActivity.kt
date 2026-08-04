@@ -12,6 +12,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
@@ -25,6 +27,8 @@ class DriverArrivalActivity : Activity() {
     private var mediaPlayer: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private var secondsLeft = 60
+    private var downY = 0f
+    private var downX = 0f
 
     private val countdownRunnable = object : Runnable {
         override fun run() {
@@ -76,6 +80,23 @@ class DriverArrivalActivity : Activity() {
 
         findViewById<Button>(R.id.btnClose).setOnClickListener {
             dismiss()
+        }
+
+        findViewById<View>(R.id.rootArrival).setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = event.rawX
+                    downY = event.rawY
+                }
+                MotionEvent.ACTION_UP -> {
+                    val dy = event.rawY - downY
+                    val dx = event.rawX - downX
+                    if (dy > 120 && Math.abs(dx) < 150) {
+                        dismiss()
+                    }
+                }
+            }
+            false
         }
 
         startRingtone()
