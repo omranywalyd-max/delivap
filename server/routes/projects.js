@@ -4,6 +4,19 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 const { getIO } = require('../socket/ioInstance');
 const { sendToUser } = require('../fcm');
+const { tokenIdentities, resolveUserFromReq } = require('../middleware/authorize');
+
+// هل الطالب يملك المشروع (زبونه، تاجر المحل، أو أدمن)؟
+async function canManageProject(req, project, User) {
+  if (req.user && req.user.role === 'admin') return true;
+  const ids = tokenIdentities(req);
+  if (ids.length && project.userId && ids.includes(String(project.userId))) return true;
+  const u = await resolveUserFromReq(req, User);
+  if (!u) return false;
+  if (project.userId && u.uid === project.userId) return true;
+  if ((u.role === 'owner' || u.role === 'merchant') && project.storeId && u.magasinId === project.storeId) return true;
+  return false;
+}
 
 router.get('/projects', async (req, res) => {
   try {
@@ -27,6 +40,18 @@ router.get('/projects/:id', async (req, res) => {
 
 router.post('/projects', async (req, res) => {
   try {
+    // منع تزوير الملكية: الزبون يسجل مشروعه باسمه هو فقط (الأدمن مخول)
+    if (req.user && req.user.role !== 'admin') {
+      const ids = tokenIdentities(req);
+      const udoc = await resolveUserFromReq(req, User);
+      if (req.body.userId) {
+        const allowed = ids.includes(String(req.body.userId)) ||
+          (udoc && (udoc.uid === req.body.userId || udoc.username === req.body.userId));
+        if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+      } else if (udoc && udoc.uid) {
+        req.body.userId = udoc.uid;
+      }
+    }
     const project = await Project.create(req.body);
     const storeId = req.body.storeId || project.storeId;
     if (storeId) {
@@ -50,6 +75,11 @@ router.post('/projects', async (req, res) => {
 
 router.put('/projects/:id', async (req, res) => {
   try {
+    const existing = await Project.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Project not found' });
+    if (!(await canManageProject(req, existing, User))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const project = await Project.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: new Date() },
@@ -81,6 +111,11 @@ router.put('/projects/:id', async (req, res) => {
 
 router.delete('/projects/:id', async (req, res) => {
   try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (!(await canManageProject(req, project, User))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     await Project.findByIdAndDelete(req.params.id);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

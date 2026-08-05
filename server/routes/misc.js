@@ -7,14 +7,41 @@ const Report = require('../models/Report');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const Driver = require('../models/Driver');
+const { tokenIdentities, resolveUserFromReq } = require('../middleware/authorize');
 
 router.use(authMiddleware);
+
+// كل هويات الطالب المحتملة (uid / user_id / id / username) + uid المستخدم في قاعدة البيانات
+async function ownIds(req) {
+  const ids = [...tokenIdentities(req)];
+  const u = await resolveUserFromReq(req, User);
+  if (u) {
+    if (u.uid) ids.push(u.uid);
+    if (u.username) ids.push(u.username);
+  }
+  return [...new Set(ids.map(String))];
+}
+
+function matches(ids, value) {
+  return value != null && ids.includes(String(value));
+}
+
+async function isOwner(req, value) {
+  if (req.user && req.user.role === 'admin') return true;
+  return matches(await ownIds(req), value);
+}
 
 // ── Saved Locations ──
 router.get('/saved-locations', async (req, res) => {
   try {
     const filter = {};
-    if (req.query.userId) filter.userId = req.query.userId;
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (!ids.length) return res.json([]);
+      filter.userId = { $in: ids };
+    } else if (req.query.userId) {
+      filter.userId = req.query.userId;
+    }
     const locs = await SavedLocation.find(filter).sort({ createdAt: 1 });
     res.json(locs);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -22,6 +49,10 @@ router.get('/saved-locations', async (req, res) => {
 
 router.post('/saved-locations', async (req, res) => {
   try {
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (ids.length) req.body.userId = ids[0];
+    }
     const loc = await SavedLocation.create(req.body);
     res.status(201).json(loc);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -29,17 +60,23 @@ router.post('/saved-locations', async (req, res) => {
 
 router.put('/saved-locations/:id', async (req, res) => {
   try {
-    const loc = await SavedLocation.findByIdAndUpdate(
+    const loc = await SavedLocation.findById(req.params.id);
+    if (!loc) return res.status(404).json({ error: 'Not found' });
+    if (!(await isOwner(req, loc.userId))) return res.status(403).json({ error: 'Forbidden' });
+    const updated = await SavedLocation.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: new Date() },
       { returnDocument: 'after' }
     );
-    res.json(loc);
+    res.json(updated);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.delete('/saved-locations/:id', async (req, res) => {
   try {
+    const loc = await SavedLocation.findById(req.params.id);
+    if (!loc) return res.status(404).json({ error: 'Not found' });
+    if (!(await isOwner(req, loc.userId))) return res.status(403).json({ error: 'Forbidden' });
     await SavedLocation.findByIdAndDelete(req.params.id);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -48,6 +85,7 @@ router.delete('/saved-locations/:id', async (req, res) => {
 // ── Nested saved-locations under /users/:uid (compatibility) ──
 router.get('/users/:uid/saved-locations', async (req, res) => {
   try {
+    if (!(await isOwner(req, req.params.uid))) return res.status(403).json({ error: 'Forbidden' });
     const locs = await SavedLocation.find({ userId: req.params.uid }).sort({ createdAt: 1 });
     res.json(locs);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -55,6 +93,7 @@ router.get('/users/:uid/saved-locations', async (req, res) => {
 
 router.post('/users/:uid/saved-locations', async (req, res) => {
   try {
+    if (!(await isOwner(req, req.params.uid))) return res.status(403).json({ error: 'Forbidden' });
     const loc = await SavedLocation.create({ ...req.body, userId: req.params.uid });
     res.status(201).json(loc);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -64,7 +103,13 @@ router.post('/users/:uid/saved-locations', async (req, res) => {
 router.get('/saved-templates', async (req, res) => {
   try {
     const filter = {};
-    if (req.query.userId) filter.userId = req.query.userId;
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (!ids.length) return res.json([]);
+      filter.userId = { $in: ids };
+    } else if (req.query.userId) {
+      filter.userId = req.query.userId;
+    }
     const tmpl = await SavedTemplate.find(filter).sort({ createdAt: -1 });
     res.json(tmpl);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -72,6 +117,10 @@ router.get('/saved-templates', async (req, res) => {
 
 router.post('/saved-templates', async (req, res) => {
   try {
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (ids.length) req.body.userId = ids[0];
+    }
     const tmpl = await SavedTemplate.create(req.body);
     res.status(201).json(tmpl);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -79,6 +128,9 @@ router.post('/saved-templates', async (req, res) => {
 
 router.delete('/saved-templates/:id', async (req, res) => {
   try {
+    const tmpl = await SavedTemplate.findById(req.params.id);
+    if (!tmpl) return res.status(404).json({ error: 'Not found' });
+    if (!(await isOwner(req, tmpl.userId))) return res.status(403).json({ error: 'Forbidden' });
     await SavedTemplate.findByIdAndDelete(req.params.id);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -87,6 +139,7 @@ router.delete('/saved-templates/:id', async (req, res) => {
 // ── Nested saved-templates under /users/:uid (compatibility) ──
 router.post('/users/:uid/saved-templates', async (req, res) => {
   try {
+    if (!(await isOwner(req, req.params.uid))) return res.status(403).json({ error: 'Forbidden' });
     const tmpl = await SavedTemplate.create({ ...req.body, userId: req.params.uid });
     res.status(201).json(tmpl);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -95,18 +148,28 @@ router.post('/users/:uid/saved-templates', async (req, res) => {
 // PUT for saved-templates
 router.put('/saved-templates/:id', async (req, res) => {
   try {
-    const tmpl = await SavedTemplate.findByIdAndUpdate(
+    const tmpl = await SavedTemplate.findById(req.params.id);
+    if (!tmpl) return res.status(404).json({ error: 'Not found' });
+    if (!(await isOwner(req, tmpl.userId))) return res.status(403).json({ error: 'Forbidden' });
+    const updated = await SavedTemplate.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: new Date() },
       { returnDocument: 'after' }
     );
-    res.json(tmpl);
+    res.json(updated);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Reports ──
 router.post('/reports', async (req, res) => {
   try {
+    // منع انتحال هوية المبلّغ
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (ids.length) {
+        req.body.userId = ids[0];
+      }
+    }
     const report = await Report.create(req.body);
     const io = getIO();
     if (io) io.to('admin_room').emit('new_report', report.toObject());
@@ -116,6 +179,7 @@ router.post('/reports', async (req, res) => {
 
 router.get('/reports', async (req, res) => {
   try {
+    if (req.user && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
     if (req.query.type) filter.type = req.query.type;
@@ -173,7 +237,13 @@ router.post('/notifications', async (req, res) => {
 router.get('/notifications', async (req, res) => {
   try {
     const filter = {};
-    if (req.query.toId) filter.toId = req.query.toId;
+    if (req.user && req.user.role !== 'admin') {
+      const ids = await ownIds(req);
+      if (!ids.length) return res.json([]);
+      filter.toId = { $in: ids };
+    } else if (req.query.toId) {
+      filter.toId = req.query.toId;
+    }
     const notifs = await Notification.find(filter).sort({ createdAt: -1 });
     res.json(notifs);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -181,8 +251,11 @@ router.get('/notifications', async (req, res) => {
 
 router.put('/notifications/:id', async (req, res) => {
   try {
-    const notif = await Notification.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
-    res.json(notif);
+    const notif = await Notification.findById(req.params.id);
+    if (!notif) return res.status(404).json({ error: 'Not found' });
+    if (!(await isOwner(req, notif.toId))) return res.status(403).json({ error: 'Forbidden' });
+    const updated = await Notification.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
+    res.json(updated);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -248,6 +321,11 @@ router.post('/notify-token', async (req, res) => {
       return res.status(400).json({ error: 'uid and fcmToken are required' });
     }
 
+    // منع انتحال: لا يمكن تسجيل توكن إلا للحساب الخاص بالطالب (أو الأدمن)
+    if (!(await isOwner(req, uid))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     let updated;
     if (role === 'driver') {
       updated = await Driver.findOneAndUpdate(
@@ -277,6 +355,9 @@ router.post('/clear-token', async (req, res) => {
   try {
     const { uid, role } = req.body;
     if (!uid) return res.status(400).json({ error: 'uid is required' });
+    if (!(await isOwner(req, uid))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     if (role === 'driver') {
       await Driver.findOneAndUpdate({ uid }, { fcmToken: null, fcmUpdatedAt: new Date() });
     } else {

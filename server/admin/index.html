@@ -128,9 +128,37 @@
             .main-content { margin-right: 80px; width: calc(100% - 80px); }
             .sidebar-menu a { justify-content: center; padding: 15px; }
         }
+
+        /* Login Screen */
+        .login-overlay {
+            position: fixed; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px;
+        }
+        .login-card {
+            background: #fff; width: 100%; max-width: 380px; padding: 40px 35px; border-radius: 30px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3); text-align: center;
+        }
+        .login-card .login-logo { font-size: 46px; color: var(--primary); margin-bottom: 10px; }
+        .login-card h2 { font-weight: 900; color: var(--text); margin-bottom: 5px; }
+        .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 25px; font-weight: 600; }
+        .login-card .form-group { text-align: right; margin-bottom: 15px; }
+        .login-card .btn { width: 100%; padding: 14px; font-size: 15px; margin-top: 8px; }
+        .login-error { color: var(--danger); font-size: 13px; font-weight: 700; margin-top: 12px; display: none; }
     </style>
 </head>
 <body>
+
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-card">
+        <div class="login-logo"><i class="fas fa-shield-halved"></i></div>
+        <h2>لوحة تحكم ديليفاب</h2>
+        <p>تسجيل الدخول مطلوب للوصول إلى لوحة الإدارة</p>
+        <div class="form-group"><label>اسم المستخدم</label><input type="text" id="loginUser" autocomplete="username"></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="password" id="loginPass" autocomplete="current-password"></div>
+        <button class="btn btn-add" id="loginBtn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+        <div class="login-error" id="loginError">بيانات الدخول غير صحيحة</div>
+    </div>
+</div>
 
 <div class="sidebar">
     <div class="sidebar-brand"><i class="fas fa-rocket"></i> D-Admin</div>
@@ -161,7 +189,10 @@
 <div class="main-content">
     <div class="header">
         <h1 id="pageTitle">لوحة التحكم</h1>
-        <button class="btn btn-edit" onclick="location.reload()"><i class="fas fa-sync-alt"></i> تحديث</button>
+        <div>
+            <button class="btn btn-del" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            <button class="btn btn-edit" onclick="location.reload()"><i class="fas fa-sync-alt"></i> تحديث</button>
+        </div>
     </div>
 
     <!-- 1. Dashboard Page -->
@@ -314,7 +345,57 @@
 
 <script>
     const API_URL = window.location.origin + '/api';
+    const TOKEN_KEY = 'delivap_admin_token';
     let currentMode = '';
+
+    // جلب مع توكن الأدمن (يُخزن في localStorage بعد تسجيل الدخول)
+    function api(path, opts) {
+        opts = opts || {};
+        opts.headers = opts.headers || {};
+        const t = localStorage.getItem(TOKEN_KEY);
+        if (t) opts.headers['Authorization'] = 'Bearer ' + t;
+        if (opts.body && !opts.headers['Content-Type']) opts.headers['Content-Type'] = 'application/json';
+        return fetch(API_URL + path, opts);
+    }
+
+    async function doLogin() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+        const err = document.getElementById('loginError');
+        if (!username || !password) { err.style.display = 'block'; return; }
+        document.getElementById('loginBtn').disabled = true;
+        err.style.display = 'none';
+        try {
+            const res = await api('/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (!res.ok) throw new Error('invalid');
+            const data = await res.json();
+            localStorage.setItem(TOKEN_KEY, data.token);
+            location.reload();
+        } catch (e) {
+            err.style.display = 'block';
+            document.getElementById('loginBtn').disabled = false;
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem(TOKEN_KEY);
+        location.reload();
+    }
+
+    function initAuth() {
+        if (localStorage.getItem(TOKEN_KEY)) {
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+    }
+
+    function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
 
     // --- Core Logic ---
     function showPage(pageId, element) {
@@ -337,8 +418,8 @@
 
     // --- Data Loaders ---
     async function loadStats() {
-        const users = await (await fetch(API_URL + '/users')).json();
-        const stores = await (await fetch(API_URL + '/stores')).json();
+        const users = await (await api('/users')).json();
+        const stores = await (await api('/stores')).json();
         document.getElementById('stat-customers').innerText = users.filter(u => u.role === 'user' || !u.role).length;
         document.getElementById('stat-merchants').innerText = users.filter(u => u.role === 'owner').length;
         document.getElementById('stat-templates').innerText = stores.filter(s => !s.ownerId).length;
@@ -346,7 +427,7 @@
     }
 
     async function loadUsers() {
-        const res = await fetch(API_URL + '/users');
+        const res = await api('/users');
         const users = await res.json();
         const custBody = document.getElementById('customers-list');
         const mercBody = document.getElementById('merchants-list');
@@ -356,47 +437,47 @@
             if(u.role === 'owner') {
                 mercBody.innerHTML += `
                     <tr>
-                        <td><img src="${u.photoUrl || 'https://via.placeholder.com/45'}" class="img-circle"></td>
-                        <td><strong>${u.username || '---'}</strong></td>
-                        <td>${u.storeName || '---'}</td>
+                        <td><img src="${esc(u.photoUrl) || 'https://via.placeholder.com/45'}" class="img-circle"></td>
+                        <td><strong>${esc(u.username) || '---'}</strong></td>
+                        <td>${esc(u.storeName) || '---'}</td>
                         <td>${u.password ? '••••••' : '---'}</td>
-                        <td>${u.phone || '---'}</td>
-                        <td style="font-size:11px;direction:ltr">${u.uid || '---'}</td>
-                        <td style="font-size:11px">${u.magasinId || '---'}</td>
+                        <td>${esc(u.phone) || '---'}</td>
+                        <td style="font-size:11px;direction:ltr">${esc(u.uid) || '---'}</td>
+                        <td style="font-size:11px">${esc(u.magasinId) || '---'}</td>
                         <td><span class="badge ${u.isActive?'badge-owner':'badge-pending'}">${u.isActive?'نشط':'بانتظار التفعيل'}</span></td>
                         <td style="display:flex;gap:5px">
-                            <button class="btn ${u.isActive?'btn-del':'btn-add'}" onclick="toggleActive('${u._id}')">${u.isActive?'إلغاء':'تفعيل'}</button>
-                            <button class="btn btn-del" onclick="deleteItem('/users/${u._id}', loadUsers)"><i class="fas fa-trash"></i></button>
+                            <button class="btn ${u.isActive?'btn-del':'btn-add'}" onclick="toggleActive('${esc(u._id)}')">${u.isActive?'إلغاء':'تفعيل'}</button>
+                            <button class="btn btn-del" onclick="deleteItem('/users/${esc(u._id)}', loadUsers)"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>`;
             } else {
                 custBody.innerHTML += `
                     <tr>
-                        <td><img src="${u.photoUrl || 'https://via.placeholder.com/45'}" class="img-circle"></td>
-                        <td><strong>${u.firstName || ''} ${u.lastName || ''}</strong></td>
-                        <td>${u.phone || '---'}</td>
-                        <td>${u.email || '---'}</td>
-                        <td>${u.gender === 'male'?'ذكر':u.gender === 'female'?'أنثى':u.gender || '---'}</td>
-                        <td>${u.location || '---'}</td>
-                        <td style="font-size:11px;direction:ltr">${u.uid ? u.uid.substring(0,16)+'…' : '---'}</td>
+                        <td><img src="${esc(u.photoUrl) || 'https://via.placeholder.com/45'}" class="img-circle"></td>
+                        <td><strong>${esc(u.firstName) || ''} ${esc(u.lastName) || ''}</strong></td>
+                        <td>${esc(u.phone) || '---'}</td>
+                        <td>${esc(u.email) || '---'}</td>
+                        <td>${u.gender === 'male'?'ذكر':u.gender === 'female'?'أنثى':esc(u.gender) || '---'}</td>
+                        <td>${esc(u.location) || '---'}</td>
+                        <td style="font-size:11px;direction:ltr">${u.uid ? esc(u.uid.substring(0,16))+'…' : '---'}</td>
                         <td><span class="badge ${u.isVerified?'badge-owner':'badge-pending'}">${u.isVerified?'موثق':'غير موثق'}</span></td>
                         <td>${u.hasFreeDelivery?'✅':'❌'}</td>
                         <td>${u.loyaltyCount || 0}</td>
                         <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-DZ') : '---'}</td>
-                        <td><button class="btn btn-del" onclick="deleteItem('/users/${u._id}', loadUsers)"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-del" onclick="deleteItem('/users/${esc(u._id)}', loadUsers)"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
             }
         });
     }
 
     async function toggleActive(id) {
-        const res = await fetch(API_URL + '/admin/users/toggle-active/' + id, { method: 'PUT' });
+        const res = await api('/admin/users/toggle-active/' + id, { method: 'PUT' });
         if(res.ok) { loadUsers(); }
         else { alert('❌ فشل تغيير الحالة'); }
     }
 
     async function loadStores() {
-        const res = await fetch(API_URL + '/stores');
+        const res = await api('/stores');
         const stores = await res.json();
         const templBody = document.getElementById('templates-list');
         const activeBody = document.getElementById('active-stores-list');
@@ -405,10 +486,10 @@
         stores.forEach(s => {
             const html = `
                 <tr>
-                    <td><img src="${s.image}" class="img-circle"></td>
-                    <td><strong>${s.nom}</strong></td>
-                    <td>${s.ownerId ? '<span class="badge badge-owner">نشط</span>' : 'Style ' + s.uiStyle}</td>
-                    <td><button class="btn btn-del" onclick="deleteItem('/stores/${s._id}', loadStores)"><i class="fas fa-trash"></i></button></td>
+                    <td><img src="${esc(s.image)}" class="img-circle"></td>
+                    <td><strong>${esc(s.nom)}</strong></td>
+                    <td>${s.ownerId ? '<span class="badge badge-owner">نشط</span>' : 'Style ' + esc(s.uiStyle)}</td>
+                    <td><button class="btn btn-del" onclick="deleteItem('/stores/${esc(s._id)}', loadStores)"><i class="fas fa-trash"></i></button></td>
                 </tr>`;
             if(s.ownerId) activeBody.innerHTML += html;
             else templBody.innerHTML += html;
@@ -416,47 +497,47 @@
     }
 
     async function loadCategories() {
-        const res = await fetch(API_URL + '/categories');
+        const res = await api('/categories');
         const cats = await res.json();
         const body = document.getElementById('categories-list');
         body.innerHTML = '';
         cats.forEach(c => {
             body.innerHTML += `<tr>
-                <td><img src="${c.image}" class="img-circle"></td>
-                <td>${c.nom}</td>
-                <td>${c.storeId || '<span style="color:grey">قالب عام</span>'}</td>
-                <td><button class="btn btn-del" onclick="deleteItem('/categories/${c._id}', loadCategories)"><i class="fas fa-trash"></i></button></td>
+                <td><img src="${esc(c.image)}" class="img-circle"></td>
+                <td>${esc(c.nom)}</td>
+                <td>${esc(c.storeId) || '<span style="color:grey">قالب عام</span>'}</td>
+                <td><button class="btn btn-del" onclick="deleteItem('/categories/${esc(c._id)}', loadCategories)"><i class="fas fa-trash"></i></button></td>
             </tr>`;
         });
     }
 
     async function loadProducts() {
-        const res = await fetch(API_URL + '/products');
+        const res = await api('/products');
         const prods = await res.json();
         const body = document.getElementById('products-list');
         body.innerHTML = '';
         prods.forEach(p => {
             body.innerHTML += `<tr>
-                <td><img src="${p.image}" class="img-circle"></td>
-                <td>${p.name}</td>
-                <td>${p.prix || p.price} دج</td>
-                <td><small>${p.storeId}</small></td>
-                <td><button class="btn btn-del" onclick="deleteItem('/products/${p._id}', loadProducts)"><i class="fas fa-trash"></i></button></td>
+                <td><img src="${esc(p.image)}" class="img-circle"></td>
+                <td>${esc(p.name)}</td>
+                <td>${esc(p.prix || p.price)} دج</td>
+                <td><small>${esc(p.storeId)}</small></td>
+                <td><button class="btn btn-del" onclick="deleteItem('/products/${esc(p._id)}', loadProducts)"><i class="fas fa-trash"></i></button></td>
             </tr>`;
         });
     }
 
     async function loadOffers() {
-        const res = await fetch(API_URL + '/promotions');
+        const res = await api('/promotions');
         const offers = await res.json();
         const body = document.getElementById('offers-list');
         body.innerHTML = '';
         offers.forEach(o => {
             body.innerHTML += `<tr>
-                <td><img src="${o.image}" class="img-circle"></td>
-                <td>${o.nom}</td>
-                <td>${o.storeId}</td>
-                <td><button class="btn btn-del" onclick="deleteItem('/promotions/${o._id}', loadOffers)"><i class="fas fa-trash"></i></button></td>
+                <td><img src="${esc(o.image)}" class="img-circle"></td>
+                <td>${esc(o.nom)}</td>
+                <td>${esc(o.storeId)}</td>
+                <td><button class="btn btn-del" onclick="deleteItem('/promotions/${esc(o._id)}', loadOffers)"><i class="fas fa-trash"></i></button></td>
             </tr>`;
         });
     }
@@ -466,7 +547,7 @@
         const statusFilter = document.getElementById('order-status-filter').value;
         let url = API_URL + '/admin/orders';
         if(statusFilter) url += '?status=' + statusFilter;
-        const res = await fetch(url);
+        const res = await api(url);
         const orders = await res.json();
         const container = document.getElementById('orders-container');
         container.innerHTML = '';
@@ -497,12 +578,12 @@
             block.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px;">
                     <div>
-                        <h3 style="font-size:18px;"><i class="fas fa-motorcycle"></i> ${driverLabel}</h3>
+                        <h3 style="font-size:18px;"><i class="fas fa-motorcycle"></i> ${esc(driverLabel)}</h3>
                         <small style="color:var(--muted);">${count} طلبية — المجموع: ${totalRev.toLocaleString()} دج</small>
                     </div>
                     <div style="display:flex;gap:5px;flex-wrap:wrap;">
                         ${Object.entries(statusCounts).map(([s,c]) => 
-                            `<span class="badge ${s==='delivered'?'badge-owner':s==='cancelled'?'badge-pending':'badge-user'}">${s}: ${c}</span>`
+                            `<span class="badge ${s==='delivered'?'badge-owner':s==='cancelled'?'badge-pending':'badge-user'}">${esc(s)}: ${c}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -513,15 +594,15 @@
                             ${driverOrders.map((o, i) => `
                                 <tr>
                                     <td>${i+1}</td>
-                                    <td>${o.userName || '---'}</td>
-                                    <td>${o.userPhone || '---'}</td>
-                                    <td>${(o.items||[]).map(it => it.name).join(', ') || '---'}</td>
+                                    <td>${esc(o.userName) || '---'}</td>
+                                    <td>${esc(o.userPhone) || '---'}</td>
+                                    <td>${(o.items||[]).map(it => esc(it.name)).join(', ') || '---'}</td>
                                     <td><strong>${(o.total||0).toLocaleString()} دج</strong></td>
-                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${o.address || '---'}</td>
-                                    <td><span class="badge ${o.status==='delivered'?'badge-owner':o.status==='cancelled'?'badge-pending':'badge-user'}">${o.status || 'pending'}</span></td>
+                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${esc(o.address) || '---'}</td>
+                                    <td><span class="badge ${o.status==='delivered'?'badge-owner':o.status==='cancelled'?'badge-pending':'badge-user'}">${esc(o.status) || 'pending'}</span></td>
                                     <td>${o.createdAt ? new Date(o.createdAt).toLocaleDateString('ar-DZ') : '---'}</td>
-                                    <td>${o.driverNote || '---'}</td>
-                                    <td><button class="btn btn-del" onclick="deleteItem('/admin/orders/${o._id}', loadOrders)"><i class="fas fa-trash"></i></button></td>
+                                    <td>${esc(o.driverNote) || '---'}</td>
+                                    <td><button class="btn btn-del" onclick="deleteItem('/admin/orders/${esc(o._id)}', loadOrders)"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -535,7 +616,7 @@
     // --- Shared Functions ---
     async function deleteItem(endpoint, callback) {
         if(!confirm("⚠️ تنبيه: هل أنت متأكد من الحذف نهائياً؟")) return;
-        const res = await fetch(API_URL + endpoint, { method: 'DELETE' });
+        const res = await api(endpoint, { method: 'DELETE' });
         if(res.ok) { alert("✅ تم الحذف بنجاح"); callback(); }
     }
 
@@ -586,7 +667,7 @@
             };
         }
 
-        const res = await fetch(API_URL + endpoint, {
+        const res = await api(endpoint, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -596,6 +677,7 @@
     }
 
     // Init
+    initAuth();
     loadStats();
 </script>
 

@@ -24,13 +24,9 @@ const authMiddleware = async (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded.uid && !decoded.user_id) {
-      console.log('[AUTH] JWT OK but no uid — rejected for %s', req.originalUrl);
-    } else {
-      req.user = decoded;
-      console.log('[AUTH] JWT OK uid=%s for %s', decoded.uid || decoded.user_id, req.originalUrl);
-      return next();
-    }
+    req.user = decoded;
+    console.log('[AUTH] JWT OK role=%s uid=%s for %s', decoded.role || 'user', decoded.uid || decoded.id || decoded.username || '-', req.originalUrl);
+    return next();
   } catch (e) {
     console.log('[AUTH] JWT fail: %s for %s', e.message, req.originalUrl);
   }

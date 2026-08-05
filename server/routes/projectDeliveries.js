@@ -9,6 +9,10 @@ const { sendToUser, sendToDriver } = require('../fcm');
 const User = require('../models/User');
 const Project = require('../models/Project');
 const { deleteImageFile, deleteImageFiles } = require('../helpers/fileCleanup');
+const authMiddleware = require('../middleware/auth');
+const { tokenIdentities, resolveUserFromReq } = require('../middleware/authorize');
+
+router.use(authMiddleware);
 
 async function resolveDriverId(driverId) {
   if (mongoose.Types.ObjectId.isValid(driverId)) {
@@ -18,13 +22,46 @@ async function resolveDriverId(driverId) {
   return driverId;
 }
 
+// هل الطالب طرف في التوصيلية (الزبون، صاحب المحل، السائق) أو أدمن؟
+async function canManageDelivery(req, delivery) {
+  if (req.user && req.user.role === 'admin') return true;
+  const ids = tokenIdentities(req);
+  const owners = [delivery.userId, delivery.storeOwnerId, delivery.driverId];
+  if (ids.length && owners.some(o => o != null && ids.includes(String(o)))) return true;
+  const u = await resolveUserFromReq(req, User);
+  if (!u) return false;
+  if (owners.some(o => o != null && o === u.uid)) return true;
+  if ((u.role === 'owner' || u.role === 'merchant') && delivery.storeId && u.magasinId === delivery.storeId) return true;
+  return false;
+}
+
+// هل الطالب هو السائق المسند إلى التوصيلية أو أدمن؟
+async function isAssignedDriver(req, delivery) {
+  if (req.user && req.user.role === 'admin') return true;
+  const ids = tokenIdentities(req);
+  if (ids.length && delivery.driverId && ids.includes(String(delivery.driverId))) return true;
+  const u = await resolveUserFromReq(req, User);
+  return !!(u && delivery.driverId && u.uid === delivery.driverId);
+}
+
 router.get('/project-deliveries', async (req, res) => {
   try {
     const filter = {};
-    if (req.query.userId) filter.userId = req.query.userId;
-    if (req.query.projectId) filter.projectId = req.query.projectId;
-    if (req.query.driverId) filter.driverId = req.query.driverId;
-    if (req.query.storeOwnerId) filter.storeOwnerId = req.query.storeOwnerId;
+    const isAdmin = req.user && req.user.role === 'admin';
+    if (isAdmin) {
+      if (req.query.userId) filter.userId = req.query.userId;
+      if (req.query.projectId) filter.projectId = req.query.projectId;
+      if (req.query.driverId) filter.driverId = req.query.driverId;
+      if (req.query.storeOwnerId) filter.storeOwnerId = req.query.storeOwnerId;
+    } else {
+      // تقييد صارم: لا يرى المستخدم إلا التوصيليات التي هو طرف فيها
+      const ids = tokenIdentities(req);
+      const u = await resolveUserFromReq(req, User);
+      const myIds = [...ids];
+      if (u && u.uid) myIds.push(u.uid);
+      if (!myIds.length) return res.json([]);
+      filter.$or = ['userId', 'storeOwnerId', 'driverId'].map(field => ({ [field]: { $in: myIds } }));
+    }
     if (req.query.status) {
       const statuses = req.query.status.split(',');
       filter.status = { $in: statuses };
@@ -40,6 +77,9 @@ router.get('/project-deliveries/:id', async (req, res) => {
   try {
     const delivery = await ProjectDelivery.findById(req.params.id);
     if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    if (!(await canManageDelivery(req, delivery))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     res.json(delivery);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -77,6 +117,9 @@ router.put('/project-deliveries/:id/driver-response', async (req, res) => {
     const { action, reason, proposedPrice } = req.body;
     const delivery = await ProjectDelivery.findById(req.params.id);
     if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    if (!(await isAssignedDriver(req, delivery))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const uid = delivery.driverId ? await resolveDriverId(delivery.driverId) : null;
     const io = getIO();
 
@@ -137,6 +180,9 @@ router.put('/project-deliveries/:id/owner-price-response', async (req, res) => {
     const { action } = req.body;
     const delivery = await ProjectDelivery.findById(req.params.id);
     if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    if (!(await canManageDelivery(req, delivery))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const uid = delivery.driverId ? await resolveDriverId(delivery.driverId) : null;
     const io = getIO();
 
@@ -174,6 +220,10 @@ router.put('/project-deliveries/:id/owner-price-response', async (req, res) => {
 router.put('/project-deliveries/:id', async (req, res) => {
   try {
     const old = await ProjectDelivery.findById(req.params.id);
+    if (!old) return res.status(404).json({ error: 'Delivery not found' });
+    if (!(await canManageDelivery(req, old))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const updateBody = { ...req.body, updatedAt: new Date() };
     if (updateBody.status === 'accepted' && updateBody.driverId) {
       updateBody.rejectedBy = [];
@@ -279,6 +329,11 @@ router.put('/project-deliveries/:id', async (req, res) => {
 
 router.delete('/project-deliveries/:id', async (req, res) => {
   try {
+    const delivery = await ProjectDelivery.findById(req.params.id);
+    if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    if (!(await canManageDelivery(req, delivery))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     await ProjectDelivery.findByIdAndDelete(req.params.id);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

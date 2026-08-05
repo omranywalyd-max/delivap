@@ -29,6 +29,7 @@ const WilayaConfig = require('../models/WilayaConfig');
 const Settlement = require('../models/Settlement');
 const Drink = require('../models/Drink');
 const authMiddleware = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/authorize');
 const fs = require('fs');
 const path = require('path');
 
@@ -75,6 +76,7 @@ router.post('/login', async (req, res) => {
 // ─── المستخدمين ─────────────────────────────────────────────────────
 
 router.use(authMiddleware);
+router.use(requireAdmin);
 
 router.get('/users', async (req, res) => {
   try {

@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
 const { getIO } = require('../socket/ioInstance');
+const authMiddleware = require('../middleware/auth');
+const { tokenIdentities } = require('../middleware/authorize');
+
+router.use('/users/:uid/reportedDrivers', authMiddleware);
+router.use('/users/:uid/reportedDrivers', (req, res, next) => {
+  if (req.user && req.user.role === 'admin') return next();
+  const ids = tokenIdentities(req);
+  if (ids.includes(String(req.params.uid))) return next();
+  return res.status(403).json({ error: 'Forbidden' });
+});
 
 // Get all reports
 router.get('/users/:uid/reportedDrivers', async (req, res) => {

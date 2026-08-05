@@ -50,7 +50,7 @@ let _io = null;
 const getIO = () => _io;
 
 // ── Middleware ──
-app.set('trust proxy', 1);
+app.set('trust proxy', 'loopback');
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin) || /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
@@ -62,7 +62,10 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '365d' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '365d',
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff')
+}));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // Rate limiting
@@ -116,8 +119,7 @@ app.use('/api', (req, res, next) => {
   const isWrite = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
   const isReadOrders = req.method === 'GET' && (req.path === '/orders' || req.path.startsWith('/orders/'));
   if ((isWrite || isReadOrders) && !publicPaths.includes(req.path) && !req.path.startsWith('/admin/')) {
-    if ((req.method === 'POST' && publicUserWrites.includes(req.path)) ||
-        (req.method === 'PUT' && req.path.startsWith('/users/'))) return next();
+    if (req.method === 'POST' && publicUserWrites.includes(req.path)) return next();
     return authMiddleware(req, res, next);
   }
   next();
@@ -160,8 +162,8 @@ const PORT = process.env.PORT || 3000;
 const net = require('net');
 
 function startServer() {
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+  server.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
     console.log(`📁 Uploads served at /uploads`);
     console.log(`🔌 Socket.IO listening`);
   });

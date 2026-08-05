@@ -8,9 +8,30 @@ const Message = require('../models/Message');
 const { getAuth } = require('firebase-admin/auth');
 const { getIO } = require('../socket/ioInstance');
 const { emitToUser } = require('../socket');
+const authMiddleware = require('../middleware/auth');
+const { isSelfOrAdmin } = require('../middleware/authorize');
+
+// تنظيف الحقول الحساسة قبل الرد
+const PRIVATE_FIELDS = ['password', 'lastIp', 'bannedIp'];
+function toSafeUser(u) {
+  if (!u) return u;
+  const obj = u.toObject ? u.toObject() : { ...u };
+  for (const f of PRIVATE_FIELDS) delete obj[f];
+  return obj;
+}
+
+// تحقق اختياري بدون فشل (للمسارات العمومية)
+async function resolveOptionalUser(req) {
+  if (req.user) return req.user;
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return null;
+  try { return await getAuth().verifyIdToken(token); } catch (_) {}
+  try { return jwt.verify(token, process.env.JWT_SECRET); } catch (_) {}
+  return null;
+}
 
 // جلب مستخدم واحد (للزباين والتجار)
-router.get('/users/:id', async (req, res) => {
+router.get('/users/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     let user = await User.findOne({ uid: id });
@@ -18,6 +39,9 @@ router.get('/users/:id', async (req, res) => {
       user = await User.findById(id);
     }
     if (!user && id.length > 20) {
+      if (!isSelfOrAdmin(req, null, id)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
       // تحقق من أن مستخدم Firebase موجود قبل auto-create
       try {
         await getAuth().getUser(id);
@@ -37,17 +61,19 @@ router.get('/users/:id', async (req, res) => {
       const fbFirst = parts[0] || '';
       const fbLast = parts.slice(1).join(' ');
       user = await User.create({ uid: id, firstName: fbFirst, lastName: fbLast, lastIp: req.ip, isActive: true });
+    } else if (user && !isSelfOrAdmin(req, user, id)) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
     if (user) {
       user.lastIp = req.ip;
       await user.save();
     }
-    res.json(user);
+    res.json(toSafeUser(user));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // تحديث مستخدم (معدل ليدعم الأدمن والزبون معاً)
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     let user;
@@ -57,6 +83,13 @@ router.put('/users/:id', async (req, res) => {
       user = await User.findOne({ uid: id });
     }
     if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    if (!isSelfOrAdmin(req, user, id)) return res.status(403).json({ error: 'Forbidden' });
+
+    // منع المستخدم العادي من تعديل الحقول الحساسة (الأدمن مخول)
+    if (!req.user || req.user.role !== 'admin') {
+      const blocked = ['role', 'uid', '_id', 'isActive', 'isBanned', 'isAdmin', 'bannedIp', 'isVerified', 'commissionPercent', 'totalEarnings', 'cash', 'lastCommissionResetEarnings'];
+      for (const k of blocked) delete req.body[k];
+    }
 
     // مزامنة cityName من cityNameAr إذا كان后者 متوفر
     if (req.body.cityNameAr && !req.body.cityName && !user.cityName) {
@@ -67,20 +100,28 @@ router.put('/users/:id', async (req, res) => {
       req.body.cityName = req.body.location;
     }
 
+    if (req.body.password) {
+      req.body.password = await bcrypt.hash(String(req.body.password), 12);
+    }
+
     Object.assign(user, req.body, { updatedAt: new Date() });
     await user.save();
-    res.json(user);
+    res.json(toSafeUser(user));
     const io = getIO();
-    if (io && user) emitToUser(io, user.uid || user._id, 'user:updated', user);
+    if (io && user) emitToUser(io, user.uid || user._id, 'user:updated', toSafeUser(user));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// جلب الكل (للأدمن)
+// جلب الكل (للأدمن + نسخة مخففة للعموم)
 router.get('/users', async (req, res) => {
   try {
+    req.user = req.user || await resolveOptionalUser(req);
+    const isAdmin = req.user && req.user.role === 'admin';
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const skip = parseInt(req.query.skip) || 0;
-    const users = await User.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const users = await User.find()
+      .select(isAdmin ? '-password -lastIp -bannedIp' : '_id uid username role storeName firstName lastName createdAt isActive')
+      .sort({ createdAt: -1 }).skip(skip).limit(limit);
     res.json(users);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -151,6 +192,27 @@ router.post('/users', async (req, res) => {
       return res.status(403).json({ error: 'لا يمكنك التسجيل. تم حظر هذا الجهاز.', ipBanned: true });
     }
 
+    // منع الاستيلاء على حساب موجود عبر upsert (الزبون ممكن يسجل بلا توكن)
+    req.user = req.user || await resolveOptionalUser(req);
+    if (req.body.uid) {
+      const existing = await User.findOne({ uid: req.body.uid });
+      if (existing && !isSelfOrAdmin(req, existing, req.body.uid)) {
+        return res.status(403).json({ error: 'هذا الحساب مسجل مسبقاً' });
+      }
+    }
+    if (!req.user || req.user.role !== 'admin') {
+      delete req.body.isBanned;
+      delete req.body.isAdmin;
+      delete req.body.bannedIp;
+      delete req.body.isVerified;
+      delete req.body.commissionPercent;
+      delete req.body.totalEarnings;
+      delete req.body.cash;
+      if (req.body.role && !['owner', 'merchant', 'customer'].includes(req.body.role)) {
+        return res.status(400).json({ error: 'role غير مسموح به' });
+      }
+    }
+
     // التاجر (owner) يحتفظ بـ isActive كما أرسله التطبيق (عادة false)
     // الزبون العادي ينشط تلقائياً
     if (req.body.role === 'owner') {
@@ -192,9 +254,11 @@ router.post('/users', async (req, res) => {
 
 
 // جلب جميع رسائل المستخدم (ذهابا وإيابا)
-router.get('/users/:id/messages', async (req, res) => {
+router.get('/users/:id/messages', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const target = mongoose.Types.ObjectId.isValid(id) ? await User.findById(id) : await User.findOne({ uid: id });
+    if (!isSelfOrAdmin(req, target, id)) return res.status(403).json({ error: 'Forbidden' });
     const messages = await Message.find({ userId: id }).sort({ createdAt: 1 });
     await Message.updateMany({ userId: id, from: 'admin', read: false }, { $set: { read: true } });
     res.json(messages);
@@ -202,11 +266,13 @@ router.get('/users/:id/messages', async (req, res) => {
 });
 
 // رد المستخدم على الأدمن
-router.post('/users/:id/messages/reply', async (req, res) => {
+router.post('/users/:id/messages/reply', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
     if (!text || !text.trim()) return res.status(400).json({ error: 'text required' });
+    const target = mongoose.Types.ObjectId.isValid(id) ? await User.findById(id) : await User.findOne({ uid: id });
+    if (!isSelfOrAdmin(req, target, id)) return res.status(403).json({ error: 'Forbidden' });
     const msg = await Message.create({ userId: id, from: 'user', text: text.trim() });
     const io = getIO();
     if (io) {
@@ -217,10 +283,21 @@ router.post('/users/:id/messages/reply', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', authMiddleware, async (req, res) => {
   try {
     const id = req.params.id;
     let user = null;
+
+    try {
+      user = await User.findById(id);
+    } catch (e) {}
+
+    if (!user) {
+      user = await User.findOne({ uid: id });
+    }
+
+    if (user && !isSelfOrAdmin(req, user, id)) return res.status(403).json({ error: 'Forbidden' });
+    if (!user && !isSelfOrAdmin(req, null, id)) return res.status(403).json({ error: 'Forbidden' });
 
     // 1. نحاول نحذف باستعمال الـ ID تاع المونغو ( ObjectId )
     // نستعمل try/catch داخلية باش لو كان الـ ID ماشي ObjectId ما يحبسش السيرفر
@@ -309,15 +386,21 @@ router.delete('/users/:id/loyalty/:driverId', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/users/:id/settlements', async (req, res) => {
+router.get('/users/:id/settlements', authMiddleware, async (req, res) => {
   try {
+    const { id } = req.params;
+    const target = mongoose.Types.ObjectId.isValid(id) ? await User.findById(id) : await User.findOne({ uid: id });
+    if (!isSelfOrAdmin(req, target, id)) return res.status(403).json({ error: 'Forbidden' });
     const list = await Settlement.find({ userId: req.params.id }).sort({ createdAt: -1 });
     res.json(list);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.delete('/users/:id/settlements/:settlementId', async (req, res) => {
+router.delete('/users/:id/settlements/:settlementId', authMiddleware, async (req, res) => {
   try {
+    const { id } = req.params;
+    const target = mongoose.Types.ObjectId.isValid(id) ? await User.findById(id) : await User.findOne({ uid: id });
+    if (!isSelfOrAdmin(req, target, id)) return res.status(403).json({ error: 'Forbidden' });
     await Settlement.findByIdAndDelete(req.params.settlementId);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
