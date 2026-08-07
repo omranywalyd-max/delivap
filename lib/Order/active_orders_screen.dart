@@ -3860,9 +3860,12 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   final Map<String, String> _storeNamesByCoord = {};
   Timer? _pollTimer;
   bool _cameraFitted = false;
-  String _cameraFitStatus = '';
 
-  double get _avgSpeedMps => _avgSpeedKmh / 3.6;
+  bool get _buyingPhase =>
+      _orderStatus.isEmpty || _orderStatus == 'pending' || _orderStatus == 'accepted';
+
+  String get _etaLabel =>
+      _buyingPhase ? 'وقت الوصول للمحل' : 'الوقت المتبقي للوصول';
 
   bool get _isFresh =>
       _driverLastSeen != null &&
@@ -4035,6 +4038,21 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
 
   String? _trackedDriverId;
 
+  void _applyDriverSnapshot(Map<String, dynamic> driverData) {
+    if (!mounted) return;
+    final lat = driverData['lat'] as num?;
+    final lng = driverData['lng'] as num?;
+    if (lat == null || lng == null) return;
+    final sp = driverData['lastSpeed'];
+    if (sp is num && sp > 0) _applySpeedKmh(sp.toDouble());
+    _recordDriverPos(LatLng(lat.toDouble(), lng.toDouble()));
+    setState(() {
+      _driverPos = LatLng(lat.toDouble(), lng.toDouble());
+    });
+    _updateMapElements();
+    _checkDistance();
+  }
+
   void _listenToDriverLocation() async {
     try {
       final orderData = await ApiClient.get('/api/orders/${widget.orderId}');
@@ -4048,37 +4066,15 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       // جلب موقع السائق الحالي من وثيقة السائق
       try {
         final driverData = await ApiClient.get('/api/drivers/$driverId');
-        if (mounted && driverData != null) {
-          final lat = driverData['lat'] as num?;
-          final lng = driverData['lng'] as num?;
-          if (lat != null && lng != null) {
-            _recordDriverPos(LatLng(lat.toDouble(), lng.toDouble()));
-            setState(() {
-              _driverPos = LatLng(lat.toDouble(), lng.toDouble());
-            });
-            _updateMapElements();
-            _checkDistance();
-          }
-        }
+        if (mounted && driverData != null) _applyDriverSnapshot(driverData);
       } catch (_) {}
 
       // تحديث دوري كاحتياطي في حال انقطاع socket
-      _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
         if (!mounted) return;
         try {
           final driverData = await ApiClient.get('/api/drivers/$driverId');
-          if (mounted && driverData != null) {
-            final lat = driverData['lat'] as num?;
-            final lng = driverData['lng'] as num?;
-            if (lat != null && lng != null) {
-              _recordDriverPos(LatLng(lat.toDouble(), lng.toDouble()));
-              setState(() {
-                _driverPos = LatLng(lat.toDouble(), lng.toDouble());
-              });
-              _updateMapElements();
-              _checkDistance();
-            }
-          }
+          if (mounted && driverData != null) _applyDriverSnapshot(driverData);
         } catch (_) {}
       });
 
@@ -4096,7 +4092,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       text: TextSpan(
         text: label,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 19,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           fontFamily: 'Amiri',
@@ -4104,13 +4100,13 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       ),
       textDirection: TextDirection.rtl,
       maxLines: 1,
-    )..layout(maxWidth: 220);
+    )..layout(maxWidth: 280);
 
-    const pillH = 24.0;
-    final pillW = tp.width + 20;
-    const pinH = 30.0;
-    final w = math.max(pillW + 10, 56.0);
-    final h = pinH + pillH + 4;
+    const pillH = 34.0;
+    final pillW = tp.width + 28;
+    const pinH = 44.0;
+    final w = math.max(pillW + 12, 78.0);
+    final h = pinH + pillH + 6;
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -4140,7 +4136,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
 
     final pillRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(w / 2 - pillW / 2, 2, pillW, pillH),
-      const Radius.circular(12),
+      const Radius.circular(16),
     );
     canvas.drawRRect(pillRect, Paint()..color = Colors.white);
     canvas.drawRRect(
@@ -4229,32 +4225,27 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
         ..clear()
         ..addAll(np);
     });
-    if (_mapCtrl != null && driverPos != null) {
-      // الزوم: قس المسافة حسب حالة الطلب
-      // - تم الشراء أو في الطريق → بين السائق وموقع التوصيل (الزبون)
-      // - مازال مشراش → بين السائق وموقع الشراء (المتجر/الهدف)
+    if (_mapCtrl != null && driverPos != null && !_cameraFitted) {
+      // ضبط الكاميرا مرة واحدة فقط عند فتح الشاشة ليظهر السائق والهدف،
+      // وبعدها تبقى الخريطة ثابتة على ما يحدده المستخدم
       final fitPos = (_orderStatus == 'purchased' ||
               _orderStatus == 'onway' ||
               _orderStatus == 'delivered')
           ? _userPos
           : targetPos;
       if (fitPos != null) {
-        final statusKey = _orderStatus.isEmpty ? 'unknown' : _orderStatus;
-        if (!_cameraFitted || _cameraFitStatus != statusKey) {
-          _cameraFitted = true;
-          _cameraFitStatus = statusKey;
-          final bounds = LatLngBounds(
-            southwest: LatLng(
-              math.min(driverPos.latitude, fitPos.latitude),
-              math.min(driverPos.longitude, fitPos.longitude),
-            ),
-            northeast: LatLng(
-              math.max(driverPos.latitude, fitPos.latitude),
-              math.max(driverPos.longitude, fitPos.longitude),
-            ),
-          );
-          _mapCtrl!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
-        }
+        _cameraFitted = true;
+        final bounds = LatLngBounds(
+          southwest: LatLng(
+            math.min(driverPos.latitude, fitPos.latitude),
+            math.min(driverPos.longitude, fitPos.longitude),
+          ),
+          northeast: LatLng(
+            math.max(driverPos.latitude, fitPos.latitude),
+            math.max(driverPos.longitude, fitPos.longitude),
+          ),
+        );
+        _mapCtrl!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
       }
     }
   }
@@ -4274,6 +4265,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     );
     if (dist < 1) return;
     final speed = dist / (elapsedMs / 1000) * 3.6;
+    _applySpeedKmh(speed);
+  }
+
+  void _applySpeedKmh(double speed) {
+    if (!speed.isFinite || speed < 0) return;
     _lastSpeedKmh = _lastSpeedKmh == 0
         ? speed
         : _lastSpeedKmh * 0.7 + speed * 0.3;
@@ -4294,7 +4290,11 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       _targetPos!.latitude,
       _targetPos!.longitude,
     );
-    final eta = _avgSpeedMps > 0 ? (dist / _avgSpeedMps / 60).round() : 0;
+    // مسافة الطرق الحقيقية أطول من الخط المستقيم، والسرعة المثبتة لا تعكس
+    // الوقوف (المتجر/الازدحام) → نستخدم حداً أدنى واقعياً للسرعة
+    final roadFactor = 1.3;
+    final speedKmh = _avgSpeedKmh < 8 ? 18.0 : _avgSpeedKmh;
+    final eta = (dist * roadFactor / (speedKmh / 3.6) / 60).round();
     setState(() {
       _distanceMeters = dist;
       _etaMinutes = eta;
@@ -4333,6 +4333,8 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   void _onDriverLocationUpdated(data) {
     if (!mounted || _trackedDriverId == null) return;
     if (data['driverId'] != _trackedDriverId) return;
+    final sp = data['speed'];
+    if (sp is num && sp > 0) _applySpeedKmh(sp.toDouble());
     _recordDriverPos(LatLng(data['lat'], data['lng']));
     setState(() {
       _driverPos = LatLng(data['lat'], data['lng']);
@@ -4359,7 +4361,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     final initialPos = _driverPos ?? _userPos ?? const LatLng(36.7538, 3.0588);
     final statusSteps = ['accepted', 'purchased', 'onway', 'delivered'];
     final stepLabels = ['قبول', 'شراء', 'توصيل', 'استلام'];
-    final currentIdx = statusSteps.indexOf('onway');
+    final currentIdx = statusSteps.indexOf(_orderStatus);
     return Scaffold(
       backgroundColor: kBgColor,
       body: Stack(
@@ -4627,7 +4629,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
                           children: [
                             _infoTile('المسافة', _distanceMeters > 0 ? _formatDistance() : '...', CupertinoIcons.location_fill, kPrimaryColor),
                             Container(width: 1, height: 44, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 8)),
-                            _infoTile('الوقت المتبقي', _distanceMeters > 0 ? _formatETA() : '...', CupertinoIcons.clock_fill, Colors.orange),
+                            _infoTile(_etaLabel, _distanceMeters > 0 ? _formatETA() : '...', CupertinoIcons.clock_fill, Colors.orange),
                             Container(width: 1, height: 44, color: Colors.grey.shade200, margin: const EdgeInsets.symmetric(horizontal: 8)),
                             _infoTile('وقت الوصول', _distanceMeters > 0 ? _estimatedArrival() : '...', CupertinoIcons.flag_fill, kSuccessColor),
                           ],

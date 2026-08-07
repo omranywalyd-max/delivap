@@ -31,6 +31,14 @@ class ApiClient {
     _customToken = token;
   }
 
+  // نفس منطق _headers(): الـ JWT أولاً، ثم Firebase
+  static Future<String?> _authToken() async {
+    if (_customToken != null) return _customToken;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) return user.getIdToken();
+    return null;
+  }
+
   static Future<Map<String, dynamic>> get(String path) async {
     try {
       final res = await http.get(
@@ -213,9 +221,8 @@ class ApiClient {
             'POST',
             Uri.parse('${EnvConfig.baseUrl}/api/upload'),
           );
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null) {
-            final token = await user.getIdToken();
+          final token = await _authToken();
+          if (token != null) {
             req.headers['Authorization'] = 'Bearer $token';
           }
           final mime = isPng ? MediaType('image', 'png') : MediaType('image', 'jpeg');

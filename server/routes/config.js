@@ -3,7 +3,7 @@ const router = express.Router();
 const Config = require('../models/Config');
 const WilayaConfig = require('../models/WilayaConfig');
 const authMiddleware = require('../middleware/auth');
-const { requireAdmin } = require('../middleware/authorize');
+const { requireAdmin, requireAdminOrPricingDriver } = require('../middleware/authorize');
 
 router.get('/config', async (req, res) => {
   try {
@@ -67,7 +67,7 @@ router.get('/wilaya-configs/:cityName', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/wilaya_configs/:cityName', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/wilaya_configs/:cityName', authMiddleware, requireAdminOrPricingDriver, async (req, res) => {
   try {
     const name = req.params.cityName.replace(/-/g, '_');
     const regex = new RegExp(name, 'i');

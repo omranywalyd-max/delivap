@@ -19,6 +19,7 @@ class SocketClient {
       'extraHeaders': {
         if (token != null) 'Authorization': 'Bearer $token',
       },
+      'transports': ['websocket'],
       'autoConnect': true,
       'reconnection': true,
       'reconnectionAttempts': 20,

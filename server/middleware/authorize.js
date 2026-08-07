@@ -5,6 +5,18 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ error: 'admin_only' });
 }
 
+// يسمح للأدمن أو لسائق لديه صلاحية التسعير (canSetPricing) بتحديث تسعيرة المدن
+async function requireAdminOrPricingDriver(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'No token' });
+  if (req.user.role === 'admin') return next();
+  try {
+    const Driver = require('../models/Driver');
+    const driver = await Driver.findOne({ uid: req.user.uid || req.user.user_id });
+    if (driver && driver.canSetPricing === true) return next();
+  } catch (_) {}
+  return res.status(403).json({ error: 'admin_only' });
+}
+
 // الـ UID الخاص بالطالب (Firebase uid أو JWT id)
 function callerUid(req) {
   const u = req.user || {};
@@ -45,4 +57,4 @@ function isSelfOrAdmin(req, user, rawId) {
   return false;
 }
 
-module.exports = { requireAdmin, isSelfOrAdmin, callerUid, tokenIdentities, resolveUserFromReq };
+module.exports = { requireAdmin, requireAdminOrPricingDriver, isSelfOrAdmin, callerUid, tokenIdentities, resolveUserFromReq };

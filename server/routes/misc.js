@@ -77,6 +77,10 @@ router.delete('/saved-locations/:id', async (req, res) => {
     const loc = await SavedLocation.findById(req.params.id);
     if (!loc) return res.status(404).json({ error: 'Not found' });
     if (!(await isOwner(req, loc.userId))) return res.status(403).json({ error: 'Forbidden' });
+    const remaining = await SavedLocation.countDocuments({ userId: loc.userId });
+    if (remaining <= 1) {
+      return res.status(400).json({ error: 'لا يمكن حذف آخر موقع' });
+    }
     await SavedLocation.findByIdAndDelete(req.params.id);
     res.json({ deleted: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

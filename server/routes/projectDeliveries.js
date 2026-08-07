@@ -8,6 +8,7 @@ const { emitToUser, emitToDriver } = require('../socket');
 const { sendToUser, sendToDriver } = require('../fcm');
 const User = require('../models/User');
 const Project = require('../models/Project');
+const Store = require('../models/Store');
 const { deleteImageFile, deleteImageFiles } = require('../helpers/fileCleanup');
 const authMiddleware = require('../middleware/auth');
 const { tokenIdentities, resolveUserFromReq } = require('../middleware/authorize');
@@ -86,7 +87,9 @@ router.get('/project-deliveries/:id', async (req, res) => {
 
 router.post('/project-deliveries', async (req, res) => {
   try {
-    const delivery = await ProjectDelivery.create({ ...req.body, status: 'pending' });
+    // بدون سائق (صاحبة المحل توصل بنفسها) يبقى بحالته، وإلا pending
+    const status = req.body.status === 'self_delivery' ? 'self_delivery' : 'pending';
+    const delivery = await ProjectDelivery.create({ ...req.body, status });
     const uid = delivery.driverId ? await resolveDriverId(delivery.driverId) : null;
     const io = getIO();
     if (io) {
@@ -279,6 +282,27 @@ router.put('/project-deliveries/:id', async (req, res) => {
           }
         } catch (drvErr) {
           console.error('Project delivery driver earnings error:', drvErr.message);
+        }
+      } else if (delivery.storeOwnerId) {
+        // بدون سائق: صاحبة المشروع توصل بنفسها → تُحسب أجرة التوصيل في حسابها وحساب المحل
+        try {
+          const fee = delivery.deliveryPrice || 0;
+          if (delivery.storeId) {
+            const store = await Store.findById(delivery.storeId);
+            if (store) {
+              store.totalEarnings = (store.totalEarnings || 0) + fee;
+              store.cash = (store.cash || 0) + fee;
+              await store.save();
+            }
+          }
+          const owner = await User.findOne({ uid: delivery.storeOwnerId });
+          if (owner) {
+            owner.totalEarnings = (owner.totalEarnings || 0) + fee;
+            owner.cash = (owner.cash || 0) + fee;
+            await owner.save();
+          }
+        } catch (ownErr) {
+          console.error('Self project delivery owner earnings error:', ownErr.message);
         }
       }
       deleteImageFile(delivery.imageUrl);

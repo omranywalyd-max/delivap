@@ -691,6 +691,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   label: doc['label'] ?? '',
                   data: doc,
                   address: doc['address'] ?? '',
+                  canDelete: _savedLocations.length > 1,
                   onDelete: () => _deleteLocation(uid, doc['_id']),
                   onEdit: () => _openLocationDialog(
   uid,
@@ -702,6 +703,18 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _deleteLocation(String uid, String docId) async {
+    if (_savedLocations.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'لا يمكن حذف آخر موقع، يجب أن يبقى موقع واحد على الأقل',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Amiri')),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16)));
+      return;
+    }
     await ApiClient.delete('/api/saved-locations/$docId');
     _loadSavedLocations();
   }
@@ -1439,6 +1452,19 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   Future<void> _save() async {
     if (_firstCtrl.text.trim().isEmpty) {
       _snack('أدخل الاسم الأول', error: true);
+      return;
+    }
+    final phone = _phoneCtrl.text.trim();
+    if (phone.isEmpty) {
+      _snack('أدخل رقم الهاتف', error: true);
+      return;
+    }
+    if (phone.length != 10) {
+      _snack('أدخل 10 أرقام بالضبط', error: true);
+      return;
+    }
+    if (!RegExp(r'^0[567]').hasMatch(phone)) {
+      _snack('الرقم يجب أن يبدأ بـ 05 أو 06 أو 07', error: true);
       return;
     }
     if (_passCtrl.text.isNotEmpty) {
@@ -2439,12 +2465,14 @@ String _cityFr = '';
 // ══════════════════════════════════════════════════════════════════════════════
 class _LocationTile extends StatelessWidget {
   final String label, address;
+  final bool canDelete;
   final VoidCallback onDelete, onEdit;
   final Map<String, dynamic> data;
 
   const _LocationTile({
     required this.label,
     required this.address,
+    required this.canDelete,
     required this.onDelete,
     required this.onEdit,
     required this.data,
@@ -2470,7 +2498,22 @@ class _LocationTile extends StatelessWidget {
         ]),
       child: Row(
         children: [
-          _circleBtn(Icons.delete_outline, Colors.redAccent, onDelete),
+          _circleBtn(
+            Icons.delete_outline,
+            canDelete ? Colors.redAccent : Colors.grey.shade400,
+            canDelete
+                ? onDelete
+                : () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'لا يمكن حذف آخر موقع، يجب أن يبقى موقع واحد على الأقل',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Amiri')),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                        margin: EdgeInsets.all(16)));
+                  }),
           const SizedBox(width: 8),
           _circleBtn(Icons.edit_location_alt_outlined, Colors.blue, onEdit),
           const Spacer(),
