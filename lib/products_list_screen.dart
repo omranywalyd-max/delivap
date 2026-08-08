@@ -220,15 +220,20 @@ class CartProvider extends ChangeNotifier {
     final index = _items.indexWhere((item) => item.productId == product.productId && item.selectedModelName == product.selectedModelName);
     if (index == -1) {
       if (_items.isNotEmpty) {
-        final existingStyle = _items.first.uiStyle;
         final newStyle = product.uiStyle;
-        if ((newStyle == 6 || newStyle == 7) && existingStyle != newStyle) {
-          lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
-          return false;
-        }
-        if ((existingStyle == 6 || existingStyle == 7) && existingStyle != newStyle) {
-          lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
-          return false;
+        final bool isProjectStyle = newStyle == 6 || newStyle == 7;
+        if (isProjectStyle) {
+          // منتج مشروع (ستايل 6/7) — لازم يكون وحده في السلة
+          if (_items.any((i) => i.uiStyle != newStyle)) {
+            lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
+            return false;
+          }
+        } else {
+          // منتج عادي — لا يمكن إضافته إذا كانت السلة فيها منتج مشروع (ستايل 6/7)
+          if (_items.any((i) => i.uiStyle == 6 || i.uiStyle == 7)) {
+            lastError = 'عذراً، هذا النوع من المنتجات لا يمكن إضافته مع منتجات أخرى في السلة. يرجى تفريغ السلة أولاً.';
+            return false;
+          }
         }
       }
       _items.add(product);
@@ -3454,9 +3459,11 @@ class _Style6DetailSheetState extends State<Style6DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
+              Expanded(
+                child: Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
+              ),
             ],
           ),
         ],
@@ -4513,9 +4520,11 @@ class _Style7DetailSheetState extends State<Style7DetailSheet>
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
+              Expanded(
+                child: Text(widget.product.description.isNotEmpty ? widget.product.description : 'لا يوجد وصف لهذا المنتج.',
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF6E6B7B), fontFamily: 'Amiri', height: 1.8)),
+              ),
             ],
           ),
         ],

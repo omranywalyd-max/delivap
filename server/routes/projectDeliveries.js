@@ -108,7 +108,7 @@ router.post('/project-deliveries', async (req, res) => {
       sendToUser({ userId: delivery.userId, title: '📦 تم إنشاء توصيلية مشروع', body: 'تم إنشاء طلب توصيل لمشروعك، يرجى انتظار السائق.', data: { deliveryId: delivery._id.toString(), type: 'delivery_created' } });
     }
     if (uid) {
-      sendToDriver({ driverId: uid, title: '🚚 توصيلية مشروع جديدة', body: `توصيلية من ${delivery.storeName || ''} إلى ${delivery.customerName || ''} — ${delivery.deliveryPrice || 0} DA`, data: { deliveryId: delivery._id.toString(), type: 'delivery_assigned' } });
+      sendToDriver({ driverId: uid, title: '🚚 توصيلية مشروع جديدة', body: `توصيلية من ${delivery.storeName || ''} — ${delivery.deliveryPrice || 0} DA`, data: { deliveryId: delivery._id.toString(), type: 'delivery_assigned' } });
     }
     res.status(201).json(delivery);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -284,21 +284,21 @@ router.put('/project-deliveries/:id', async (req, res) => {
           console.error('Project delivery driver earnings error:', drvErr.message);
         }
       } else if (delivery.storeOwnerId) {
-        // بدون سائق: صاحبة المشروع توصل بنفسها → تُحسب أجرة التوصيل في حسابها وحساب المحل
+        // بدون سائق: صاحبة المشروع توصل بنفسها → تُحسب الفاتورة كاملة في حسابها وحساب المحل
         try {
-          const fee = delivery.deliveryPrice || 0;
+          const invoice = delivery.totalPrice || (delivery.deliveryPrice || 0) + (delivery.productPrice || 0);
           if (delivery.storeId) {
             const store = await Store.findById(delivery.storeId);
             if (store) {
-              store.totalEarnings = (store.totalEarnings || 0) + fee;
-              store.cash = (store.cash || 0) + fee;
+              store.totalEarnings = (store.totalEarnings || 0) + invoice;
+              store.cash = (store.cash || 0) + invoice;
               await store.save();
             }
           }
           const owner = await User.findOne({ uid: delivery.storeOwnerId });
           if (owner) {
-            owner.totalEarnings = (owner.totalEarnings || 0) + fee;
-            owner.cash = (owner.cash || 0) + fee;
+            owner.totalEarnings = (owner.totalEarnings || 0) + invoice;
+            owner.cash = (owner.cash || 0) + invoice;
             await owner.save();
           }
         } catch (ownErr) {

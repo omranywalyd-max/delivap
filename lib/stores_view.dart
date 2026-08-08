@@ -352,7 +352,8 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
                 storeColor: _storeColor,
                 distance: cat.distance,
                 openTime: cat.openTime,
-                closeTime: cat.closeTime);
+                closeTime: cat.closeTime,
+                isProjectStyle: _uiStyle == 6);
             }),
       ]);
   }
@@ -1176,6 +1177,7 @@ class CategoryCardWidget extends StatefulWidget {
   final double? lat, lng;
   final String openTime;
   final String closeTime;
+  final bool isProjectStyle;
 
   const CategoryCardWidget({
     super.key,
@@ -1192,6 +1194,7 @@ class CategoryCardWidget extends StatefulWidget {
     this.lng,
     this.openTime = '',
     this.closeTime = '',
+    this.isProjectStyle = false,
   });
 
   @override
@@ -1258,36 +1261,48 @@ class _CategoryCardWidgetState extends State<CategoryCardWidget> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: widget.distance != null
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "${widget.distance!.toStringAsFixed(1)} km",
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Amiri')),
-                        Flexible(
-                          child: Text(
-                            widget.name,
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              color: kTextDark,
-                              fontFamily: 'Amiri'))),
-                      ])
-                  : Center(
+              child: widget.isProjectStyle
+                  ? Center(
                       child: Text(
                         widget.name,
                         textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 13,
                           color: kTextDark,
-                          fontFamily: 'Amiri')))),
+                          fontFamily: 'Amiri')))
+                  : widget.distance != null
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "${widget.distance!.toStringAsFixed(1)} km",
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Amiri')),
+                            Flexible(
+                              child: Text(
+                                widget.name,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: kTextDark,
+                                  fontFamily: 'Amiri'))),
+                          ])
+                      : Center(
+                          child: Text(
+                            widget.name,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: kTextDark,
+                              fontFamily: 'Amiri')))),
           ])));
   }
 }

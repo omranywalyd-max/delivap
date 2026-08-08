@@ -174,11 +174,25 @@ class DeliveryPricingService {
       // احتياط: سائق دراجة نارية فقط (لا سيارة ولا نقل) في نفس المدينة
       final driversList =
           await ApiClient.getList('/api/drivers?isOnline=true&vehicleType=motorcycle');
+      String normalize(String s) => s
+          .trim()
+          .toLowerCase()
+          .replaceAll('_', ' ')
+          .replaceAll(RegExp(r'[أإآ]'), 'ا')
+          .replaceAll('ة', 'ه');
+      final nAr = normalize(cityNameAr);
+      final nFr = normalize(cityNameFr);
       for (final d in driversList) {
         if ((d['vehicleType'] as String?) != 'motorcycle') continue;
-        if (d['cityNameAr'] == cityNameAr ||
-            d['cityNameFr'] == cityNameFr ||
-            d['cityName'] == cityNameAr) {
+        final dAr = normalize(d['cityNameAr'] as String? ?? '');
+        final dFr = normalize(d['cityNameFr'] as String? ?? '');
+        final dMain = normalize(d['cityName'] as String? ?? '');
+        final matchesCity = (nAr.isNotEmpty &&
+                (dAr == nAr ||
+                    dMain == nAr ||
+                    (dAr.isNotEmpty && (dAr.contains(nAr) || nAr.contains(dAr))))) ||
+            (nFr.isNotEmpty && dFr.isNotEmpty && dFr == nFr);
+        if (matchesCity) {
           if (d['deliveryConfig'] != null) {
             return calcFromConfig(
               d['deliveryConfig'],
@@ -468,12 +482,26 @@ class DeliveryPricingService {
   }
 
   static Future<bool> hasDriversInCity(String cityAr, String cityFr) async {
+    String normalize(String s) => s
+        .trim()
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'[أإآ]'), 'ا')
+        .replaceAll('ة', 'ه');
     try {
       final drivers = await ApiClient.getList('/api/drivers?isOnline=true');
+      final nAr = normalize(cityAr);
+      final nFr = normalize(cityFr);
       for (final d in drivers) {
-        if (d['cityNameAr'] == cityAr ||
-            d['cityNameFr'] == cityFr ||
-            d['cityName'] == cityAr)
+        final dAr = normalize(d['cityNameAr'] as String? ?? '');
+        final dFr = normalize(d['cityNameFr'] as String? ?? '');
+        final dMain = normalize(d['cityName'] as String? ?? '');
+        if (nAr.isNotEmpty && dAr.isNotEmpty && dAr == nAr) return true;
+        if (nFr.isNotEmpty && dFr.isNotEmpty && dFr == nFr) return true;
+        if (nAr.isNotEmpty && dMain.isNotEmpty && dMain == nAr) return true;
+        if (nAr.isNotEmpty &&
+            dAr.isNotEmpty &&
+            (dAr.contains(nAr) || nAr.contains(dAr)))
           return true;
       }
     } catch (_) {}
@@ -641,16 +669,22 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _autoComputeDeliveryFromLocation() async {
+    if (_isProjectStyle) return;
     final locationProvider = LocationProvider();
     if (!locationProvider.hasLocation) return;
     if (mounted) setState(() => _loadingPrecomputed = true);
     try {
-      final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
-        locationProvider.lat!,
-        locationProvider.lng!,
-      );
-      final cAr = cityNames['ar']!;
-      final cFr = cityNames['fr']!;
+      // ✅ نفضّل المدينة المحفوظة في البروفيل على التحديد الخارجي (Nominatim)
+      String cAr = (locationProvider.cityNameAr ?? '').trim();
+      String cFr = (locationProvider.cityNameFr ?? '').trim();
+      if (cAr.isEmpty && cFr.isEmpty) {
+        final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
+          locationProvider.lat!,
+          locationProvider.lng!,
+        );
+        cAr = cityNames['ar']!;
+        cFr = cityNames['fr']!;
+      }
       final distKm = await DeliveryPricingService.calcDistanceToFarthestStore(
         locationProvider.lat!,
         locationProvider.lng!,
@@ -706,16 +740,21 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _onTapNoPricing() async {
     final locationProvider = LocationProvider();
     if (!locationProvider.hasLocation) return;
-    final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
-      locationProvider.lat!,
-      locationProvider.lng!,
-    );
+    // ✅ نفضّل المدينة المحفوظة في البروفيل على التحديد الخارجي (Nominatim)
+    String cAr = (locationProvider.cityNameAr ?? '').trim();
+    if (cAr.isEmpty) {
+      final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
+        locationProvider.lat!,
+        locationProvider.lng!,
+      );
+      cAr = cityNames['ar']!;
+    }
     if (!mounted) return;
     final picked = await DeliveryPricingService.pickNearbyCity(
       context,
       userLat: locationProvider.lat!,
       userLng: locationProvider.lng!,
-      currentCityAr: cityNames['ar']!,
+      currentCityAr: cAr,
     );
     if (picked != null && mounted) {
       final distKm = await DeliveryPricingService.calcDistanceToFarthestStore(
@@ -1506,7 +1545,7 @@ class _CartScreenState extends State<CartScreen> {
 
   bool get _isProjectStyle =>
       GlobalCart.provider.items.isNotEmpty &&
-      GlobalCart.provider.items.every((p) => p.uiStyle == 6 || p.uiStyle == 7);
+      GlobalCart.provider.items.any((p) => p.uiStyle == 6 || p.uiStyle == 7);
 
   Widget _buildSummary(double subtotal) {
     final deliveryFee = (_precomputedPricing?['deliveryFee'] as double?) ?? 0;
@@ -2235,11 +2274,18 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
     _loadLoyaltyData();
     final lp = LocationProvider();
     if (lp.hasLocation) {
-      DeliveryPricingService.getCityNamesFromCoords(lp.lat!, lp.lng!).then((
-        names,
-      ) {
-        _checkDriversForCity(names['ar']!, names['fr']!);
-      });
+      // ✅ نفضّل المدينة المحفوظة في البروفيل على التحديد الخارجي (Nominatim)
+      final savedAr = (lp.cityNameAr ?? '').trim();
+      final savedFr = (lp.cityNameFr ?? '').trim();
+      if (savedAr.isNotEmpty) {
+        _checkDriversForCity(savedAr, savedFr);
+      } else {
+        DeliveryPricingService.getCityNamesFromCoords(lp.lat!, lp.lng!).then((
+          names,
+        ) {
+          _checkDriversForCity(names['ar']!, names['fr']!);
+        });
+      }
     }
   }
 
@@ -2385,7 +2431,7 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
 
   bool get _isProjectOrder =>
       GlobalCart.provider.items.isNotEmpty &&
-      GlobalCart.provider.items.every((p) => p.uiStyle == 6 || p.uiStyle == 7);
+      GlobalCart.provider.items.any((p) => p.uiStyle == 6 || p.uiStyle == 7);
 
   bool get _canConfirm =>
       _finalAddress.isNotEmpty &&
@@ -2396,15 +2442,24 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
           _driversAvailable == true ||
           _driversAvailable == null);
 
-  Future<void> _fetchPricingForLocation(double userLat, double userLng) async {
+  Future<void> _fetchPricingForLocation(
+    double userLat,
+    double userLng, {
+    String? cityNameAr,
+    String? cityNameFr,
+  }) async {
     setState(() => _loadingPricing = true);
     try {
-      final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
-        userLat,
-        userLng,
-      );
-      String cAr = cityNames['ar']!;
-      String cFr = cityNames['fr']!;
+      String cAr = (cityNameAr ?? '').trim();
+      String cFr = (cityNameFr ?? '').trim();
+      if (cAr.isEmpty) {
+        final cityNames = await DeliveryPricingService.getCityNamesFromCoords(
+          userLat,
+          userLng,
+        );
+        cAr = cityNames['ar']!;
+        cFr = cityNames['fr']!;
+      }
       _userCityName = cAr;
       _selectedCityAr = cAr;
       _selectedCityFr = cFr;
@@ -3050,6 +3105,11 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                       _mapAddress = result['address'].toString();
                       _selectedLat = double.tryParse(result['lat'].toString());
                       _selectedLng = double.tryParse(result['lng'].toString());
+                      _selectedCityAr =
+                          (result['cityNameAr'] as String?) ?? _selectedCityAr;
+                      _selectedCityFr =
+                          (result['cityNameFr'] as String?) ?? _selectedCityFr;
+                      _userCityName = _selectedCityAr;
                     } else {
                       _mapAddress = result.toString();
                     }
@@ -3058,6 +3118,8 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                     await _fetchPricingForLocation(
                       _selectedLat!,
                       _selectedLng!,
+                      cityNameAr: _selectedCityAr,
+                      cityNameFr: _selectedCityFr,
                     );
                   }
                 }

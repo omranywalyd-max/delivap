@@ -30,11 +30,15 @@ class LocationProvider extends ChangeNotifier {
   String? _address;
   double? _lat;
   double? _lng;
+  String? _cityNameAr;
+  String? _cityNameFr;
 
   String? get label => _label;
   String? get address => _address;
   double? get lat => _lat;
   double? get lng => _lng;
+  String? get cityNameAr => _cityNameAr;
+  String? get cityNameFr => _cityNameFr;
 
   bool get hasLocation => _address != null && _address!.isNotEmpty;
 
@@ -43,11 +47,15 @@ class LocationProvider extends ChangeNotifier {
     required String address,
     double? lat,
     double? lng,
+    String? cityNameAr,
+    String? cityNameFr,
   }) {
     _label = label;
     _address = address;
     _lat = lat;
     _lng = lng;
+    _cityNameAr = cityNameAr;
+    _cityNameFr = cityNameFr;
     notifyListeners();
   }
 
@@ -56,6 +64,8 @@ class LocationProvider extends ChangeNotifier {
     _address = null;
     _lat = null;
     _lng = null;
+    _cityNameAr = null;
+    _cityNameFr = null;
     notifyListeners();
   }
 }
@@ -130,7 +140,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           label: data['label'] ?? 'موقعي',
           address: data['address'] ?? '',
           lat: (data['lat'] as num?)?.toDouble(),
-          lng: (data['lng'] as num?)?.toDouble());
+          lng: (data['lng'] as num?)?.toDouble(),
+          cityNameAr: (data['cityNameAr'] as String?) ?? '',
+          cityNameFr: (data['cityNameFr'] as String?) ?? '');
         setState(() {});
       }
     } catch (_) {}
@@ -166,7 +178,9 @@ class _DashboardScreenState extends State<DashboardScreen>
         label: data['label'] ?? 'موقعي',
         address: data['address'] ?? '',
         lat: (data['lat'] as num?)?.toDouble(),
-        lng: (data['lng'] as num?)?.toDouble());
+        lng: (data['lng'] as num?)?.toDouble(),
+        cityNameAr: (data['cityNameAr'] as String?) ?? '',
+        cityNameFr: (data['cityNameFr'] as String?) ?? '');
     }
   }
 
@@ -213,7 +227,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           label: 'موقعي',
           address: result['address'] ?? '',
           lat: result['lat'],
-          lng: result['lng']);
+          lng: result['lng'],
+          cityNameAr: (result['cityNameAr'] as String?) ?? '',
+          cityNameFr: (result['cityNameFr'] as String?) ?? '');
         setState(() {});
       }
     }
@@ -232,12 +248,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       isScrollControlled: true,
       builder: (_) => _LocationBottomSheet(
         userId: user.uid,
-        onLocationSelected: (label, address, lat, lng) {
+        onLocationSelected: (label, address, lat, lng, cityNameAr, cityNameFr) {
           _locationProvider.setLocation(
             label: label,
             address: address,
             lat: lat,
-            lng: lng);
+            lng: lng,
+            cityNameAr: cityNameAr,
+            cityNameFr: cityNameFr);
           if (mounted) setState(() {});
         },
         onPickFromMap: () async {
@@ -249,7 +267,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               label: 'موقع جديد',
               address: result['address'] ?? '',
               lat: result['lat'],
-              lng: result['lng']);
+              lng: result['lng'],
+              cityNameAr: (result['cityNameAr'] as String?) ?? '',
+              cityNameFr: (result['cityNameFr'] as String?) ?? '');
             setState(() {});
           }
         }));
@@ -758,7 +778,13 @@ class _LocationChip extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════════════
 class _LocationBottomSheet extends StatefulWidget {
   final String userId;
-  final Function(String label, String address, double? lat, double? lng)
+  final Function(
+      String label,
+      String address,
+      double? lat,
+      double? lng,
+      String? cityNameAr,
+      String? cityNameFr)
   onLocationSelected;
   final VoidCallback onPickFromMap;
 
@@ -935,7 +961,10 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
                           return GestureDetector(
                             onTap: () {
                               Navigator.pop(context);
-                              widget.onLocationSelected(label, address, lat, lng);
+                              final cityAr = (d['cityNameAr'] as String?) ?? '';
+                              final cityFr = (d['cityNameFr'] as String?) ?? '';
+                              widget.onLocationSelected(
+                                  label, address, lat, lng, cityAr, cityFr);
                             },
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 12),

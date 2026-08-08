@@ -130,10 +130,6 @@ import 'package:flutter_application_1/driver_name_cache.dart';
       if (_isLoading || _uploadingImage) return false;
       if (!_isDelivery && _orderNameCtrl.text.trim().isEmpty) return false;
       if (_priceCtrl.text.trim().isEmpty) return false;
-      if (_minPrice != null) {
-        final v = double.tryParse(_priceCtrl.text.trim()) ?? 0;
-        if (v < _minPrice!) return false;
-      }
       return _fromAddress.isNotEmpty && _toAddress.isNotEmpty;
     }
 
@@ -187,15 +183,12 @@ import 'package:flutter_application_1/driver_name_cache.dart';
         if (!mounted || mySeq != _calcSeq) return;
         final fee = (res['deliveryFee'] as num?)?.toDouble();
         if (fee != null && fee > 0) {
-          final current = double.tryParse(_priceCtrl.text.trim()) ?? 0;
           setState(() {
             _minPrice = fee;
             _pricingInfo = res;
             _calculatingPrice = false;
-            // نعبّئ الحقل تلقائياً فقط إذا فارغ أو أقل من الحد الأدنى
-            if (_priceCtrl.text.trim().isEmpty || current < fee) {
-              _priceCtrl.text = fee.toStringAsFixed(0);
-            }
+            // نحدّث السعر تلقائياً كلما تغيّرت المواقع — الزبون يبقى حراً في تعديله لاحقاً
+            _priceCtrl.text = fee.toStringAsFixed(0);
           });
         } else {
           setState(() {
@@ -745,16 +738,7 @@ import 'package:flutter_application_1/driver_name_cache.dart';
                     textDirection: TextDirection.rtl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) => setState(() {
-                      // الزبون يزيد فقط ولا ينقص عن السعر المحسوب
-                      if (_minPrice != null) {
-                        final parsed = double.tryParse(v.trim()) ?? 0;
-                        if (parsed < _minPrice! && v.trim().isNotEmpty) {
-                          _priceCtrl.text = _minPrice!.toStringAsFixed(0);
-                          _priceCtrl.selection = TextSelection.collapsed(offset: _priceCtrl.text.length);
-                        }
-                      }
-                    }),
+                    onChanged: (v) => setState(() {}),
                     style: const TextStyle(
                       fontSize: 18,
                       color: kTextDark,
@@ -816,10 +800,6 @@ import 'package:flutter_application_1/driver_name_cache.dart';
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'يمكنك الزيادة في السعر، ولا يمكن إنقاصه عن السعر المحسوب',
-              style: TextStyle(fontSize: 11, fontFamily: 'Amiri', color: Colors.black45),
-            ),
           ],
         ],
       );
@@ -1217,9 +1197,7 @@ import 'package:flutter_application_1/driver_name_cache.dart';
         !_isLoading &&
         _fromFinalAddress.isNotEmpty &&
         _toFinalAddress.isNotEmpty &&
-        _priceCtrl.text.trim().isNotEmpty &&
-        (_minPrice == null ||
-            (double.tryParse(_priceCtrl.text.trim()) ?? 0) >= _minPrice!);
+        _priceCtrl.text.trim().isNotEmpty;
 
     (double?, double?) get _fromCoords {
       if (_fromMap) return (_fromLat, _fromLng);
@@ -1273,15 +1251,12 @@ import 'package:flutter_application_1/driver_name_cache.dart';
         if (!mounted || mySeq != _calcSeq) return;
         final fee = (res['deliveryFee'] as num?)?.toDouble();
         if (fee != null && fee > 0) {
-          final current = double.tryParse(_priceCtrl.text.trim()) ?? 0;
           setState(() {
             _minPrice = fee;
             _pricingInfo = res;
             _calculatingPrice = false;
-            // نعبّئ الحقل تلقائياً فقط إذا فارغ أو أقل من الحد الأدنى
-            if (_priceCtrl.text.trim().isEmpty || current < fee) {
-              _priceCtrl.text = fee.toStringAsFixed(0);
-            }
+            // نحدّث السعر تلقائياً كلما تغيّرت المواقع — الزبون يبقى حراً في تعديله لاحقاً
+            _priceCtrl.text = fee.toStringAsFixed(0);
           });
         } else {
           setState(() {
@@ -1784,16 +1759,7 @@ import 'package:flutter_application_1/driver_name_cache.dart';
                     textDirection: TextDirection.rtl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) => setState(() {
-                      // الزبون يزيد فقط ولا ينقص عن السعر المحسوب
-                      if (_minPrice != null) {
-                        final parsed = double.tryParse(v.trim()) ?? 0;
-                        if (parsed < _minPrice! && v.trim().isNotEmpty) {
-                          _priceCtrl.text = _minPrice!.toStringAsFixed(0);
-                          _priceCtrl.selection = TextSelection.collapsed(offset: _priceCtrl.text.length);
-                        }
-                      }
-                    }),
+                    onChanged: (v) => setState(() {}),
                     style: const TextStyle(
                       fontSize: 18,
                       color: kTextDark,
@@ -1865,10 +1831,6 @@ import 'package:flutter_application_1/driver_name_cache.dart';
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'يمكنك الزيادة في السعر، ولا يمكن إنقاصه عن السعر المحسوب',
-              style: TextStyle(fontSize: 11, fontFamily: 'Amiri', color: Colors.black45),
-            ),
           ],
         ],
       );
