@@ -88,4 +88,61 @@ router.put('/wilaya_configs/:cityName', authMiddleware, requireAdminOrPricingDri
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Force update config (public, no auth) ──
+// ترجع أدنى رقم build مطلوب + رابط التحديث لكل تطبيق.
+// الأولوية لمخزون MongoDB (يعدل من لوحة التحكم) ثم .env كقيمة افتراضية.
+router.get('/app/config', async (req, res) => {
+  try {
+    let versions = {};
+    try {
+      const doc = await Config.findOne();
+      if (doc) versions = doc.get('appVersions') || {};
+    } catch (_) {}
+    const v = versions.customer || {};
+    const d = versions.driver || {};
+    res.json({
+      customer: {
+        minBuild: v.minBuild != null ? parseInt(v.minBuild, 10) : parseInt(process.env.MIN_BUILD_CUSTOMER || '0', 10),
+        latestVersion: v.latestVersion ?? process.env.LATEST_VERSION_CUSTOMER ?? '',
+        updateUrl: v.updateUrl ?? (process.env.UPDATE_URL_CUSTOMER ||
+          'https://play.google.com/store/apps/details?id=com.deliv.customer'),
+      },
+      driver: {
+        minBuild: d.minBuild != null ? parseInt(d.minBuild, 10) : parseInt(process.env.MIN_BUILD_DRIVER || '0', 10),
+        latestVersion: d.latestVersion ?? process.env.LATEST_VERSION_DRIVER ?? '',
+        updateUrl: d.updateUrl ?? (process.env.UPDATE_URL_DRIVER ||
+          'https://play.google.com/store/apps/details?id=com.deliv.driver'),
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── تحديث النسخة الإلزامية من لوحة التحكم (admin only) ──
+// body: { app: 'customer' | 'driver', minBuild: 25, latestVersion: '1.2.0', updateUrl: '...' }
+router.put('/app/config', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { app, minBuild, latestVersion, updateUrl } = req.body;
+    if (app !== 'customer' && app !== 'driver') {
+      return res.status(400).json({ error: 'app must be customer or driver' });
+    }
+    let doc = await Config.findOne();
+    if (!doc) doc = new Config({});
+    const versions = doc.get('appVersions') || {};
+    const current = versions[app] || {};
+    versions[app] = {
+      minBuild: minBuild != null ? parseInt(minBuild, 10) : current.minBuild,
+      latestVersion: latestVersion || current.latestVersion,
+      updateUrl: updateUrl || current.updateUrl,
+    };
+    doc.set('appVersions', versions);
+    doc.set('updatedAt', new Date());
+    await doc.save();
+    res.json(versions[app]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

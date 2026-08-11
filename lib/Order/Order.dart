@@ -15,6 +15,7 @@ import 'dart:ui';
 
 import 'order_models.dart';
 import 'active_orders_screen.dart';
+import 'project_unread_store.dart';
 import 'package:flutter_application_1/Services/api_client.dart';
 import 'package:flutter_application_1/Services/socket_client.dart';
 
@@ -98,9 +99,11 @@ class _OrdersScreenState extends State<OrdersScreen>
       final ordersData = await ApiClient.getList('/api/orders?userId=${user.uid}');
       final transportData = await ApiClient.getList('/api/transport-orders?userId=${user.uid}');
       final serviceData = await ApiClient.getList('/api/service-orders?userId=${user.uid}');
+      final projectData = await ApiClient.getList('/api/projects?userId=${user.uid}');
+      final deliveryData = await ApiClient.getList('/api/project-deliveries?userId=${user.uid}');
 
       int active = 0, done = 0, cancelled = 0;
-      for (final doc in [...ordersData, ...transportData, ...serviceData]) {
+      for (final doc in [...ordersData, ...transportData, ...serviceData, ...projectData, ...deliveryData]) {
         final d = doc as Map<String, dynamic>;
         final status = d['status'] as String? ?? '';
         switch (status) {
@@ -109,9 +112,17 @@ class _OrdersScreenState extends State<OrdersScreen>
           case 'purchased':
           case 'on_way':
           case 'onway':
+          case 'onway_to_store':
+          case 'picked_up':
+          case 'in_transit':
+          case 'near_owner':
+          case 'near_customer':
+          case 'self_delivery':
+          case 'processing':
             active++;
             break;
           case 'delivered':
+          case 'completed':
             done++;
             break;
           case 'cancelled':
@@ -560,6 +571,8 @@ class _OrdersTabState extends State<_OrdersTab> {
   List<dynamic> _transportDocs = [];
   List<dynamic> _serviceDocs = [];
   List<dynamic> _ordersDocs = [];
+  List<dynamic> _pendingProjects = [];
+  List<dynamic> _projectDeliveries = [];
   bool _loading = true;
   Timer? _refreshTimer;
 
@@ -574,6 +587,12 @@ class _OrdersTabState extends State<_OrdersTab> {
     SocketClient.on('transport:created', _onAnyOrderEvent);
     SocketClient.on('order:updated', _onOrderUpdated);
     SocketClient.on('order:created', _onAnyOrderEvent);
+    SocketClient.on('project:updated', _onAnyOrderEvent);
+    SocketClient.on('project:created', _onAnyOrderEvent);
+    SocketClient.on('delivery:updated', _onAnyOrderEvent);
+    SocketClient.on('delivery:created', _onAnyOrderEvent);
+    SocketClient.on('project_delivery:updated', _onAnyOrderEvent);
+    SocketClient.on('project_delivery:created', _onAnyOrderEvent);
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) _loadAll();
     });
@@ -586,6 +605,8 @@ class _OrdersTabState extends State<_OrdersTab> {
         ApiClient.getList('/api/transport-orders?userId=${widget.userId}'),
         ApiClient.getList('/api/service-orders?userId=${widget.userId}'),
         ApiClient.getList('/api/orders?userId=${widget.userId}'),
+        ApiClient.getList('/api/project-deliveries?userId=${widget.userId}'),
+        ApiClient.getList('/api/projects?userId=${widget.userId}'),
       ]);
       if (!mounted) return;
       setState(() {
@@ -614,6 +635,28 @@ class _OrdersTabState extends State<_OrdersTab> {
           final hidden = List<String>.from(m['hiddenFor'] ?? []);
           if (hidden.contains(widget.userId)) return false;
           return widget.statuses.contains(m['status']);
+        }).toList();
+
+        // مشاريع (ستايل 6) + توصيليات المشاريع
+        final isActiveTab = widget.statuses.contains('pending');
+        final deliveriesRaw = results[3].whereType<Map<String, dynamic>>();
+        _projectDeliveries = deliveriesRaw.where((m) {
+          final rb = m['rejectedBy'];
+          final hasRejected = rb is String ? rb.isNotEmpty : rb is List ? rb.isNotEmpty : false;
+          if (hasRejected) return false;
+          if (isActiveTab) return true;
+          return widget.statuses.contains(m['status']);
+        }).toList();
+        final deliveredIds = _projectDeliveries
+            .map((d) => d['projectId'] as String? ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet();
+        final projectsRaw = results[4].whereType<Map<String, dynamic>>();
+        _pendingProjects = projectsRaw.where((p) {
+          final status = p['status'] as String? ?? '';
+          if (!isActiveTab) return false;
+          return status == 'pending' &&
+              !deliveredIds.contains(p['_id'] as String? ?? '');
         }).toList();
         _loading = false;
       });
@@ -671,6 +714,12 @@ class _OrdersTabState extends State<_OrdersTab> {
     SocketClient.off('transport:created', _onAnyOrderEvent);
     SocketClient.off('order:updated', _onOrderUpdated);
     SocketClient.off('order:created', _onAnyOrderEvent);
+    SocketClient.off('project:updated', _onAnyOrderEvent);
+    SocketClient.off('project:created', _onAnyOrderEvent);
+    SocketClient.off('delivery:updated', _onAnyOrderEvent);
+    SocketClient.off('delivery:created', _onAnyOrderEvent);
+    SocketClient.off('project_delivery:updated', _onAnyOrderEvent);
+    SocketClient.off('project_delivery:created', _onAnyOrderEvent);
     super.dispose();
   }
 
@@ -680,105 +729,138 @@ class _OrdersTabState extends State<_OrdersTab> {
       return _ShimmerList(shimmerAnim: widget.shimmerAnim);
     }
 
-    final totalItems = _transportDocs.length + _serviceDocs.length + _ordersDocs.length;
-    if (totalItems == 0) {
+    final children = <Widget>[];
+
+    // مشاريع (ستايل 6) قيد الانتظار عند صاحب المشروع
+    if (_pendingProjects.isNotEmpty) {
+      children.add(_projectSectionHeader('طلبات المشاريع قيد الانتظار'));
+      children.addAll(_pendingProjects.map((p) => ListenableBuilder(
+            listenable: ProjectUnreadStore.instance,
+            builder: (_, __) =>
+                PendingProjectCard(project: p as Map<String, dynamic>),
+          )));
+      children.add(const SizedBox(height: 8));
+    }
+
+    // توصيليات المشاريع (بعد ما يقبلها صاحب المتجر)
+    if (_projectDeliveries.isNotEmpty) {
+      children.add(_projectSectionHeader('مشاريعي'));
+      children.addAll(_projectDeliveries.map((d) => ListenableBuilder(
+            listenable: ProjectUnreadStore.instance,
+            builder: (_, __) =>
+                ProjectDeliveryCard(doc: d as Map<String, dynamic>),
+          )));
+      children.add(const SizedBox(height: 8));
+    }
+
+    for (final d in _transportDocs) {
+      final doc = d as Map<String, dynamic>;
+      children.add(TransportCard(
+        data: doc,
+        docId: doc['_id'] as String? ?? '',
+        onChanged: widget.onChanged));
+    }
+
+    for (final d in _serviceDocs) {
+      final doc = d as Map<String, dynamic>;
+      children.add(ServiceOrderCard(
+        data: doc,
+        docId: doc['_id'] as String? ?? '',
+        onChanged: widget.onChanged));
+    }
+
+    for (var i = 0; i < _ordersDocs.length; i++) {
+      final d = _ordersDocs[i] as Map<String, dynamic>;
+      final docId = d['_id'] as String? ?? '';
+      final items = ((d['items'] as List<dynamic>?) ?? []).map((item) {
+        final m = item as Map<String, dynamic>;
+
+        final double originalPrice = ((m['prix'] ?? m['price'] ?? 0) as num).toDouble();
+
+        final double finalPrice = m['finalPrice'] != null
+            ? (m['finalPrice'] as num).toDouble()
+            : originalPrice;
+
+        return OrderItem(
+          name: m['name'] as String? ?? '',
+          price: finalPrice,
+          originalPrice: originalPrice,
+          purchaseStatus: m['purchaseStatus'] as String? ?? '',
+          alternativeName: m['alternativeName'] as String? ?? '',
+          alternativePrice: ((m['alternativePrice'] as num?) ?? 0).toDouble(),
+          alternativeStatus: m['alternativeStatus'] as String? ?? '',
+          image: m['image'] as String? ?? m['imageUrl'] as String? ?? '',
+          quantity: (m['quantity'] as int?) ?? 1,
+          uiStyle: (m['uiStyle'] as int?) ?? 1,
+          capacite: m['capacite'] as String? ?? '',
+          categoryName: m['categoryName'] as String? ?? '',
+          templateName: m['templateName'] as String? ?? '',
+          storeName: m['storeName'] as String? ?? '',
+          storeId: m['storeId'] as String? ?? '',
+          productId: m['productId'] as String? ?? '',
+          categorieId: m['categorieId'] as String? ?? '',
+          sizes: (m['sizes'] as List?) ?? [],
+          extraImages: (m['extraImages'] as List?) ?? [],
+          variants: (m['variants'] as List?) ?? [],
+        );
+      }).toList();
+
+      final order = Order(
+        id: docId,
+        items: items,
+        deliveryFee: (d['deliveryFee'] as num? ?? 15).toDouble(),
+        driverName: d['driverName'] as String?,
+        status: statusFromString(d['status'] as String? ?? ''),
+        time: _formatTime(d['createdAt']),
+        address: d['address'] as String? ?? '',
+        magasinId: d['magasinId'] as String?,
+        customerConfirmed: d['customerConfirmed'] as bool? ?? false,
+        driverId: d['driverId'] as String?,
+        driverLat: (d['driverLat'] as num?)?.toDouble(),
+        driverLng: (d['driverLng'] as num?)?.toDouble(),
+        userLat: (d['userLat'] as num?)?.toDouble(),
+        userLng: (d['userLng'] as num?)?.toDouble(),
+        storeLat: (d['storeLat'] as num?)?.toDouble(),
+        storeLng: (d['storeLng'] as num?)?.toDouble(),
+        userCityNameAr: d['userCityName'] as String?,
+        userCityNameFr: d['userCityNameFr'] as String?,
+        counterOffer: d['counterOffer'] as Map<String, dynamic>?,
+        isFreeDelivery: d['isFreeDelivery'] == true);
+
+      children.add(AnimCard(
+        order: order,
+        index: i,
+        docId: docId,
+        onChanged: widget.onChanged));
+    }
+
+    if (children.isEmpty) {
       return _EmptyState(msg: widget.emptyMsg, icon: widget.emptyIcon);
     }
 
     return RefreshIndicator(
       onRefresh: () async => _loadAll(),
       color: const Color(0xFF6C63FF),
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 100),
         physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: totalItems,
-      itemBuilder: (context, index) {
-        if (index < _transportDocs.length) {
-          final d = _transportDocs[index] as Map<String, dynamic>;
-          final docId = d['_id'] as String? ?? '';
-          return TransportCard(
-            data: d,
-            docId: docId,
-            onChanged: widget.onChanged);
-        }
-
-        final serviceOffset = index - _transportDocs.length;
-        if (serviceOffset < _serviceDocs.length) {
-          final d = _serviceDocs[serviceOffset] as Map<String, dynamic>;
-          final docId = d['_id'] as String? ?? '';
-          return ServiceOrderCard(
-            data: d,
-            docId: docId,
-            onChanged: widget.onChanged);
-        }
-
-        final productIndex = index - _transportDocs.length - _serviceDocs.length;
-        final d = _ordersDocs[productIndex] as Map<String, dynamic>;
-        final docId = d['_id'] as String? ?? '';
-final items = ((d['items'] as List<dynamic>?) ?? []).map((item) {
-  final m = item as Map<String, dynamic>;
-
-  final double originalPrice = ((m['prix'] ?? m['price'] ?? 0) as num).toDouble();
-
-  final double finalPrice = m['finalPrice'] != null 
-      ? (m['finalPrice'] as num).toDouble() 
-      : originalPrice;
-
-  return OrderItem(
-    name: m['name'] as String? ?? '',
-    price: finalPrice,
-    originalPrice: originalPrice,
-    purchaseStatus: m['purchaseStatus'] as String? ?? '',
-    alternativeName: m['alternativeName'] as String? ?? '',
-    alternativePrice: ((m['alternativePrice'] as num?) ?? 0).toDouble(),
-    alternativeStatus: m['alternativeStatus'] as String? ?? '',
-    image: m['image'] as String? ?? m['imageUrl'] as String? ?? '',
-    quantity: (m['quantity'] as int?) ?? 1,
-    uiStyle: (m['uiStyle'] as int?) ?? 1,
-    capacite: m['capacite'] as String? ?? '',
-    categoryName: m['categoryName'] as String? ?? '',
-    templateName: m['templateName'] as String? ?? '',
-    storeName: m['storeName'] as String? ?? '',
-    storeId: m['storeId'] as String? ?? '',
-    productId: m['productId'] as String? ?? '',
-    categorieId: m['categorieId'] as String? ?? '',
-    sizes: (m['sizes'] as List?) ?? [],
-    extraImages: (m['extraImages'] as List?) ?? [],
-    variants: (m['variants'] as List?) ?? [],
-  );
-}).toList();
-
-        final order = Order(
-          id: docId,
-          items: items,
-          deliveryFee: (d['deliveryFee'] as num? ?? 15).toDouble(),
-          driverName: d['driverName'] as String?,
-          status: statusFromString(d['status'] as String? ?? ''),
-          time: _formatTime(d['createdAt']),
-          address: d['address'] as String? ?? '',
-          magasinId: d['magasinId'] as String?,
-          customerConfirmed: d['customerConfirmed'] as bool? ?? false,
-          driverId: d['driverId'] as String?,
-          driverLat: (d['driverLat'] as num?)?.toDouble(),
-          driverLng: (d['driverLng'] as num?)?.toDouble(),
-          userLat: (d['userLat'] as num?)?.toDouble(),
-          userLng: (d['userLng'] as num?)?.toDouble(),
-          storeLat: (d['storeLat'] as num?)?.toDouble(),
-          storeLng: (d['storeLng'] as num?)?.toDouble(),
-          userCityNameAr: d['userCityName'] as String?,
-          userCityNameFr: d['userCityNameFr'] as String?,
-          counterOffer: d['counterOffer'] as Map<String, dynamic>?,
-          isFreeDelivery: d['isFreeDelivery'] == true);
-
-        return AnimCard(
-          order: order,
-          index: index,
-          docId: docId,
-          onChanged: widget.onChanged);
-      },
-    ),
+        children: children,
+      ),
     );
   }
+
+  Widget _projectSectionHeader(String title) => Padding(
+    padding: const EdgeInsets.only(top: 10, bottom: 4),
+    child: Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: kPrimaryColor,
+        fontFamily: 'Amiri',
+      ),
+    ),
+  );
 
   String _formatTime(dynamic ts) {
     if (ts == null) return 'الآن';

@@ -1,6 +1,7 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemNavigator, SystemChrome, DeviceOrientation;
+import 'package:flutter/services.dart'
+    show SystemNavigator, SystemChrome, DeviceOrientation;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_application_1/products_list_screen.dart';
@@ -132,7 +133,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (user == null) return;
 
     try {
-      final locations = await ApiClient.getList('/api/users/${user.uid}/saved-locations');
+      final locations = await ApiClient.getList(
+        '/api/users/${user.uid}/saved-locations',
+      );
       if (locations.isNotEmpty && mounted) {
         final data = locations.first;
         if (data is! Map<String, dynamic>) return;
@@ -142,7 +145,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           lat: (data['lat'] as num?)?.toDouble(),
           lng: (data['lng'] as num?)?.toDouble(),
           cityNameAr: (data['cityNameAr'] as String?) ?? '',
-          cityNameFr: (data['cityNameFr'] as String?) ?? '');
+          cityNameFr: (data['cityNameFr'] as String?) ?? '',
+        );
         setState(() {});
       }
     } catch (_) {}
@@ -158,7 +162,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (user != null) {
       futures.add(_fetchUserLocation(user));
     }
-    futures.add(_bannerKey.currentState?._checkVersionAndLoad() ?? Future.value());
+    futures.add(
+      _bannerKey.currentState?._checkVersionAndLoad() ?? Future.value(),
+    );
     await Future.wait(futures);
 
     if (mounted) {
@@ -170,7 +176,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _fetchUserLocation(User user) async {
-    final locations = await ApiClient.getList('/api/users/${user.uid}/saved-locations');
+    final locations = await ApiClient.getList(
+      '/api/users/${user.uid}/saved-locations',
+    );
     if (locations.isNotEmpty && mounted) {
       final data = locations.first;
       if (data is! Map<String, dynamic>) return;
@@ -180,18 +188,20 @@ class _DashboardScreenState extends State<DashboardScreen>
         lat: (data['lat'] as num?)?.toDouble(),
         lng: (data['lng'] as num?)?.toDouble(),
         cityNameAr: (data['cityNameAr'] as String?) ?? '',
-        cityNameFr: (data['cityNameFr'] as String?) ?? '');
+        cityNameFr: (data['cityNameFr'] as String?) ?? '',
+      );
     }
   }
 
   Future<void> _loadStores() async {
     try {
       final stores = await ApiClient.getList('/api/stores');
-      final filtered = stores
-          .where((s) => s['ownerId'] == null)
-          .toList();
-      filtered.sort((a, b) => ((a['nm']?.toString()) ?? '')
-          .compareTo((b['nm']?.toString()) ?? ''));
+      final filtered = stores.where((s) => s['ownerId'] == null).toList();
+      filtered.sort(
+        (a, b) => ((a['nm']?.toString()) ?? '').compareTo(
+          (b['nm']?.toString()) ?? '',
+        ),
+      );
       if (mounted) {
         setState(() {
           _cachedStores = filtered;
@@ -221,7 +231,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       // مش مسجل → افتح الخريطة مباشرة
       final result = await Navigator.push<Map<String, dynamic>>(
         context,
-        MaterialPageRoute(builder: (_) => const MapPickerScreen()));
+        MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+      );
       if (result != null && mounted) {
         _locationProvider.setLocation(
           label: 'موقعي',
@@ -229,7 +240,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           lat: result['lat'],
           lng: result['lng'],
           cityNameAr: (result['cityNameAr'] as String?) ?? '',
-          cityNameFr: (result['cityNameFr'] as String?) ?? '');
+          cityNameFr: (result['cityNameFr'] as String?) ?? '',
+        );
         setState(() {});
       }
     }
@@ -255,13 +267,15 @@ class _DashboardScreenState extends State<DashboardScreen>
             lat: lat,
             lng: lng,
             cityNameAr: cityNameAr,
-            cityNameFr: cityNameFr);
+            cityNameFr: cityNameFr,
+          );
           if (mounted) setState(() {});
         },
         onPickFromMap: () async {
           final result = await Navigator.push<Map<String, dynamic>>(
             context,
-            MaterialPageRoute(builder: (_) => const MapPickerScreen()));
+            MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+          );
           if (result != null && mounted) {
             _locationProvider.setLocation(
               label: 'موقع جديد',
@@ -269,58 +283,76 @@ class _DashboardScreenState extends State<DashboardScreen>
               lat: result['lat'],
               lng: result['lng'],
               cityNameAr: (result['cityNameAr'] as String?) ?? '',
-              cityNameFr: (result['cityNameFr'] as String?) ?? '');
+              cityNameFr: (result['cityNameFr'] as String?) ?? '',
+            );
             setState(() {});
           }
-        }));
+        },
+      ),
+    );
   }
 
   // ── Animations ─────────────────────────────────────────────────────────────
   void _setupAnimations() {
     _headerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550));
+      duration: const Duration(milliseconds: 550),
+    );
     _headerSlide = Tween<Offset>(begin: const Offset(-0.6, 0), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _headerController,
-            curve: Curves.easeOutCubic));
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _headerFade = CurvedAnimation(
       parent: _headerController,
-      curve: Curves.easeOut);
+      curve: Curves.easeOut,
+    );
 
     _searchController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500));
+      duration: const Duration(milliseconds: 500),
+    );
     _searchSlide = Tween<Offset>(begin: const Offset(0, -0.8), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _searchController,
-            curve: Curves.easeOutCubic));
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _searchFade = CurvedAnimation(
       parent: _searchController,
-      curve: Curves.easeOut);
+      curve: Curves.easeOut,
+    );
 
     _bannerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600));
+      duration: const Duration(milliseconds: 600),
+    );
     _bannerScale = Tween<double>(begin: 0.88, end: 1.0).animate(
-      CurvedAnimation(parent: _bannerController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _bannerController, curve: Curves.easeOutBack),
+    );
     _bannerFade = CurvedAnimation(
       parent: _bannerController,
-      curve: Curves.easeOut);
+      curve: Curves.easeOut,
+    );
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550));
+      duration: const Duration(milliseconds: 550),
+    );
     _contentSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _contentController,
-            curve: Curves.easeOutCubic));
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _contentFade = CurvedAnimation(
       parent: _contentController,
-      curve: Curves.easeOut);
+      curve: Curves.easeOut,
+    );
   }
 
   Future<void> _playSequence() async {
@@ -372,13 +404,17 @@ class _DashboardScreenState extends State<DashboardScreen>
           BoxShadow(
             color: const Color(0xFFB8B1C8).withOpacity(0.6), // ظل بنفسجي بارد
             blurRadius: 10,
-            offset: const Offset(4, 4)),
+            offset: const Offset(4, 4),
+          ),
           BoxShadow(
             color: const Color(0xFFB8B1C8).withOpacity(0.6),
             blurRadius: 10,
-            offset: Offset(-4, -4)),
-        ]),
-      child: child);
+            offset: Offset(-4, -4),
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -387,7 +423,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final storesData = _cachedStores;
-    if (storesData != null && storesData.isNotEmpty && selectedStoreId == null) {
+    if (storesData != null &&
+        storesData.isNotEmpty &&
+        selectedStoreId == null) {
       selectedStoreId = storesData.first['id'] ?? storesData.first['_id'];
     }
 
@@ -404,238 +442,319 @@ class _DashboardScreenState extends State<DashboardScreen>
               content: const Text(
                 'اضغط مرة أخرى للخروج',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: 'Amiri')),
+                style: TextStyle(fontFamily: 'Amiri'),
+              ),
               duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating));
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         } else {
           SystemNavigator.pop();
         }
       },
       child: Scaffold(
-      backgroundColor: const Color(0xFFF1F0F5),
-      body: Stack(
-        children: [
-          // ══════════════════════════════════════════════════════════════
-          // ✅ الطبقة الأولى: التدرج البنفسجي خلف شريط الساعة والبطارية
-          // ══════════════════════════════════════════════════════════════
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              // جلب ارتفاع منطقة الساعة الحقيقي للجهاز
-              height: MediaQuery.of(context).padding.top,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  colors: [
-                    Color.fromARGB(255, 143, 105, 143), // بنفسجي غامق
-                    Color.fromARGB(255, 167, 166, 167), // بنفسجي أساسي
-                    Color.fromARGB(255, 159, 123, 177), // بنفسجي فاتح (أكسنت)
-                  ])))),
-
-          // ══════════════════════════════════════════════════════════════
-          // ✅ الطبقة الثانية: محتوى الصفحة الأصلي (بدون أي تغيير)
-          // ══════════════════════════════════════════════════════════════
-          SafeArea(
-            bottom: false,
-            child: RefreshIndicator(
-              onRefresh: _onRefresh,
-              color: const Color(0xFF7D29C6),
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics()),
-                slivers: [
-                  // ── Sliver 1: الهيدر + السيرش + البانر ──
-                  SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
-
-                        // ── AppBar ────────────────
-                        SlideTransition(
-                          position: _headerSlide,
-                          child: FadeTransition(
-                            opacity: _headerFade,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => showProfileMiniMenu(context),
-                                    child: _neumorphicContainer(
-                                      child: const _UserAvatar())),
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => _openLocationPicker(),
-                                      child: _LocationChip(
-                                        provider: _locationProvider))),
-                                  ListenableBuilder(
-                                    listenable: GlobalCart.provider,
-                                    builder: (context, _) {
-                                      int cartCount = GlobalCart.provider.count;
-                                      final Color primaryPurple = const Color(
-                                        0xFF7D29C6);
-
-                                      return GestureDetector(
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => const CartScreen())),
-                                        child: Stack(
-                                          clipBehavior: Clip.none,
-                                          children: [
-                                            _neumorphicContainer(
-                                              padding: const EdgeInsets.all(11),
-                                              child: Icon(
-                                                CupertinoIcons.cart_fill,
-                                                color: const Color(0xFF7D29C6),
-                                                size: 24)),
-
-                                            if (cartCount > 0)
-                                              Positioned(
-                                                right: -4,
-                                                top: -4,
-                                                child: TweenAnimationBuilder(
-                                                  duration: const Duration(
-                                                    milliseconds: 400),
-                                                  tween: Tween<double>(
-                                                    begin: 0,
-                                                    end: 1),
-                                                  builder:
-                                                      (context, double val, child) {
-                                                        return Transform.scale(
-                                                          scale: val,
-                                                          child: Container(
-                                                            padding:
-                                                                const EdgeInsets.all(
-                                                                  4),
-                                                            decoration: BoxDecoration(
-                                                              gradient:
-                                                                  LinearGradient(
-                                                                    colors: [
-                                                                      primaryPurple,
-                                                                      const Color(
-                                                                        0xFF9232E8),
-                                                                    ]),
-                                                              shape:
-                                                                  BoxShape.circle,
-                                                              border: Border.all(
-                                                                color: const Color(
-                                                                  0xFFB8B1C8).withOpacity(0.6),
-                                                                width: 1.5),
-                                                              boxShadow: [
-                                                                BoxShadow(
-                                                                  color:
-                                                                      const Color(
-                                                                        0xFFB8B1C8).withOpacity(
-                                                                        0.6),
-                                                                  blurRadius: 6,
-                                                                  offset:
-                                                                      const Offset(
-                                                                        0,
-                                                                        3)),
-                                                              ]),
-                                                            constraints:
-                                                                const BoxConstraints(
-                                                                  minWidth: 20,
-                                                                  minHeight: 20),
-                                                            child: Text(
-                                                              '$cartCount',
-                                                              style:
-                                                                  const TextStyle(
-                                                                    color: Colors
-                                                                        .white,
-                                                                    fontSize: 10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w900,
-                                                                    fontFamily:
-                                                                        'Cairo'),
-                                                              textAlign:
-                                                                  TextAlign.center)));
-                                                      })),
-                                          ]));
-                                    }), // زر السلة (يفضل فصله في دالة)
-                      ])))),
-
-                        const SizedBox(height: 10),
-
-                        // ── Search Bar ──────────────
-                        SlideTransition(
-                          position: _searchSlide,
-                          child: FadeTransition(
-                            opacity: _searchFade,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: DashboardSearchBar(stores: _cachedStores ?? [])))),
-
-                        const SizedBox(height: 8),
-
-                        // ── Banner ──
-                        SlideTransition(
-                          position: _contentSlide,
-                          child: FadeTransition(
-                            opacity: _contentFade,
-                            child: Column(
-                              children: [
-                                RepaintBoundary(
-                                  child: ScaleTransition(
-                                    scale: _bannerScale,
-                                    child: FadeTransition(
-                                      opacity: _bannerFade,
-                                      child: _PromotionsBanner(key: _bannerKey)))),
-
-                                const SizedBox(height: 13),
-                              ]))),
-                      ])),
-
-                  // ── Sliver 2: StoresWidget (ثابت فوق الشاشة) ──
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _StoresHeaderDelegate(
-                      child: Builder(
-                        builder: (context) {
-                          final docs = _cachedStores;
-
-                          if (docs == null) {
-                            return const Center(
-                              child: CupertinoActivityIndicator());
-                          }
-
-                          if (docs.isEmpty) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 40),
-                              child: Text(
-                                "لا توجد تصنيفات حالياً",
-                                style: TextStyle(fontFamily: 'Amiri')));
-                          }
-
-                          return StoresWidget(
-                            stores: docs,
-                            selectedStoreId: selectedStoreId,
-                            onStoreSelected: onStoreSelected);
-                        },
-                      ),
-                    ),
+        backgroundColor: const Color(0xFFF1F0F5),
+        body: Stack(
+          children: [
+            // ══════════════════════════════════════════════════════════════
+            // ✅ الطبقة الأولى: التدرج البنفسجي خلف شريط الساعة والبطارية
+            // ══════════════════════════════════════════════════════════════
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                // جلب ارتفاع منطقة الساعة الحقيقي للجهاز
+                height: MediaQuery.of(context).padding.top,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [
+                      Color.fromARGB(255, 143, 105, 143), // بنفسجي غامق
+                      Color.fromARGB(255, 167, 166, 167), // بنفسجي أساسي
+                      Color.fromARGB(255, 159, 123, 177), // بنفسجي فاتح (أكسنت)
+                    ],
                   ),
+                ),
+              ),
+            ),
 
-                  // ── Sliver 3: StoresView ──
-                  if (_cachedStores != null && _cachedStores!.isNotEmpty && selectedStoreId != null)
+            // ══════════════════════════════════════════════════════════════
+            // ✅ الطبقة الثانية: محتوى الصفحة الأصلي (بدون أي تغيير)
+            // ══════════════════════════════════════════════════════════════
+            SafeArea(
+              bottom: false,
+              child: RefreshIndicator(
+                onRefresh: _onRefresh,
+                color: const Color(0xFF7D29C6),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    // ── Sliver 1: الهيدر + السيرش + البانر ──
                     SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 11, right: 1),
-                        child: StoresView(
-                          templateId: selectedStoreId!,
-                          stores: _cachedStores!),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+
+                          // ── AppBar ────────────────
+                          SlideTransition(
+                            position: _headerSlide,
+                            child: FadeTransition(
+                              opacity: _headerFade,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => showProfileMiniMenu(context),
+                                      child: _neumorphicContainer(
+                                        child: const _UserAvatar(),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _openLocationPicker(),
+                                        child: _LocationChip(
+                                          provider: _locationProvider,
+                                        ),
+                                      ),
+                                    ),
+                                    ListenableBuilder(
+                                      listenable: GlobalCart.provider,
+                                      builder: (context, _) {
+                                        int cartCount =
+                                            GlobalCart.provider.count;
+                                        final Color primaryPurple = const Color(
+                                          0xFF7D29C6,
+                                        );
+
+                                        return GestureDetector(
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const CartScreen(),
+                                            ),
+                                          ),
+                                          child: Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              _neumorphicContainer(
+                                                padding: const EdgeInsets.all(
+                                                  11,
+                                                ),
+                                                child: Icon(
+                                                  CupertinoIcons.cart_fill,
+                                                  color: const Color(
+                                                    0xFF7D29C6,
+                                                  ),
+                                                  size: 24,
+                                                ),
+                                              ),
+
+                                              if (cartCount > 0)
+                                                Positioned(
+                                                  right: -4,
+                                                  top: -4,
+                                                  child: TweenAnimationBuilder(
+                                                    duration: const Duration(
+                                                      milliseconds: 400,
+                                                    ),
+                                                    tween: Tween<double>(
+                                                      begin: 0,
+                                                      end: 1,
+                                                    ),
+                                                    builder: (context, double val, child) {
+                                                      return Transform.scale(
+                                                        scale: val,
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.all(
+                                                                4,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            gradient:
+                                                                LinearGradient(
+                                                                  colors: [
+                                                                    primaryPurple,
+                                                                    const Color(
+                                                                      0xFF9232E8,
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            border: Border.all(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFFB8B1C8,
+                                                                  ).withOpacity(
+                                                                    0.6,
+                                                                  ),
+                                                              width: 1.5,
+                                                            ),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color:
+                                                                    const Color(
+                                                                      0xFFB8B1C8,
+                                                                    ).withOpacity(
+                                                                      0.6,
+                                                                    ),
+                                                                blurRadius: 6,
+                                                                offset:
+                                                                    const Offset(
+                                                                      0,
+                                                                      3,
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          constraints:
+                                                              const BoxConstraints(
+                                                                minWidth: 20,
+                                                                minHeight: 20,
+                                                              ),
+                                                          child: Text(
+                                                            '$cartCount',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w900,
+                                                                  fontFamily:
+                                                                      'Cairo',
+                                                                ),
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ), // زر السلة (يفضل فصله في دالة)
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // ── Search Bar ──────────────
+                          SlideTransition(
+                            position: _searchSlide,
+                            child: FadeTransition(
+                              opacity: _searchFade,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                child: DashboardSearchBar(
+                                  stores: _cachedStores ?? [],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // ── Banner ──
+                          SlideTransition(
+                            position: _contentSlide,
+                            child: FadeTransition(
+                              opacity: _contentFade,
+                              child: Column(
+                                children: [
+                                  RepaintBoundary(
+                                    child: ScaleTransition(
+                                      scale: _bannerScale,
+                                      child: FadeTransition(
+                                        opacity: _bannerFade,
+                                        child: _PromotionsBanner(
+                                          key: _bannerKey,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 13),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 100)),
-                ]))),
-        ])));
+                    // ── Sliver 2: StoresWidget (ثابت فوق الشاشة) ──
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _StoresHeaderDelegate(
+                        child: Builder(
+                          builder: (context) {
+                            final docs = _cachedStores;
+
+                            if (docs == null) {
+                              return const Center(
+                                child: CupertinoActivityIndicator(),
+                              );
+                            }
+
+                            if (docs.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 40),
+                                child: Text(
+                                  "لا توجد تصنيفات حالياً",
+                                  style: TextStyle(fontFamily: 'Amiri'),
+                                ),
+                              );
+                            }
+
+                            return StoresWidget(
+                              stores: docs,
+                              selectedStoreId: selectedStoreId,
+                              onStoreSelected: onStoreSelected,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // ── Sliver 3: StoresView ──
+                    if (_cachedStores != null &&
+                        _cachedStores!.isNotEmpty &&
+                        selectedStoreId != null)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 11, right: 1),
+                          child: StoresView(
+                            templateId: selectedStoreId!,
+                            stores: _cachedStores!,
+                          ),
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -653,10 +772,12 @@ class _StoresHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: const Color(0xFFF1F0F5),
-      child: child);
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: const Color(0xFFF1F0F5), child: child);
   }
 
   @override
@@ -692,21 +813,26 @@ class _LocationChip extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [const Color(0xFFF1F0F5), const Color(0xFFE6E4F0)]),
+                colors: [const Color(0xFFF1F0F5), const Color(0xFFE6E4F0)],
+              ),
               boxShadow: [
                 BoxShadow(
                   color: lavenderShadow.withOpacity(0.4),
                   blurRadius: 8,
-                  offset: const Offset(4, 4)),
+                  offset: const Offset(4, 4),
+                ),
                 BoxShadow(
                   color: const Color(0xFFB8B1C8).withOpacity(0.6),
                   blurRadius: 8,
-                  offset: Offset(-4, -4)),
+                  offset: Offset(-4, -4),
+                ),
               ],
               // ✅ إطار بنفسجي خفيف جداً بدل الأحمر
               border: Border.all(
                 color: primaryPurple.withOpacity(0.1),
-                width: 1)),
+                width: 1,
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -716,7 +842,8 @@ class _LocationChip extends StatelessWidget {
                   height: 30,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: primaryPurple.withOpacity(0.08)),
+                    color: primaryPurple.withOpacity(0.08),
+                  ),
                   child: Icon(
                     hasLoc
                         ? CupertinoIcons.location_solid
@@ -725,7 +852,9 @@ class _LocationChip extends StatelessWidget {
                     color: hasLoc
                         ? primaryPurple
                         : primaryPurple.withOpacity(0.5),
-                    size: 16)),
+                    size: 16,
+                  ),
+                ),
 
                 const SizedBox(width: 8),
 
@@ -743,14 +872,18 @@ class _LocationChip extends StatelessWidget {
                             // ✅ بنفسجي غامق جداً (شبه أسود) مريح للعين
                             color: const Color(0xFF2D2A3A),
                             fontWeight: FontWeight.w800,
-                            fontFamily: 'Amiri')),
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
                         Text(
                           provider.address ?? '',
                           style: TextStyle(
                             fontSize: 11,
                             // ✅ رمادي مائل للبنفسجي
                             color: const Color(0xFF6E6B7B),
-                            fontFamily: 'Amiri')),
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
                       ] else ...[
                         Text(
                           'حدد موقعك',
@@ -758,18 +891,27 @@ class _LocationChip extends StatelessWidget {
                             fontSize: 13,
                             color: primaryPurple.withOpacity(0.6),
                             fontWeight: FontWeight.w600,
-                            fontFamily: 'Amiri')),
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
                       ],
-                    ])),
+                    ],
+                  ),
+                ),
 
                 // ── سهم بنفسجي صغير ────────────────────────────────────────
                 Icon(
                   CupertinoIcons.chevron_down,
                   color: primaryPurple.withOpacity(0.4),
-                  size: 12),
+                  size: 12,
+                ),
                 const SizedBox(width: 8),
-              ])));
-      });
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -779,12 +921,13 @@ class _LocationChip extends StatelessWidget {
 class _LocationBottomSheet extends StatefulWidget {
   final String userId;
   final Function(
-      String label,
-      String address,
-      double? lat,
-      double? lng,
-      String? cityNameAr,
-      String? cityNameFr)
+    String label,
+    String address,
+    double? lat,
+    double? lng,
+    String? cityNameAr,
+    String? cityNameFr,
+  )
   onLocationSelected;
   final VoidCallback onPickFromMap;
 
@@ -810,7 +953,9 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
 
   Future<void> _loadLocations() async {
     try {
-      final locations = await ApiClient.getList('/api/users/${widget.userId}/saved-locations');
+      final locations = await ApiClient.getList(
+        '/api/users/${widget.userId}/saved-locations',
+      );
       if (mounted) {
         setState(() {
           _locations = locations;
@@ -831,7 +976,8 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.65),
+        maxHeight: MediaQuery.of(context).size.height * 0.65,
+      ),
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       decoration: BoxDecoration(
         color: bgCool, // ✅ خلفية باردة
@@ -840,8 +986,10 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
           BoxShadow(
             color: const Color(0xFFB8B1C8).withOpacity(0.6),
             blurRadius: 30,
-            offset: const Offset(0, -5)),
-        ]),
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -852,7 +1000,9 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
             height: 4,
             decoration: BoxDecoration(
               color: lavenderShadow.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(10))),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
 
           // ── العنوان ───────────────────────────────────────────────────
           Padding(
@@ -869,17 +1019,21 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 7),
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [primaryPurple, const Color(0xFF9232E8)]),
+                        colors: [primaryPurple, const Color(0xFF9232E8)],
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFB8B1C8).withOpacity(0.6),
                           blurRadius: 8,
-                          offset: const Offset(0, 3)),
-                      ]),
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
                     child: const Row(
                       children: [
                         Icon(CupertinoIcons.map, color: Colors.white, size: 14),
@@ -890,8 +1044,13 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Amiri')),
-                      ]))),
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
                 // عنوان الشيت
                 Row(
@@ -902,129 +1061,168 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2D2A3A),
-                        fontFamily: 'Amiri')),
+                        fontFamily: 'Amiri',
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Icon(
                       CupertinoIcons.location_solid,
                       color: primaryPurple,
-                      size: 18),
-                  ]),
-              ])),
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
 
           // ✅ فاصل بنفسجي خفيف جداً
           Divider(
             height: 20,
             color: primaryPurple.withOpacity(0.1),
-            thickness: 1),
+            thickness: 1,
+          ),
 
           // ── قائمة المواقع ──────────────────────────────────────────────
           Flexible(
             child: _loading
                 ? Padding(
                     padding: const EdgeInsets.all(30),
-                    child: CupertinoActivityIndicator(color: primaryPurple))
+                    child: CupertinoActivityIndicator(color: primaryPurple),
+                  )
                 : _locations == null || _locations!.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(30),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.location_slash,
-                              color: lavenderShadow.withOpacity(0.5),
-                              size: 40),
-                            const SizedBox(height: 10),
-                            Text(
-                              'مكاش مواقع محفوظة',
-                              style: TextStyle(
-                                color: lavenderShadow,
-                                fontFamily: 'Amiri',
-                                fontSize: 14)),
-                          ]))
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10),
-                        itemCount: _locations!.length,
-                        itemBuilder: (context, i) {
-                          final item = _locations![i];
-                          if (item is! Map<String, dynamic>) {
-                            return const SizedBox.shrink();
-                          }
-                          final d = item;
-                          final label = d['label'] ?? 'موقع';
-                          final address = d['address'] ?? '';
-                          final lat = (d['lat'] as num?)?.toDouble();
-                          final lng = (d['lng'] as num?)?.toDouble();
+                ? Padding(
+                    padding: const EdgeInsets.all(30),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.location_slash,
+                          color: lavenderShadow.withOpacity(0.5),
+                          size: 40,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'مكاش مواقع محفوظة',
+                          style: TextStyle(
+                            color: lavenderShadow,
+                            fontFamily: 'Amiri',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    itemCount: _locations!.length,
+                    itemBuilder: (context, i) {
+                      final item = _locations![i];
+                      if (item is! Map<String, dynamic>) {
+                        return const SizedBox.shrink();
+                      }
+                      final d = item;
+                      final label = d['label'] ?? 'موقع';
+                      final address = d['address'] ?? '';
+                      final lat = (d['lat'] as num?)?.toDouble();
+                      final lng = (d['lng'] as num?)?.toDouble();
 
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                              final cityAr = (d['cityNameAr'] as String?) ?? '';
-                              final cityFr = (d['cityNameFr'] as String?) ?? '';
-                              widget.onLocationSelected(
-                                  label, address, lat, lng, cityAr, cityFr);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: bgCool,
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFB8B1C8).withOpacity(0.6),
-                                    blurRadius: 6,
-                                    offset: const Offset(3, 3)),
-                                  BoxShadow(
-                                    color: const Color(0xFFB8B1C8).withOpacity(0.6),
-                                    blurRadius: 6,
-                                    offset: Offset(-3, -3)),
-                                ]),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.chevron_left,
-                                    color: primaryPurple.withOpacity(0.4),
-                                    size: 14),
-                                  const Spacer(),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          label,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF2D2A3A),
-                                            fontFamily: 'Amiri')),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          address,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xFF6E6B7B),
-                                            fontFamily: 'Amiri')),
-                                      ])),
-                                  const SizedBox(width: 12),
-                                  // ✅ أيقونة الموقع داخل كارد المواقع
-                                  Container(
-                                    padding: const EdgeInsets.all(9),
-                                    decoration: BoxDecoration(
-                                      color: primaryPurple.withOpacity(0.08),
-                                      shape: BoxShape.circle),
-                                    child: Icon(
-                                      CupertinoIcons.location_fill,
-                                      color: primaryPurple,
-                                        size: 16)),
-                                ])));
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          final cityAr = (d['cityNameAr'] as String?) ?? '';
+                          final cityFr = (d['cityNameFr'] as String?) ?? '';
+                          widget.onLocationSelected(
+                            label,
+                            address,
+                            lat,
+                            lng,
+                            cityAr,
+                            cityFr,
+                          );
                         },
-                      )),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: bgCool,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFB8B1C8).withOpacity(0.6),
+                                blurRadius: 6,
+                                offset: const Offset(3, 3),
+                              ),
+                              BoxShadow(
+                                color: const Color(0xFFB8B1C8).withOpacity(0.6),
+                                blurRadius: 6,
+                                offset: Offset(-3, -3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.chevron_left,
+                                color: primaryPurple.withOpacity(0.4),
+                                size: 14,
+                              ),
+                              const Spacer(),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      label,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF2D2A3A),
+                                        fontFamily: 'Amiri',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      address,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF6E6B7B),
+                                        fontFamily: 'Amiri',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // ✅ أيقونة الموقع داخل كارد المواقع
+                              Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: BoxDecoration(
+                                  color: primaryPurple.withOpacity(0.08),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.location_fill,
+                                  color: primaryPurple,
+                                  size: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
 
           const SizedBox(height: 16),
-        ]));
+        ],
+      ),
+    );
   }
 }
 
@@ -1048,7 +1246,8 @@ class _UserAvatarState extends State<_UserAvatar> {
     return _avatar(
       gender == 'أنثى'
           ? 'assets/images/avatarf.png'
-          : 'assets/images/avatar.png');
+          : 'assets/images/avatar.png',
+    );
   }
 
   Widget _avatar(String assetPath) => Container(
@@ -1056,10 +1255,13 @@ class _UserAvatarState extends State<_UserAvatar> {
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       border: Border.all(color: const Color(0xFF7D29C6), width: 0.07),
-      gradient: LinearGradient(colors: [Colors.black, Colors.grey.shade800])),
+      gradient: LinearGradient(colors: [Colors.black, Colors.grey.shade800]),
+    ),
     child: ClipRRect(
       borderRadius: BorderRadius.circular(60),
-      child: Image.asset(assetPath, width: 44, height: 44, fit: BoxFit.fill)));
+      child: Image.asset(assetPath, width: 44, height: 44, fit: BoxFit.fill),
+    ),
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1093,7 +1295,8 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
     super.initState();
     _pageController = PageController(
       viewportFraction: 0.9,
-      initialPage: _safeInitialPage);
+      initialPage: _safeInitialPage,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_cachedPromos.isNotEmpty && mounted) _startTimer();
     });
@@ -1159,7 +1362,8 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
       _pageController.animateToPage(
         next,
         duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut);
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -1175,7 +1379,8 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
     if (_loading) {
       return const SizedBox(
         height: 170,
-        child: Center(child: CupertinoActivityIndicator()));
+        child: Center(child: CupertinoActivityIndicator()),
+      );
     }
 
     if (_cachedPromos.isEmpty) {
@@ -1190,12 +1395,15 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
               BoxShadow(
                 color: const Color(0xFFB8B1C8).withOpacity(0.6),
                 blurRadius: 10,
-                offset: const Offset(4, 4)),
+                offset: const Offset(4, 4),
+              ),
               BoxShadow(
                 color: const Color(0xFFB8B1C8).withOpacity(0.6),
                 blurRadius: 10,
-                offset: Offset(-4, -4)),
-            ]),
+                offset: Offset(-4, -4),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1207,8 +1415,13 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
                   color: Colors.grey.shade500,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Amiri')),
-            ])));
+                  fontFamily: 'Amiri',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     // ✅ Banner يسكرول أفقي فقط — مش يتداخل مع السكرول العمودي
@@ -1223,8 +1436,11 @@ class _PromotionsBannerState extends State<_PromotionsBanner> {
           final realIndex = index % _cachedPromos.length;
           return _BannerItem(
             index: realIndex,
-            promoData: _cachedPromos[realIndex]);
-        }));
+            promoData: _cachedPromos[realIndex],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -1251,20 +1467,28 @@ class _BannerItemState extends State<_BannerItem> {
         if (!isActive || isDeleted) return;
         final user = FirebaseAuth.instance.currentUser;
         if (user == null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('سجّل دخولك باش تشوف تفاصيل العرض',
-                textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Amiri')),
-            backgroundColor: const Color(0xFF7D29C6),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'سجّل دخولك باش تشوف تفاصيل العرض',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: 'Amiri'),
+              ),
+              backgroundColor: const Color(0xFF7D29C6),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
           return;
         }
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (_) => _OfferDetailSheet(promo: widget.promoData));
+          builder: (_) => _OfferDetailSheet(promo: widget.promoData),
+        );
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1278,12 +1502,15 @@ class _BannerItemState extends State<_BannerItem> {
             BoxShadow(
               color: const Color(0xFF7D29C6).withOpacity(0.15),
               blurRadius: 12,
-              offset: const Offset(0, 4)),
+              offset: const Offset(0, 4),
+            ),
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 20,
-              offset: const Offset(0, 2)),
-          ]),
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Stack(
           children: [
             // ── 1. صورة العرض ──
@@ -1297,14 +1524,22 @@ class _BannerItemState extends State<_BannerItem> {
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Container(
                       color: const Color(0xFFDDDDDD),
-                      child: const Center(child: CupertinoActivityIndicator())),
+                      child: const Center(child: CupertinoActivityIndicator()),
+                    ),
                     errorWidget: (_, __, ___) => Container(
                       color: const Color(0xFFE0E0E0),
                       child: const Center(
                         child: Icon(
                           CupertinoIcons.photo,
                           color: Colors.grey,
-                          size: 32))))))),
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
             // ── 2. علامة فيديو ▶ ──
             if (isVideo)
@@ -1318,15 +1553,17 @@ class _BannerItemState extends State<_BannerItem> {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white.withOpacity(0.6),
-                        width: 2),
+                        width: 2,
+                      ),
                     ),
-                    child: const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 44),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 44,
+                    ),
                   ),
                 ),
               ),
-
-
 
             // ── 3. علامة "محذوف" ──
             if (isDeleted)
@@ -1334,25 +1571,33 @@ class _BannerItemState extends State<_BannerItem> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 22,
-                    vertical: 10),
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.75),
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
                       color: Colors.redAccent.withOpacity(0.8),
-                      width: 2),
+                      width: 2,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10),
-                    ]),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
                   child: const Text(
                     "محذوف",
                     style: TextStyle(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
-                      fontFamily: 'Amiri')))),
+                      fontFamily: 'Amiri',
+                    ),
+                  ),
+                ),
+              ),
 
             // ── 3. علامة "متوقف" ──
             if (isStopped)
@@ -1360,18 +1605,22 @@ class _BannerItemState extends State<_BannerItem> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 22,
-                    vertical: 10),
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.75),
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
                       color: Colors.orangeAccent.withOpacity(0.8),
-                      width: 2),
+                      width: 2,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10),
-                    ]),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1381,16 +1630,25 @@ class _BannerItemState extends State<_BannerItem> {
                           color: Colors.orangeAccent,
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          fontFamily: 'Amiri')),
+                          fontFamily: 'Amiri',
+                        ),
+                      ),
                       Text(
                         "العرض غير متوفر حالياً",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 10,
-                          fontFamily: 'Amiri')),
-                    ]))),
-
-          ])));
+                          fontFamily: 'Amiri',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1438,11 +1696,14 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
         setState(() {});
       }
     });
-    ctl.initialize().then((_) {
-      if (mounted) setState(() => _videoReady = true);
-    }).catchError((_) {
-      if (mounted) setState(() => _videoError = true);
-    });
+    ctl
+        .initialize()
+        .then((_) {
+          if (mounted) setState(() => _videoReady = true);
+        })
+        .catchError((_) {
+          if (mounted) setState(() => _videoError = true);
+        });
   }
 
   Future<void> _toggleVideo() async {
@@ -1454,7 +1715,8 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
       // إذا كان الفيديو في آخر شيء، نرجعه للبداية قبل إعادة التشغيل
       final dur = ctl.value.duration;
       final pos = ctl.value.position;
-      if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 300)) {
+      if (dur > Duration.zero &&
+          pos >= dur - const Duration(milliseconds: 300)) {
         await ctl.seekTo(Duration.zero);
       }
       await ctl.play();
@@ -1470,15 +1732,16 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
     if (ctl == null || !ctl.value.isInitialized) return;
     ctl.pause();
     final isLandscape = ctl.value.aspectRatio >= 1;
-    await SystemChrome.setPreferredOrientations(isLandscape
-        ? [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]
-        : [DeviceOrientation.portraitUp]);
+    await SystemChrome.setPreferredOrientations(
+      isLandscape
+          ? [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]
+          : [DeviceOrientation.portraitUp],
+    );
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _FullVideoViewer(
-          url: widget.promo['video'] as String? ?? '',
-        ),
+        builder: (_) =>
+            _FullVideoViewer(url: widget.promo['video'] as String? ?? ''),
       ),
     );
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -1506,14 +1769,18 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
   void _openFullImage(BuildContext context, String imageUrl) {
     if (imageUrl.isEmpty) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => _FullImageViewer(imageUrl: imageUrl)));
+      MaterialPageRoute(builder: (_) => _FullImageViewer(imageUrl: imageUrl)),
+    );
   }
 
   void _addToCart() {
     final rawLat = (widget.promo['storeLat'] as num?)?.toDouble();
     final rawLng = (widget.promo['storeLng'] as num?)?.toDouble();
     final product = Product(
-      productId: widget.promo['_id'] ?? widget.promo['productId'] ?? 'promo_${DateTime.now().millisecondsSinceEpoch}',
+      productId:
+          widget.promo['_id'] ??
+          widget.promo['productId'] ??
+          'promo_${DateTime.now().millisecondsSinceEpoch}',
       name: widget.promo['title'] ?? 'عرض خاص',
       price: (widget.promo['price'] as num?)?.toDouble() ?? 0.0,
       imagePath: widget.promo['image'] ?? '',
@@ -1529,19 +1796,29 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
       quantity: _quantity,
       uiStyle: _uiStyle,
       models: [],
-      toppings: []);
+      toppings: [],
+    );
 
     if (!GlobalCart.provider.toggle(product)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(GlobalCart.provider.lastError ?? 'لا يمكن إضافة العرض',
-            textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Amiri')),
-        backgroundColor: Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            GlobalCart.provider.lastError ?? 'لا يمكن إضافة العرض',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontFamily: 'Amiri'),
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
-    GlobalCart.cartKey.currentState?.runCartAnimation(GlobalCart.provider.count.toString());
+    GlobalCart.cartKey.currentState?.runCartAnimation(
+      GlobalCart.provider.count.toString(),
+    );
     Navigator.pop(context);
   }
 
@@ -1555,16 +1832,20 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: const BoxDecoration(
         color: Color(0xFFF1F0F5),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2))),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             const SizedBox(height: 20),
 
             // ── صورة العرض / فيديو العرض ──
@@ -1588,10 +1869,14 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white.withOpacity(0.6),
-                                  width: 2),
+                                  width: 2,
+                                ),
                               ),
-                              child: const Icon(Icons.play_arrow_rounded,
-                                  color: Colors.white, size: 44),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 44,
+                              ),
                             ),
                           ),
                         // ── زر كتم/تشغيل الصوت — ظاهر دائماً ──
@@ -1612,13 +1897,15 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.45),
-                                borderRadius: BorderRadius.circular(10)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: Icon(
                                 _videoCtl!.value.volume == 0
                                     ? Icons.volume_off_rounded
                                     : Icons.volume_up_rounded,
                                 color: Colors.white,
-                                size: 18),
+                                size: 18,
+                              ),
                             ),
                           ),
                         ),
@@ -1632,9 +1919,13 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.45),
-                                borderRadius: BorderRadius.circular(10)),
-                              child: const Icon(Icons.fullscreen_rounded,
-                                  color: Colors.white, size: 18),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
                           ),
                         ),
@@ -1664,7 +1955,8 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                 height: 150,
                 decoration: BoxDecoration(
                   color: const Color(0xFFDDDDDD),
-                  borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: const Center(child: CupertinoActivityIndicator()),
               )
             else
@@ -1684,10 +1976,20 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
                             color: const Color(0xFFDDDDDD),
-                            child: const Center(child: CupertinoActivityIndicator())),
+                            child: const Center(
+                              child: CupertinoActivityIndicator(),
+                            ),
+                          ),
                           errorWidget: (_, __, ___) => Container(
                             color: const Color(0xFFE0E0E0),
-                            child: const Icon(CupertinoIcons.photo, color: Colors.grey, size: 40)))),
+                            child: const Icon(
+                              CupertinoIcons.photo,
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                     Positioned(
                       left: 10,
@@ -1696,9 +1998,14 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.45),
-                          borderRadius: BorderRadius.circular(10)),
-                        child: const Icon(CupertinoIcons.zoom_in,
-                            color: Colors.white, size: 18)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.zoom_in,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1708,35 +2015,38 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(p['storeName'] ?? '',
-                  style: const TextStyle(
-                    color: Color(0xFF7D29C6),
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Amiri',
-                    fontSize: 13)),
-                const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF7D29C6).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8)),
-                  child: Text(p['categoryName'] ?? p['templateName'] ?? '',
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    p['categoryName'] ?? p['templateName'] ?? '',
                     style: const TextStyle(
                       fontFamily: 'Amiri',
                       fontSize: 10,
-                      color: Color(0xFF7D29C6))),
+                      color: Color(0xFF7D29C6),
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
 
-            Text(p['title'] ?? '',
+            Text(
+              p['title'] ?? '',
               textAlign: TextAlign.right,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Amiri',
-                color: Color(0xFF2D2A3A))),
+                color: Color(0xFF2D2A3A),
+              ),
+            ),
             const SizedBox(height: 10),
 
             if ((p['description'] as String?)?.isNotEmpty == true)
@@ -1747,16 +2057,28 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.4), blurRadius: 8, offset: const Offset(3, 3)),
-                    const BoxShadow(color: Colors.white, blurRadius: 8, offset: Offset(-3, -3)),
-                  ]),
-                child: Text(p['description'] ?? '',
+                    BoxShadow(
+                      color: const Color(0xFFB8B1C8).withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(3, 3),
+                    ),
+                    const BoxShadow(
+                      color: Colors.white,
+                      blurRadius: 8,
+                      offset: Offset(-3, -3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  p['description'] ?? '',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     fontFamily: 'Amiri',
                     fontSize: 13,
                     height: 1.5,
-                    color: Color(0xFF4A4560))),
+                    color: Color(0xFF4A4560),
+                  ),
+                ),
               ),
             const SizedBox(height: 16),
 
@@ -1765,29 +2087,53 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
               children: [
                 Row(
                   children: [
-                    _quantityBtn(CupertinoIcons.add, () => setState(() => _quantity++)),
+                    _quantityBtn(
+                      CupertinoIcons.add,
+                      () => setState(() => _quantity++),
+                    ),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
-                          BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.4), blurRadius: 5, offset: const Offset(2, 2)),
-                          const BoxShadow(color: Colors.white, blurRadius: 5, offset: Offset(-2, -2)),
-                        ]),
-                      child: Text("$_quantity",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                          BoxShadow(
+                            color: const Color(0xFFB8B1C8).withOpacity(0.4),
+                            blurRadius: 5,
+                            offset: const Offset(2, 2),
+                          ),
+                          const BoxShadow(
+                            color: Colors.white,
+                            blurRadius: 5,
+                            offset: Offset(-2, -2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        "$_quantity",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                     _quantityBtn(CupertinoIcons.minus, () {
                       if (_quantity > 1) setState(() => _quantity--);
                     }),
                   ],
                 ),
-                Text("$price DA",
+                Text(
+                  "$price DA",
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF7D29C6))),
+                    color: Color(0xFF7D29C6),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -1801,33 +2147,51 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
                   gradient: const LinearGradient(
                     colors: [Color(0xFF7D29C6), Color(0xFF9B4DE0)],
                     begin: Alignment.topLeft,
-                    end: Alignment.bottomRight),
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF7D29C6).withOpacity(0.4),
                       blurRadius: 12,
-                      offset: const Offset(0, 4)),
-                  ]),
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: Center(
                   child: _loadingStyle
-                    ? const CupertinoActivityIndicator(color: Colors.white)
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(isProject ? CupertinoIcons.doc_text : CupertinoIcons.shopping_cart,
-                            color: Colors.white, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            isProject ? 'إضافة إلى طلب المشروع' : 'إضافة إلى السلة',
-                            style: const TextStyle(
+                      ? const CupertinoActivityIndicator(color: Colors.white)
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isProject
+                                  ? CupertinoIcons.doc_text
+                                  : CupertinoIcons.shopping_cart,
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              fontFamily: 'Amiri')),
-                        ]))),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isProject
+                                  ? 'إضافة إلى طلب المشروع'
+                                  : 'إضافة إلى السلة',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                fontFamily: 'Amiri',
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
             ),
-          ])));
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _quantityBtn(IconData icon, VoidCallback onTap) => GestureDetector(
@@ -1841,13 +2205,18 @@ class _OfferDetailSheetState extends State<_OfferDetailSheet> {
           BoxShadow(
             color: const Color(0xFFB8B1C8).withOpacity(0.6),
             blurRadius: 8,
-            offset: const Offset(4, 4)),
+            offset: const Offset(4, 4),
+          ),
           const BoxShadow(
             color: Colors.white,
             blurRadius: 8,
-            offset: Offset(-4, -4)),
-        ]),
-      child: Icon(icon, color: const Color(0xFF7D29C6), size: 20)));
+            offset: Offset(-4, -4),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: const Color(0xFF7D29C6), size: 20),
+    ),
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1872,10 +2241,15 @@ class _FullImageViewer extends StatelessWidget {
                   imageUrl: imageUrl,
                   fit: BoxFit.contain,
                   placeholder: (_, __) => const Center(
-                      child: CupertinoActivityIndicator(color: Colors.white)),
+                    child: CupertinoActivityIndicator(color: Colors.white),
+                  ),
                   errorWidget: (_, __, ___) => const Center(
-                      child: Icon(CupertinoIcons.photo,
-                          color: Colors.white70, size: 48)),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      color: Colors.white70,
+                      size: 48,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1892,9 +2266,13 @@ class _FullImageViewer extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.5),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24)),
-                  child: const Icon(CupertinoIcons.arrow_right,
-                      color: Colors.white, size: 24),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.arrow_right,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
             ),
@@ -1931,13 +2309,16 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
       if (!mounted) return;
       setState(() {});
     });
-    ctl.initialize().then((_) {
-      if (!mounted) return;
-      setState(() => _ready = true);
-      ctl.play();
-    }).catchError((_) {
-      if (mounted) setState(() => _error = true);
-    });
+    ctl
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          setState(() => _ready = true);
+          ctl.play();
+        })
+        .catchError((_) {
+          if (mounted) setState(() => _error = true);
+        });
   }
 
   @override
@@ -1955,7 +2336,8 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
       // إذا كان الفيديو في آخر شيء، نرجعه للبداية قبل إعادة التشغيل
       final dur = ctl.value.duration;
       final pos = ctl.value.position;
-      if (dur > Duration.zero && pos >= dur - const Duration(milliseconds: 300)) {
+      if (dur > Duration.zero &&
+          pos >= dur - const Duration(milliseconds: 300)) {
         await ctl.seekTo(Duration.zero);
       }
       await ctl.play();
@@ -1990,15 +2372,17 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
               ),
             )
           else if (ctl != null && !_error)
-            const Center(
-                child: CupertinoActivityIndicator(color: Colors.white))
+            const Center(child: CupertinoActivityIndicator(color: Colors.white))
           else
             const Center(
-              child: Text('تعذر تشغيل الفيديو',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontFamily: 'Amiri')),
+              child: Text(
+                'تعذر تشغيل الفيديو',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: 'Amiri',
+                ),
+              ),
             ),
           if (_ready)
             SafeArea(
@@ -2015,9 +2399,13 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white24)),
-                        child: const Icon(CupertinoIcons.xmark,
-                            color: Colors.white, size: 22),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.xmark,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
@@ -2032,13 +2420,15 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white24)),
+                          border: Border.all(color: Colors.white24),
+                        ),
                         child: Icon(
                           ctl!.value.volume == 0
                               ? Icons.volume_off_rounded
                               : Icons.volume_up_rounded,
                           color: Colors.white,
-                          size: 22),
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
@@ -2049,9 +2439,13 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
-                          shape: BoxShape.circle),
-                        child: const Icon(Icons.play_arrow_rounded,
-                            color: Colors.white, size: 40),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
                       ),
                     ),
                   // ── شريط تقدم الفيديو (تفويت/إرجاع) ──
@@ -2061,7 +2455,9 @@ class _FullVideoViewerState extends State<_FullVideoViewer> {
                       ctl!,
                       allowScrubbing: true,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 18),
+                        horizontal: 28,
+                        vertical: 18,
+                      ),
                       colors: const VideoProgressColors(
                         playedColor: Colors.white,
                         bufferedColor: Colors.white38,

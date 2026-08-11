@@ -11,6 +11,7 @@ import 'Order/Order.dart';
 import 'Services/Services.dart';
 import 'profile_screen.dart';
 import 'messages_screen.dart';
+import 'Order/project_unread_store.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex; 
@@ -275,9 +276,13 @@ class _MainPageState extends State<MainPage> {
           const SignInScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: currentIndex,
-        onTabChange: (index) => setState(() => currentIndex = index),
+      bottomNavigationBar: ListenableBuilder(
+        listenable: ProjectUnreadStore.instance,
+        builder: (_, __) => BottomNavBar(
+          selectedIndex: currentIndex,
+          onTabChange: (index) => setState(() => currentIndex = index),
+          unreadBadge: ProjectUnreadStore.instance.total,
+        ),
       ),
     );
   }
@@ -370,9 +375,13 @@ class _MainPageState extends State<MainPage> {
           const ProfileScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: currentIndex,
-        onTabChange: (index) => setState(() => currentIndex = index),
+      bottomNavigationBar: ListenableBuilder(
+        listenable: ProjectUnreadStore.instance,
+        builder: (_, __) => BottomNavBar(
+          selectedIndex: currentIndex,
+          onTabChange: (index) => setState(() => currentIndex = index),
+          unreadBadge: ProjectUnreadStore.instance.total,
+        ),
       ),
     );
   }

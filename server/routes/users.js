@@ -60,7 +60,14 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
       const parts = fbName.split(' ');
       const fbFirst = parts[0] || '';
       const fbLast = parts.slice(1).join(' ');
-      user = await User.create({ uid: id, firstName: fbFirst, lastName: fbLast, lastIp: req.ip, isActive: true });
+      user = await User.findOneAndUpdate(
+        { uid: id },
+        {
+          $set: { lastIp: req.ip },
+          $setOnInsert: { uid: id, firstName: fbFirst, lastName: fbLast, isActive: true },
+        },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+      );
     } else if (user && !isSelfOrAdmin(req, user, id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }

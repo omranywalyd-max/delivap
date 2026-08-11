@@ -434,6 +434,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
 
   _SortMode _sortMode = _SortMode.none;
   List<Map<String, dynamic>> _favorites = [];
+  List<Map<String, dynamic>> _rawFavorites = [];
   String? _selectedFavoriteId;
   bool _isOpenNow() {
     try {
@@ -500,6 +501,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           _applyLocalFilter();
           _isLoading = false;
         });
+        _syncVisibleFavorites();
         _pageAnimController.forward();
       }
       _silentRevalidate();
@@ -525,6 +527,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
             _computeMaxPrice();
             _applyLocalFilter();
           });
+          _syncVisibleFavorites();
         }
         precacheImages(fresh.map((p) => p.imagePath).where((i) => i.isNotEmpty).toList());
       }
@@ -559,6 +562,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           _applyLocalFilter();
           _isLoading = false;
         });
+        _syncVisibleFavorites();
         _pageAnimController.forward();
       }
       precacheImages(
@@ -593,6 +597,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           _applyLocalFilter();
           _loadingMore = false;
         });
+        _syncVisibleFavorites();
       }
       precacheImages(
         newProds.map((p) => p.imagePath).where((i) => i.isNotEmpty).toList(),
@@ -741,15 +746,35 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       final data = await ApiClient.getList('/api/favorites?storeId=${widget.storeId}');
       if (mounted) {
         setState(() {
-          _favorites = data.map((d) {
+          _rawFavorites = data.map((d) {
             final m = Map<String, dynamic>.from(d as Map);
             return {'id': m['_id'] ?? m['id'] ?? '', 'name': m['name'] ?? '', 'productIds': m['productIds'] ?? []};
           }).toList();
           _loadingFavorites = false;
         });
+        _syncVisibleFavorites();
       }
     } catch (_) {
       if (mounted) setState(() => _loadingFavorites = false);
+    }
+  }
+
+  void _syncVisibleFavorites() {
+    final Set<String> sectionIds = _allProducts.map((p) => p.productId).toSet();
+    final List<Map<String, dynamic>> visible = [];
+    for (final fav in _rawFavorites) {
+      final ids = (fav['productIds'] as List<dynamic>? ?? []).cast<String>();
+      if (ids.any(sectionIds.contains)) visible.add(fav);
+    }
+    if (mounted) {
+      setState(() {
+        _favorites = visible;
+        if (_selectedFavoriteId != null &&
+            !visible.any((f) => f['id'] == _selectedFavoriteId)) {
+          _selectedFavoriteId = null;
+        }
+      });
+      _applyLocalFilter();
     }
   }
 
@@ -1265,6 +1290,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
               ),
             ),
             if (_favorites.isNotEmpty) _buildFavoritesBar(),
+            if (_favorites.isNotEmpty && !_isLargeCardStyle) const SizedBox(height: 10),
             if (!_isLargeCardStyle) _buildViewToggle(),
             const SizedBox(height: 8),
           ],
@@ -5842,19 +5868,27 @@ class _FavChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        height: 34,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: selected ? color : kBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? color : Colors.grey.shade400, width: selected ? 0 : 1),
+          color: selected ? color.withOpacity(0.15) : kBg,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(color: selected ? color : Colors.grey.shade400, width: selected ? 1.3 : 1),
           boxShadow: selected
-              ? [BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.6), blurRadius: 8, offset: const Offset(0, 3))]
+              ? [BoxShadow(color: color.withOpacity(0.35), blurRadius: 8, offset: const Offset(0, 2))]
               : [
                   BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.6), blurRadius: 4, offset: const Offset(3, 3)),
                   BoxShadow(color: const Color(0xFFB8B1C8).withOpacity(0.6), blurRadius: 4, offset: const Offset(-3, -3)),
                 ],
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.bold : FontWeight.w500, color: selected ? Colors.white : Colors.black87, fontFamily: 'Amiri')),
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.bold : FontWeight.w500, color: selected ? color : Colors.black87, fontFamily: 'Amiri'),
+          ),
+        ),
       ),
     );
   }

@@ -1,4 +1,4 @@
-﻿// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 //  cardd.dart  — السلة + تأكيد الطلبية
 // ══════════════════════════════════════════════════════════════════════════════
 import 'dart:async';
@@ -156,11 +156,13 @@ class DeliveryPricingService {
   }) async {
     try {
       // نطلب دائماً تسعيرة نوع المركبة المحدد فقط (السلة/الإحضار/التوصيل = دراجة)
-      var cfgData =
-          await ApiClient.get('/api/wilaya-configs/$cityNameAr?vehicleType=$vehicleType');
+      var cfgData = await ApiClient.get(
+        '/api/wilaya-configs/$cityNameAr?vehicleType=$vehicleType',
+      );
       if (cfgData == null || cfgData.isEmpty) {
-        cfgData =
-            await ApiClient.get('/api/wilaya-configs/$cityNameFr?vehicleType=$vehicleType');
+        cfgData = await ApiClient.get(
+          '/api/wilaya-configs/$cityNameFr?vehicleType=$vehicleType',
+        );
       }
       if (cfgData != null && cfgData.isNotEmpty) {
         return calcFromConfig(
@@ -172,8 +174,9 @@ class DeliveryPricingService {
         );
       }
       // احتياط: سائق دراجة نارية فقط (لا سيارة ولا نقل) في نفس المدينة
-      final driversList =
-          await ApiClient.getList('/api/drivers?isOnline=true&vehicleType=motorcycle');
+      final driversList = await ApiClient.getList(
+        '/api/drivers?isOnline=true&vehicleType=motorcycle',
+      );
       String normalize(String s) => s
           .trim()
           .toLowerCase()
@@ -187,10 +190,12 @@ class DeliveryPricingService {
         final dAr = normalize(d['cityNameAr'] as String? ?? '');
         final dFr = normalize(d['cityNameFr'] as String? ?? '');
         final dMain = normalize(d['cityName'] as String? ?? '');
-        final matchesCity = (nAr.isNotEmpty &&
+        final matchesCity =
+            (nAr.isNotEmpty &&
                 (dAr == nAr ||
                     dMain == nAr ||
-                    (dAr.isNotEmpty && (dAr.contains(nAr) || nAr.contains(dAr))))) ||
+                    (dAr.isNotEmpty &&
+                        (dAr.contains(nAr) || nAr.contains(dAr))))) ||
             (nFr.isNotEmpty && dFr.isNotEmpty && dFr == nFr);
         if (matchesCity) {
           if (d['deliveryConfig'] != null) {
@@ -236,7 +241,8 @@ class DeliveryPricingService {
       final seen = <String>{};
       for (final cfg in configs) {
         if (cfg is Map) {
-          final nameAr = (cfg['cityNameAr'] ?? cfg['cityName'] ?? '').toString();
+          final nameAr = (cfg['cityNameAr'] ?? cfg['cityName'] ?? '')
+              .toString();
           final nameFr = (cfg['cityNameFr'] ?? '').toString();
           final lat = (cfg['cityLat'] as num?)?.toDouble();
           final lng = (cfg['cityLng'] as num?)?.toDouble();
@@ -266,7 +272,9 @@ class DeliveryPricingService {
       final dist = calcDistance(userLat, userLng, lat, lng);
       withDist.add({...city, 'distance': dist});
     }
-    withDist.sort((a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+    withDist.sort(
+      (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
+    );
     return withDist.take(5).toList();
   }
 
@@ -331,8 +339,14 @@ class DeliveryPricingService {
               return GestureDetector(
                 onTap: () => Navigator.pop(ctx, city),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 4,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     gradient: const LinearGradient(
@@ -381,7 +395,10 @@ class DeliveryPricingService {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF6D22AC).withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
@@ -516,16 +533,20 @@ class DeliveryPricingService {
     try {
       final urlAr =
           'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=ar';
-      final respAr = await http.get(
-        Uri.parse(urlAr),
-        headers: {'User-Agent': 'walyyid-user-app/1.0'},
-      ).timeout(const Duration(seconds: 6));
+      final respAr = await http
+          .get(
+            Uri.parse(urlAr),
+            headers: {'User-Agent': 'walyyid-user-app/1.0'},
+          )
+          .timeout(const Duration(seconds: 6));
       final urlFr =
           'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&accept-language=fr';
-      final respFr = await http.get(
-        Uri.parse(urlFr),
-        headers: {'User-Agent': 'walyyid-user-app/1.0'},
-      ).timeout(const Duration(seconds: 6));
+      final respFr = await http
+          .get(
+            Uri.parse(urlFr),
+            headers: {'User-Agent': 'walyyid-user-app/1.0'},
+          )
+          .timeout(const Duration(seconds: 6));
 
       if (respAr.statusCode == 200 && respFr.statusCode == 200) {
         final jsonAr =
@@ -547,8 +568,7 @@ class DeliveryPricingService {
         results['ar'] = cityAr.split(RegExp(r'[،,]')).first.trim();
         results['fr'] = cityFr.split(RegExp(r'[،,]')).first.trim();
       }
-    } catch (e) {
-    }
+    } catch (e) {}
     return results;
   }
 
@@ -563,7 +583,12 @@ class DeliveryPricingService {
         final lat = item.storeLat;
         final lng = item.storeLng;
         final key = item.storeId;
-        if (lat != null && lat != 0 && lng != null && lng != 0 && key.isNotEmpty && seen.add(key)) {
+        if (lat != null &&
+            lat != 0 &&
+            lng != null &&
+            lng != 0 &&
+            key.isNotEmpty &&
+            seen.add(key)) {
           final d = calcDistance(lat, lng, userLat, userLng);
           if (d > maxDist) maxDist = d;
         }
@@ -717,7 +742,9 @@ class _CartScreenState extends State<CartScreen> {
       if (mounted) {
         setState(() {
           _precomputedPricing = pricing;
-          _precomputedCityName = (pickedNearby != null) ? pickedNearby['ar'] as String : cAr;
+          _precomputedCityName = (pickedNearby != null)
+              ? pickedNearby['ar'] as String
+              : cAr;
           _loadingPrecomputed = false;
         });
       }
@@ -784,8 +811,8 @@ class _CartScreenState extends State<CartScreen> {
     final p = products.first;
     final String headerName = p.categoryName.isNotEmpty
         ? (p.categoryName == 'عرض خاص' && p.templateName.isNotEmpty
-            ? '${p.categoryName} — ${p.templateName}'
-            : p.categoryName)
+              ? '${p.categoryName} — ${p.templateName}'
+              : p.categoryName)
         : p.storeName.isNotEmpty && p.templateName.isNotEmpty
         ? '${p.storeName} — ${p.templateName}'
         : p.storeName.isNotEmpty
@@ -1021,7 +1048,9 @@ class _CartScreenState extends State<CartScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const MainPage(initialIndex: 3)),
+                    MaterialPageRoute(
+                      builder: (_) => const MainPage(initialIndex: 3),
+                    ),
                     (_) => false,
                   );
                 },
@@ -1370,178 +1399,172 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-        listenable: GlobalCart.provider,
-        builder: (context, _) {
-          final items = GlobalCart.provider.items;
-          final subtotal = GlobalCart.provider.total;
-          _preloadColors();
+      listenable: GlobalCart.provider,
+      builder: (context, _) {
+        final items = GlobalCart.provider.items;
+        final subtotal = GlobalCart.provider.total;
+        _preloadColors();
 
-          return Scaffold(
-                backgroundColor: kBg,
-                appBar: AppBar(
-                  centerTitle: true,
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor: Color(0xFF7D29C6),
-                  statusBarIconBrightness: Brightness.light,
-                ),
-                automaticallyImplyLeading: false,
-                leading: _neumorphicBackButton(),
-                title: const Text(
-                  "السلة",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D2A3A),
-                    fontFamily: 'Amiri',
-                  ),
-                ),
-                actions: [
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: kPrimary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        "${items.length} منتج",
-                        style: const TextStyle(
-                          color: kPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          fontFamily: 'Amiri',
-                        ),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const SavedOrdersScreen(),
-                      ),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: kBg,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: kNeumShadow.withOpacity(0.5),
-                            blurRadius: 5,
-                            offset: const Offset(2, 2),
-                          ),
-                          BoxShadow(
-                            color: const Color(0xFFB8B1C8).withOpacity(0.6),
-                            blurRadius: 5,
-                            offset: const Offset(-2, -2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.bookmark_fill,
-                        color: kPrimary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
+        return Scaffold(
+          backgroundColor: kBg,
+          appBar: AppBar(
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Color(0xFF7D29C6),
+              statusBarIconBrightness: Brightness.light,
+            ),
+            automaticallyImplyLeading: false,
+            leading: _neumorphicBackButton(),
+            title: const Text(
+              "السلة",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D2A3A),
+                fontFamily: 'Amiri',
               ),
-              body: SafeArea(
-                bottom: false,
-                child: items.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                color: kBg,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: kNeumShadow.withOpacity(0.6),
-                                    blurRadius: 14,
-                                    offset: const Offset(5, 5),
-                                  ),
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFFB8B1C8,
-                                    ).withOpacity(0.6),
-                                    blurRadius: 14,
-                                    offset: const Offset(-5, -5),
-                                  ),
-                                ],
+            ),
+            actions: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: kPrimary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${items.length} منتج",
+                    style: const TextStyle(
+                      color: kPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontFamily: 'Amiri',
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SavedOrdersScreen()),
+                ),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: kBg,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kNeumShadow.withOpacity(0.5),
+                        blurRadius: 5,
+                        offset: const Offset(2, 2),
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFFB8B1C8).withOpacity(0.6),
+                        blurRadius: 5,
+                        offset: const Offset(-2, -2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.bookmark_fill,
+                    color: kPrimary,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+          ),
+          body: SafeArea(
+            bottom: false,
+            child: items.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            color: kBg,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: kNeumShadow.withOpacity(0.6),
+                                blurRadius: 14,
+                                offset: const Offset(5, 5),
                               ),
-                              child: Icon(
-                                CupertinoIcons.cart,
-                                size: 50,
-                                color: Colors.grey.shade300,
+                              BoxShadow(
+                                color: const Color(0xFFB8B1C8).withOpacity(0.6),
+                                blurRadius: 14,
+                                offset: const Offset(-5, -5),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              "السلة فارغة حالياً",
-                              style: TextStyle(
-                                color: Color(0xFF6E6B7B),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Amiri',
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Icon(
+                            CupertinoIcons.cart,
+                            size: 50,
+                            color: Colors.grey.shade300,
+                          ),
                         ),
-                      )
-                    : Column(
-                        children: [
-                          Expanded(
-                            child: Builder(
-                              builder: (context) {
-                                final Map<String, List<Product>> groupedItems =
-                                    {};
-                                for (var item in items) {
-                                  String key = item.categoryName.isNotEmpty
-                                      ? item.categoryName
-                                      : item.storeId.isNotEmpty
-                                      ? item.storeId
-                                      : item.storeName;
-                                  groupedItems
-                                      .putIfAbsent(key, () => [])
-                                      .add(item);
-                                }
-                                return ListView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: groupedItems.length,
-                                  itemBuilder: (context, index) {
-                                    String storeKey = groupedItems.keys
-                                        .elementAt(index);
-                                    List<Product> products =
-                                        groupedItems[storeKey]!;
-                                    return _buildStoreGroup(storeKey, products);
-                                  },
+                        const SizedBox(height: 20),
+                        const Text(
+                          "السلة فارغة حالياً",
+                          style: TextStyle(
+                            color: Color(0xFF6E6B7B),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: Builder(
+                          builder: (context) {
+                            final Map<String, List<Product>> groupedItems = {};
+                            for (var item in items) {
+                              String key = item.categoryName.isNotEmpty
+                                  ? item.categoryName
+                                  : item.storeId.isNotEmpty
+                                  ? item.storeId
+                                  : item.storeName;
+                              groupedItems.putIfAbsent(key, () => []).add(item);
+                            }
+                            return ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: groupedItems.length,
+                              itemBuilder: (context, index) {
+                                String storeKey = groupedItems.keys.elementAt(
+                                  index,
                                 );
+                                List<Product> products =
+                                    groupedItems[storeKey]!;
+                                return _buildStoreGroup(storeKey, products);
                               },
-                            ),
-                          ),
-                          _buildSummary(subtotal),
-                        ],
+                            );
+                          },
+                        ),
                       ),
-              ),
-            );
-    },
-  );
-}
+                      _buildSummary(subtotal),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
+  }
 
   bool get _isProjectStyle =>
       GlobalCart.provider.items.isNotEmpty &&
@@ -1835,7 +1858,10 @@ class _CartScreenState extends State<CartScreen> {
                       icon: Icons.add,
                       accentColor: itemColor,
                       onTap: () {
-                        GlobalCart.provider.updateQuantity(item, item.quantity + 1);
+                        GlobalCart.provider.updateQuantity(
+                          item,
+                          item.quantity + 1,
+                        );
                       },
                     ),
                     const SizedBox(width: 10),
@@ -1853,7 +1879,10 @@ class _CartScreenState extends State<CartScreen> {
                       accentColor: itemColor,
                       onTap: () {
                         if (item.quantity > 1) {
-                          GlobalCart.provider.updateQuantity(item, item.quantity - 1);
+                          GlobalCart.provider.updateQuantity(
+                            item,
+                            item.quantity - 1,
+                          );
                         }
                       },
                     ),
@@ -2130,24 +2159,30 @@ class _CartScreenState extends State<CartScreen> {
       child: SizedBox(
         width: double.infinity,
         child: GestureDetector(
-          onTap: _loadingPrecomputed ? null : () => _showCheckoutSheet(subtotal),
+          onTap: _loadingPrecomputed
+              ? null
+              : () => _showCheckoutSheet(subtotal),
           child: Container(
             height: 56,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              gradient: _loadingPrecomputed ? null : const LinearGradient(
-                colors: [kPrimaryDark, kPrimary, kAccent],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-              ),
+              gradient: _loadingPrecomputed
+                  ? null
+                  : const LinearGradient(
+                      colors: [kPrimaryDark, kPrimary, kAccent],
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                    ),
               color: _loadingPrecomputed ? Colors.grey.shade300 : null,
-              boxShadow: _loadingPrecomputed ? [] : [
-                BoxShadow(
-                  color: kPrimary.withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              boxShadow: _loadingPrecomputed
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: kPrimary.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
             ),
             child: Stack(
               children: [
@@ -2186,7 +2221,9 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _isProjectStyle ? "تقديم طلب المشروع" : "تأكيد الطلب",
+                              _isProjectStyle
+                                  ? "تقديم طلب المشروع"
+                                  : "تأكيد الطلب",
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -2754,8 +2791,8 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
               'uiStyle': p.uiStyle,
               'sizes': p.sizes,
               'extraImages': p.extraImages,
-            'variants': p.variants,
-            'categoryId': p.categoryId,
+              'variants': p.variants,
+              'categoryId': p.categoryId,
               'purchaseStatus': '',
               'note': p.note ?? '',
             },
@@ -2796,14 +2833,62 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
         });
         if (projectResult['_id'] == null) throw Exception('لم يتم حفظ الطلبية');
 
-      widget.onConfirmed();
+        widget.onConfirmed();
+        GlobalCart.provider.clear();
         if (!mounted) return;
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ تم إرسال طلب المشروع إلى صاحب المتجر بنجاح!'),
-            backgroundColor: Color(0xFF27AE60),
-            behavior: SnackBarBehavior.floating,
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              'تم إرسال طلبك',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Amiri',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: const Text(
+              '📩 انتظر مراسلة أو اتصال من صاحب المشروع، وستجده في الطلبات الجارية',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: 'Amiri', fontSize: 14, height: 1.6),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7D29C6),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => const MainPage(initialIndex: 2),
+                    ),
+                    (route) => false,
+                  );
+                },
+                child: const Text(
+                  'حسناً',
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
         return;
@@ -3865,9 +3950,13 @@ class _ProjectCheckoutSheetState extends State<_ProjectCheckoutSheet> {
           content: Padding(
             padding: const EdgeInsets.only(top: 10),
             child: Text(
-              'انتظر اتصالاً من عند $storeName',
+              '📩 انتظر مراسلة أو اتصال من صاحب المشروع، وستجده في الطلبات الجارية',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: 'Amiri', fontSize: 14),
+              style: const TextStyle(
+                fontFamily: 'Amiri',
+                fontSize: 14,
+                height: 1.6,
+              ),
             ),
           ),
           actions: [
@@ -3876,7 +3965,14 @@ class _ProjectCheckoutSheetState extends State<_ProjectCheckoutSheet> {
                 'حسناً',
                 style: TextStyle(fontFamily: 'Amiri', color: Color(0xFF7D29C6)),
               ),
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () {
+                Navigator.of(ctx).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => const MainPage(initialIndex: 2),
+                  ),
+                  (route) => false,
+                );
+              },
             ),
           ],
         ),

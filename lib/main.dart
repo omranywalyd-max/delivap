@@ -261,6 +261,14 @@ void _handleNotificationNavigation(Map<String, dynamic> data) {
         navigatorKey.currentState?.pushNamed('/orders');
       }
       break;
+    case 'project_message':
+    case 'project_created':
+    case 'project_rejected':
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainPage(initialIndex: 2)),
+        (route) => false,
+      );
+      break;
     default:
       navigatorKey.currentState?.pushNamed('/home');
   }

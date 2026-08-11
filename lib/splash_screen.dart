@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main_page.dart';
 import 'org/org.dart';
+import 'Services/version_check.dart';
+import 'force_update_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,6 +28,14 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 3600));
     if (!mounted) return;
     final prefs = await prefsFuture;
+    final forceConfig = await VersionCheck.fetchRequiredConfig();
+    if (!mounted) return;
+    if (forceConfig != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => ForceUpdateScreen(config: forceConfig)),
+      );
+      return;
+    }
     final bool isFirstTime = prefs.getBool('is_first_time') ?? true;
     if (!mounted) return;
     final destination = isFirstTime ? const OnboardingScreen() : const MainPage();
