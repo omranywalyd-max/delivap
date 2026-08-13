@@ -298,41 +298,40 @@ class _MainPageState extends State<MainPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (UserLocal.loadError != null) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.wifi_off, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                const SizedBox(height: 8),
-                  Text(
-                  UserLocal.loadError!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontFamily: 'Amiri', fontSize: 15, color: Colors.black87),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () async {
-                    UserLocal.clearError();
-                    await FirebaseAuth.instance.signOut();
-                    await UserLocal.clear();
-                  },
-                  child: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Amiri')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     final data = UserLocal.data;
     if (data == null || data.isEmpty) {
+      if (UserLocal.loadError != null) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  Text(
+                    UserLocal.loadError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontFamily: 'Amiri', fontSize: 15, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      UserLocal.clearError();
+                      await FirebaseAuth.instance.signOut();
+                      await UserLocal.clear();
+                    },
+                    child: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Amiri')),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

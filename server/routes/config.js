@@ -137,6 +137,7 @@ router.put('/app/config', authMiddleware, requireAdmin, async (req, res) => {
       updateUrl: updateUrl || current.updateUrl,
     };
     doc.set('appVersions', versions);
+    doc.markModified('appVersions');
     doc.set('updatedAt', new Date());
     await doc.save();
     res.json(versions[app]);

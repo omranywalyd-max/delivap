@@ -17,6 +17,7 @@ import 'store_accounts_screen.dart';
 import 'package:flutter_application_1/Services/delivery_screen.dart';
 import 'Services/api_client.dart';
 import 'user_local.dart';
+import 'offline_cache.dart';
 import 'package:video_player/video_player.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -207,10 +208,12 @@ class _DashboardScreenState extends State<DashboardScreen>
           _cachedStores = filtered;
         });
       }
+      OfflineCache.writeList('stores', filtered);
     } catch (e) {
+      final cached = await OfflineCache.readList('stores');
       if (mounted) {
         setState(() {
-          _cachedStores = [];
+          _cachedStores = cached.isNotEmpty ? cached : [];
         });
       }
     }

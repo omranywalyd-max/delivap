@@ -78,18 +78,3 @@ stores_widget_explanation.md
 
 # Agents
 /.agents/
-
-# Driver app
-/driver_app/.dart_tool/
-/driver_app/build/
-/driver_app/.flutter-plugins-dependencies
-/driver_app/ios/
-/driver_app/linux/
-/driver_app/macos/
-/driver_app/web/
-/driver_app/windows/
-/driver_app/android/.kotlin/
-/driver_app/android/app/debug
-/driver_app/android/app/profile
-/driver_app/android/app/release
-/driver_app/android/build/

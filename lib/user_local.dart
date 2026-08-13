@@ -71,7 +71,7 @@ class UserLocal {
         isIpBanned = true;
         loadError = 'تم حظر هذا الجهاز. لا يمكنك استخدام التطبيق.';
       } else {
-        loadError = 'فشل الاتصال بالسيرفر';
+        loadError = 'تعذر الاتصال بالسيرفر';
       }
       if (_data == null) await _restore();
     }

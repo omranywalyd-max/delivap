@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Store = require('../models/Store');
 const fs = require('fs');
@@ -35,8 +36,11 @@ router.get('/products', async (req, res) => {
     if (req.query.active) match.active = req.query.active === 'true';
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const skip = parseInt(req.query.skip) || 0;
+    if (req.query.lastId && mongoose.Types.ObjectId.isValid(req.query.lastId)) {
+      match._id = { $lt: new mongoose.Types.ObjectId(req.query.lastId) };
+    }
 
-    const products = await Product.find(match).sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const products = await Product.find(match).sort({ _id: -1 }).skip(skip).limit(limit);
     // jib uiStyle من store (magasins) لكل منتج
     const storeIds = [...new Set(products.map(p => p.storeId).filter(Boolean))];
     const storeMap = {};

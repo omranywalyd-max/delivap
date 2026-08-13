@@ -50,6 +50,27 @@ import '../product_alternative_overlay.dart';
 
 final List<Order> activeOrders = [];
 
+// حالات التوصيلية النشطة لمشاريع أصحاب المشاريع (الباقي منتهي: delivered / rejected)
+const Set<String> kActiveProjectDeliveryStatuses = {
+  'pending',
+  'self_delivery',
+  'accepted',
+  'onway_to_store',
+  'near_owner',
+  'picked_up',
+  'in_transit',
+  'near_customer',
+  'onway',
+};
+
+// حالات التوصيلية المنتهية — أي توصيلية بحالة منهم لازم تخرج من "الطلبات الجارية"
+const Set<String> kFinishedProjectDeliveryStatuses = {
+  'delivered',
+  'completed',
+  'cancelled',
+  'rejected',
+};
+
 String _formatTime(dynamic ts) {
   if (ts == null) return 'الآن';
   if (ts is String) return ts;
@@ -250,16 +271,40 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
           _rawOrders = results[0].cast<Map<String, dynamic>>();
           _transportDocs = results[1].cast<Map<String, dynamic>>();
           _serviceDocs = results[2].cast<Map<String, dynamic>>();
-          _projectDeliveries = results[3].cast<Map<String, dynamic>>();
-          final allProjects = results[4].cast<Map<String, dynamic>>();
-          final deliveredProjectIds = _projectDeliveries
+          final allProjectDeliveries =
+              results[3].cast<Map<String, dynamic>>();
+          final deliveredProjectIds = allProjectDeliveries
               .map((d) => d['projectId'] as String? ?? '')
               .where((id) => id.isNotEmpty)
               .toSet();
+          final allProjects = results[4].cast<Map<String, dynamic>>();
+          final finishedProjectIds = allProjects
+              .where(
+                (p) => kFinishedProjectDeliveryStatuses.contains(
+                  p['status'],
+                ),
+              )
+              .map((p) => p['_id'] as String? ?? '')
+              .where((id) => id.isNotEmpty)
+              .toSet();
+          // فقط التوصيليات الجارية — الموصلة/المرفوضة/مكتملة المشروع تخرج من "الطلبات الجارية"
+          _projectDeliveries = allProjectDeliveries
+              .where(
+                (d) =>
+                    kActiveProjectDeliveryStatuses.contains(
+                      d['status'],
+                    ) &&
+                    !kFinishedProjectDeliveryStatuses.contains(
+                      d['status'],
+                    ) &&
+                    !finishedProjectIds.contains(d['projectId']),
+              )
+              .toList();
           _pendingProjects = allProjects
               .where(
                 (p) =>
                     (p['status'] as String? ?? '') == 'pending' &&
+                    !finishedProjectIds.contains(p['_id'] as String? ?? '') &&
                     !deliveredProjectIds.contains(p['_id'] as String? ?? ''),
               )
               .toList();
@@ -378,16 +423,16 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
           : false;
 
       if (index != -1) {
-        if (status == 'delivered' || status == 'cancelled' || hasRejected) {
-          if (status == 'cancelled' || hasRejected) {
+        if (kFinishedProjectDeliveryStatuses.contains(status) ||
+            hasRejected) {
+          if (status == 'cancelled' || status == 'rejected' || hasRejected) {
             _restoreFreeDelivery(targetList[index]);
           }
           targetList.removeAt(index);
         } else {
           targetList[index] = updatedItem;
         }
-      } else if (status != 'delivered' &&
-          status != 'cancelled' &&
+      } else if (!kFinishedProjectDeliveryStatuses.contains(status) &&
           !hasRejected) {
         targetList.insert(0, updatedItem);
       }
@@ -4290,6 +4335,7 @@ class _ActionButton extends StatelessWidget {
 class DriverTrackingScreen extends StatefulWidget {
   final String orderId;
   final double? userLat, userLng, driverLat, driverLng;
+  final bool isProject;
   const DriverTrackingScreen({
     super.key,
     required this.orderId,
@@ -4297,6 +4343,7 @@ class DriverTrackingScreen extends StatefulWidget {
     this.userLng,
     this.driverLat,
     this.driverLng,
+    this.isProject = false,
   });
   @override
   State<DriverTrackingScreen> createState() => _DriverTrackingScreenState();
@@ -4306,6 +4353,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     with TickerProviderStateMixin {
   GoogleMapController? _mapCtrl;
   LatLng? _driverPos, _userPos, _targetPos;
+  LatLng? _projectStorePos;
   int _mapGen = 0;
   double _distanceMeters = 0;
   int _etaMinutes = 0;
@@ -4330,17 +4378,60 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
   Timer? _pollTimer;
   bool _cameraFitted = false;
 
-  bool get _buyingPhase =>
-      _orderStatus.isEmpty ||
-      _orderStatus == 'pending' ||
-      _orderStatus == 'accepted';
+  bool get _buyingPhase {
+    if (widget.isProject) {
+      return _orderStatus.isEmpty ||
+          _orderStatus == 'accepted' ||
+          _orderStatus == 'onway_to_store' ||
+          _orderStatus == 'near_owner';
+    }
+    return _orderStatus.isEmpty ||
+        _orderStatus == 'pending' ||
+        _orderStatus == 'accepted';
+  }
 
-  String get _etaLabel =>
-      _buyingPhase ? 'وقت الوصول للمحل' : 'الوقت المتبقي للوصول';
+  String get _etaLabel {
+    if (widget.isProject &&
+        (_orderStatus == 'accepted' ||
+            _orderStatus == 'onway_to_store' ||
+            _orderStatus == 'near_owner')) {
+      return 'وقت الوصول لصاحب المشروع';
+    }
+    return _buyingPhase ? 'وقت الوصول للمحل' : 'الوقت المتبقي للوصول';
+  }
 
   bool get _isFresh =>
       _driverLastSeen != null &&
       DateTime.now().difference(_driverLastSeen!) < const Duration(seconds: 60);
+
+  bool get _isUserTargetPhase {
+    if (widget.isProject) {
+      return _orderStatus == 'picked_up' ||
+          _orderStatus == 'in_transit' ||
+          _orderStatus == 'near_customer' ||
+          _orderStatus == 'delivered';
+    }
+    return _orderStatus == 'purchased' ||
+        _orderStatus == 'onway' ||
+        _orderStatus == 'delivered';
+  }
+
+  int get _projectStatusStep {
+    switch (_orderStatus) {
+      case 'onway_to_store':
+      case 'near_owner':
+        return 0;
+      case 'picked_up':
+        return 1;
+      case 'in_transit':
+      case 'near_customer':
+        return 2;
+      case 'delivered':
+        return 3;
+      default:
+        return 0;
+    }
+  }
 
   @override
   void initState() {
@@ -4360,12 +4451,23 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     _listenToDriverLocation();
     _updateMapElements();
     _loadOrderDetails();
-    SocketClient.on('order:updated', _onMapOrderUpdated);
+    SocketClient.on(
+      widget.isProject ? 'project_delivery:updated' : 'order:updated',
+      _onMapOrderUpdated,
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchDeliveryData() async {
+    return await ApiClient.get(
+      widget.isProject
+          ? '/api/project-deliveries/${widget.orderId}'
+          : '/api/orders/${widget.orderId}',
+    );
   }
 
   Future<void> _loadOrderDetails() async {
     try {
-      final data = await ApiClient.get('/api/orders/${widget.orderId}');
+      final data = await _fetchDeliveryData();
       if (data != null && mounted) {
         final driverId = data['driverId'] as String?;
         String dName = '', dPhoto = '';
@@ -4384,19 +4486,41 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
         }
         if (mounted) {
           setState(() {
-            _storeName = data['items'] is List && data['items'].isNotEmpty
-                ? (data['items'][0]['storeName'] as String? ?? '')
-                : '';
-            _items =
-                (data['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-            _deliveryFee = (data['deliveryFee'] as num? ?? 0).toDouble();
+            if (widget.isProject) {
+              _storeName = data['storeName'] as String? ?? '';
+              _items = [];
+              _deliveryFee = (data['deliveryPrice'] as num? ?? 0).toDouble();
+              _customerName = data['customerName'] as String? ?? 'الزبون';
+              _orderStatus = data['status'] as String? ?? '';
+              final cLat = data['customerLat'] as num?;
+              final cLng = data['customerLng'] as num?;
+              if (cLat != null && cLng != null) {
+                _userPos = LatLng(cLat.toDouble(), cLng.toDouble());
+              }
+              final sLat = data['storeLat'] as num?;
+              final sLng = data['storeLng'] as num?;
+              if (sLat != null && sLng != null) {
+                _projectStorePos = LatLng(sLat.toDouble(), sLng.toDouble());
+                _storeNamesByCoord.clear();
+                _storeNamesByCoord[_storeKey(sLat.toDouble(), sLng.toDouble())] =
+                    _storeName;
+              }
+            } else {
+              _storeName = data['items'] is List && data['items'].isNotEmpty
+                  ? (data['items'][0]['storeName'] as String? ?? '')
+                  : '';
+              _items = (data['items'] as List?)
+                      ?.cast<Map<String, dynamic>>() ??
+                  [];
+              _deliveryFee = (data['deliveryFee'] as num? ?? 0).toDouble();
+              _customerName = data['userName'] as String? ?? 'الزبون';
+              _orderStatus = data['status'] as String? ?? '';
+              _storeNamesByCoord
+                ..clear()
+                ..addAll(_buildStoreNames(_items));
+            }
             _driverName = dName;
             _driverPhoto = dPhoto;
-            _customerName = data['userName'] as String? ?? 'الزبون';
-            _orderStatus = data['status'] as String? ?? '';
-            _storeNamesByCoord
-              ..clear()
-              ..addAll(_buildStoreNames(_items));
             final dLat = data['driverLat'] as num?;
             final dLng = data['driverLng'] as num?;
             if (dLat != null && dLng != null) {
@@ -4430,6 +4554,14 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       '${lat.toStringAsFixed(6)}_${lng.toStringAsFixed(6)}';
 
   void _resolveTarget() {
+    if (widget.isProject) {
+      if (_isUserTargetPhase) {
+        _targetPos = _userPos;
+      } else {
+        _targetPos = _projectStorePos ?? _userPos;
+      }
+      return;
+    }
     // تم شراء المنتجات أو في الطريق → الهدف هو موقع التوصيل فقط (بدون متجر)
     if (_orderStatus == 'purchased' ||
         _orderStatus == 'onway' ||
@@ -4550,7 +4682,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
 
   void _listenToDriverLocation() async {
     try {
-      final orderData = await ApiClient.get('/api/orders/${widget.orderId}');
+      final orderData = await _fetchDeliveryData();
       if (!mounted) return;
       final driverId = orderData['driverId'] as String?;
       if (driverId == null) return;
@@ -4726,12 +4858,7 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
     if (_mapCtrl != null && driverPos != null && !_cameraFitted) {
       // ضبط الكاميرا مرة واحدة فقط عند فتح الشاشة ليظهر السائق والهدف،
       // وبعدها تبقى الخريطة ثابتة على ما يحدده المستخدم
-      final fitPos =
-          (_orderStatus == 'purchased' ||
-              _orderStatus == 'onway' ||
-              _orderStatus == 'delivered')
-          ? _userPos
-          : targetPos;
+      final fitPos = _isUserTargetPhase ? _userPos : targetPos;
       if (fitPos != null) {
         _cameraFitted = true;
         final bounds = LatLngBounds(
@@ -4854,16 +4981,25 @@ class _DriverTrackingScreenState extends State<DriverTrackingScreen>
       SocketClient.leave('track_driver_$_trackedDriverId');
     }
     SocketClient.off('driver:location_updated', _onDriverLocationUpdated);
-    SocketClient.off('order:updated', _onMapOrderUpdated);
+    SocketClient.off(
+      widget.isProject ? 'project_delivery:updated' : 'order:updated',
+      _onMapOrderUpdated,
+    );
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final initialPos = _driverPos ?? _userPos ?? const LatLng(36.7538, 3.0588);
-    final statusSteps = ['accepted', 'purchased', 'onway', 'delivered'];
-    final stepLabels = ['قبول', 'شراء', 'توصيل', 'استلام'];
-    final currentIdx = statusSteps.indexOf(_orderStatus);
+    final statusSteps = widget.isProject
+        ? ['accepted', 'picked_up', 'in_transit', 'delivered']
+        : ['accepted', 'purchased', 'onway', 'delivered'];
+    final stepLabels = widget.isProject
+        ? ['قبول', 'استلام', 'في الطريق', 'تسليم']
+        : ['قبول', 'شراء', 'توصيل', 'استلام'];
+    final currentIdx = widget.isProject
+        ? _projectStatusStep
+        : statusSteps.indexOf(_orderStatus);
     return Scaffold(
       backgroundColor: kBgColor,
       body: Stack(
@@ -10082,6 +10218,45 @@ class _TransportDetailsSheetState extends State<TransportDetailsSheet> {
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PendingProjectCard — طلب مشروع قيد الانتظار عند صاحب المشروع
+// ══════════════════════════════════════════════════════════════════════════════
+
+// شارة عدد الرسائل غير المقروءة داخل بطاقات المشاريع
+class _UnreadChip extends StatelessWidget {
+  final int count;
+  const _UnreadChip({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE53E6A).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            CupertinoIcons.chat_bubble_2_fill,
+            color: Color(0xFFE53E6A),
+            size: 11,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            count > 99 ? '99+' : '$count',
+            style: const TextStyle(
+              color: Color(0xFFE53E6A),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Amiri',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PendingProjectCard extends StatelessWidget {
   final Map<String, dynamic> project;
   const PendingProjectCard({super.key, required this.project});
@@ -10089,7 +10264,6 @@ class PendingProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = project;
-    final description = p['description'] as String? ?? '';
     final name = p['name'] as String? ?? 'طلب مشروع';
     final storeName = p['storeName'] as String? ?? 'صاحب المشروع';
     final price = (p['productPrice'] as num?)?.toInt() ?? 0;
@@ -10126,20 +10300,35 @@ class PendingProjectCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(
                     CupertinoIcons.hourglass,
                     color: kWarningColor,
                     size: 20,
                   ),
-                  const Spacer(),
-                  Text(
-                    description.isEmpty ? name : description,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: kTextColor,
-                      fontFamily: 'Amiri',
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          storeName.isEmpty ? name : storeName,
+                          textAlign: TextAlign.right,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: kTextColor,
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
+                        if (unread > 0) ...[
+                          const SizedBox(height: 4),
+                          _UnreadChip(count: unread),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -10179,67 +10368,12 @@ class PendingProjectCard extends StatelessWidget {
                 ],
               ),
               if (p['userId'] != null) ...[
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () => openProjectChat(context, p),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: kPrimaryColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: kPrimaryColor.withOpacity(0.25),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.chat_bubble_2_fill,
-                          color: kPrimaryColor,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'مراسلة صاحب المشروع',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: kPrimaryColor,
-                            fontFamily: 'Amiri',
-                          ),
-                        ),
-                        if (unread > 0) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE53E6A),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            constraints: const BoxConstraints(minWidth: 18),
-                            child: Text(
-                              unread > 99 ? '99+' : '$unread',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 8),
                 Text(
-                  'بانتظار قبول $storeName لطلبك',
+                  'بانتظار قبول $storeName لطلبك — اضغط لعرض التفاصيل والملاحظة والمراسلة',
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11,
                     color: kTextGrey,
@@ -10268,7 +10402,8 @@ class ProjectDeliveryCard extends StatelessWidget {
     final rejectedBy = List<String>.from(d['rejectedBy'] ?? []);
     final rejectionReason = d['rejectionReason'] as String?;
     final driverName = d['driverName'] as String?;
-    final description = d['description'] as String? ?? '';
+    final assignedDriverId = d['driverId'] as String?;
+    final storeName = d['storeName'] as String? ?? '';
     final counterOffer = d['counterOffer'] as Map<String, dynamic>?;
     final projectId = d['projectId'] as String? ?? '';
     final unread = ProjectUnreadStore.instance.countFor(projectId);
@@ -10341,16 +10476,46 @@ class ProjectDeliveryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(statusIcon, color: statusColor, size: 20),
-                  const Spacer(),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: kTextColor,
-                      fontFamily: 'Amiri',
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          storeName.isEmpty ? 'طلب مشروع' : storeName,
+                          textAlign: TextAlign.right,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: kTextColor,
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
+                        if (d['customerName'] is String &&
+                            (d['customerName'] as String).isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'الزبون: ${d['customerName']}',
+                            textAlign: TextAlign.right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: kTextGrey,
+                              fontFamily: 'Amiri',
+                            ),
+                          ),
+                        ],
+                        if (unread > 0) ...[
+                          const SizedBox(height: 4),
+                          _UnreadChip(count: unread),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -10379,22 +10544,30 @@ class ProjectDeliveryCard extends StatelessWidget {
                     ),
                   ),
                   if (counterOffer != null)
-                    Text(
-                      '${(counterOffer['proposedPrice'] as num?)?.toInt() ?? 0} د.ج',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                        fontFamily: 'Amiri',
+                    Flexible(
+                      child: Text(
+                        '${(counterOffer['proposedPrice'] as num?)?.toInt() ?? 0} د.ج',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryColor,
+                          fontFamily: 'Amiri',
+                        ),
                       ),
                     ),
                   if (driverName != null && status == 'accepted')
-                    Text(
-                      'السائق: $driverName',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: kTextGrey,
-                        fontFamily: 'Amiri',
+                    Flexible(
+                      child: Text(
+                        'السائق: $driverName',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: kTextGrey,
+                          fontFamily: 'Amiri',
+                        ),
                       ),
                     ),
                 ],
@@ -10423,99 +10596,62 @@ class ProjectDeliveryCard extends StatelessWidget {
                   ],
                 ),
               ],
-              if (d['storeOwnerId'] != null) ...[
+              // ✅ زر تتبع السائق — يظهر غير بعد ما السائق يقبل التوصيلية
+              if (assignedDriverId != null &&
+                  assignedDriverId.isNotEmpty &&
+                  const [
+                    'accepted',
+                    'onway_to_store',
+                    'near_owner',
+                    'picked_up',
+                    'in_transit',
+                    'near_customer',
+                  ].contains(status)) ...[
                 const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () => showReportOwnerSheet(context, d),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: kDangerColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: kDangerColor.withOpacity(0.2)),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.flag,
-                          color: kDangerColor,
-                          size: 14,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'الإبلاغ عن صاحب المشروع',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: kDangerColor,
-                            fontFamily: 'Amiri',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => openProjectChat(context, d),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: kPrimaryColor.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: kPrimaryColor.withOpacity(0.25),
+                _ActionButton(
+                  label: 'تتبع السائق المباشر',
+                  icon: CupertinoIcons.location_solid,
+                  gradient: const [
+                    Color(0xFF9232E8),
+                    Color(0xFF7D29C6),
+                    Color(0xFF6D22AC),
+                  ],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DriverTrackingScreen(
+                        orderId: d['_id'] as String? ?? '',
+                        userLat: (d['customerLat'] as num?)?.toDouble(),
+                        userLng: (d['customerLng'] as num?)?.toDouble(),
+                        driverLat: (d['driverLat'] as num?)?.toDouble(),
+                        driverLng: (d['driverLng'] as num?)?.toDouble(),
+                        isProject: true,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.chat_bubble_2_fill,
-                          color: kPrimaryColor,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'مراسلة صاحب المشروع',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: kPrimaryColor,
-                            fontFamily: 'Amiri',
-                          ),
-                        ),
-                        if (unread > 0) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE53E6A),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            constraints: const BoxConstraints(minWidth: 18),
-                            child: Text(
-                              unread > 99 ? '99+' : '$unread',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
                     ),
                   ),
                 ),
               ],
+              const SizedBox(height: 8),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.info_circle, color: kTextGrey, size: 11),
+                  SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'اضغط لعرض التفاصيل والملاحظة والمراسلة والإبلاغ',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: kTextGrey,
+                        fontFamily: 'Amiri',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -10666,8 +10802,13 @@ class ProjectDetailsSheet extends StatelessWidget {
     final isDelivery = d['projectId'] != null;
     final st = _projectStatusInfo(d);
     final projectId = d['projectId'] as String? ?? d['_id'] as String? ?? '';
-    final title =
-        (d['description'] as String?) ?? (d['name'] as String?) ?? 'طلب مشروع';
+    final note = (d['description'] as String? ?? '').trim();
+    final storeLabel = (d['storeName'] as String?)?.trim() ?? '';
+    final title = storeLabel.isNotEmpty
+        ? storeLabel
+        : ((d['name'] as String?)?.trim().isNotEmpty == true
+            ? (d['name'] as String).trim()
+            : 'طلب مشروع');
     final storeName = d['storeName'] as String? ?? 'صاحب المشروع';
     final imageUrl = d['imageUrl'] as String? ?? '';
     final productPrice = (d['productPrice'] as num?)?.toInt();
@@ -10686,6 +10827,9 @@ class ProjectDetailsSheet extends StatelessWidget {
     final price = isDelivery && totalPrice != null ? totalPrice : productPrice;
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
+      ),
       padding: EdgeInsets.only(
         top: 20,
         left: 20,
@@ -10763,6 +10907,56 @@ class ProjectDetailsSheet extends StatelessWidget {
                 ),
               ],
             ),
+            if (note.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: kWarningColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: kWarningColor.withOpacity(0.25),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'الملاحظة',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: kWarningColor,
+                            fontFamily: 'Amiri',
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(
+                          CupertinoIcons.doc_text_fill,
+                          color: kWarningColor,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      note,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: kTextColor,
+                        fontFamily: 'Amiri',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (imageUrl.isNotEmpty) ...[
               const SizedBox(height: 14),
               ClipRRect(

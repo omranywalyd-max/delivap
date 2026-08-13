@@ -98,6 +98,12 @@ const setupSocket = (io) => {
           { driverLat: lat, driverLng: lng }
         );
 
+        // تحديث موقع السائق في توصيليات المشاريع النشطة (بعد قبول السائق)
+        await require('../models/ProjectDelivery').updateMany(
+          { driverId, status: { $in: ['accepted', 'onway_to_store', 'near_owner', 'picked_up', 'in_transit', 'near_customer'] } },
+          { driverLat: lat, driverLng: lng }
+        );
+
         // بث الطلبيات المحدّثة للزبون والسائق (مسار إضافي للتتبع)
         const activeOrders = await require('../models/Order').find(
           { driverId, status: { $in: ['accepted', 'purchased', 'onway'] } }

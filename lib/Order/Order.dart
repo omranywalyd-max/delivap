@@ -226,7 +226,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                         onChanged: _loadStats),
                       _OrdersTab(
                         userId: user.uid,
-                        statuses: const ['delivered', 'cancelled'],
+                        statuses: const ['delivered', 'cancelled', 'rejected'],
                         emptyMsg: 'لا توجد طلبات منتهية',
                         emptyIcon: CupertinoIcons.checkmark_seal,
                         shimmerAnim: _shimmerAnim,
@@ -639,24 +639,36 @@ class _OrdersTabState extends State<_OrdersTab> {
 
         // مشاريع (ستايل 6) + توصيليات المشاريع
         final isActiveTab = widget.statuses.contains('pending');
-        final deliveriesRaw = results[3].whereType<Map<String, dynamic>>();
+        final deliveriesRaw = results[3].whereType<Map<String, dynamic>>().toList();
+        final projectsRaw = results[4].whereType<Map<String, dynamic>>().toList();
+        final finishedProjectIds = projectsRaw
+            .where((p) => kFinishedProjectDeliveryStatuses.contains(p['status']))
+            .map((p) => p['_id'] as String? ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet();
         _projectDeliveries = deliveriesRaw.where((m) {
           final rb = m['rejectedBy'];
           final hasRejected = rb is String ? rb.isNotEmpty : rb is List ? rb.isNotEmpty : false;
           if (hasRejected) return false;
-          if (isActiveTab) return true;
+          if (isActiveTab) {
+            // الجارية فقط — الموصلة/المكتملة تخرج
+            return kActiveProjectDeliveryStatuses.contains(m['status']) &&
+                !kFinishedProjectDeliveryStatuses.contains(m['status']) &&
+                !finishedProjectIds.contains(m['projectId']);
+          }
           return widget.statuses.contains(m['status']);
         }).toList();
-        final deliveredIds = _projectDeliveries
+        // أي مشروع عندو توصيلية (منتهية أو جارية) ما يظهرش في "قيد الانتظار"
+        final hasDeliveryProjectIds = deliveriesRaw
             .map((d) => d['projectId'] as String? ?? '')
             .where((id) => id.isNotEmpty)
             .toSet();
-        final projectsRaw = results[4].whereType<Map<String, dynamic>>();
         _pendingProjects = projectsRaw.where((p) {
           final status = p['status'] as String? ?? '';
           if (!isActiveTab) return false;
           return status == 'pending' &&
-              !deliveredIds.contains(p['_id'] as String? ?? '');
+              !finishedProjectIds.contains(p['_id'] as String? ?? '') &&
+              !hasDeliveryProjectIds.contains(p['_id'] as String? ?? '');
         }).toList();
         _loading = false;
       });

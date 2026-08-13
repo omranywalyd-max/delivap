@@ -28,6 +28,7 @@ import 'cardd.dart';
 import 'product_detail_sheet.dart';
 import 'user_local.dart';
 import 'main_page.dart';
+import 'offline_cache.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  Design Tokens
@@ -313,7 +314,7 @@ class _CacheEntry {
 class _ProdCache {
   static final Map<String, _CacheEntry> _store = {};
   static const int _maxEntries = 100;
-  static const int pageSize = 24;
+  static const int pageSize = 200;
   static String _key(String s, String c) => '${s}_$c';
   static List<Product>? get(String s, String c) {
     final entry = _store[_key(s, c)];
@@ -518,11 +519,19 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       final fresh = _toProducts(data.map((e) => Map<String, dynamic>.from(e as Map)).toList());
       final cached = _ProdCache.get(widget.storeId, widget.categoryId);
       if (cached == null || _dataChanged(cached, fresh)) {
+        final Map<String, Product> merged = {};
+        for (final p in _allProducts) {
+          merged[p.productId] = p;
+        }
+        for (final p in fresh) {
+          merged[p.productId] = p;
+        }
+        final combined = merged.values.toList();
         final Map<String, dynamic>? lastDoc = data.isNotEmpty ? Map<String, dynamic>.from(data.last as Map) : null;
-        _ProdCache.set(widget.storeId, widget.categoryId, fresh, lastDoc: lastDoc);
+        _ProdCache.set(widget.storeId, widget.categoryId, combined, lastDoc: lastDoc);
         if (mounted) {
           setState(() {
-            _allProducts = List.from(fresh);
+            _allProducts = List.from(combined);
             _lastDoc = lastDoc;
             _computeMaxPrice();
             _applyLocalFilter();
@@ -530,6 +539,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
           _syncVisibleFavorites();
         }
         precacheImages(fresh.map((p) => p.imagePath).where((i) => i.isNotEmpty).toList());
+        _fetchAllPages();
       }
     } catch (_) {}
   }
@@ -554,6 +564,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       _hasMore = data.length == _ProdCache.pageSize;
       final products = _toProducts(data.map((e) => Map<String, dynamic>.from(e as Map)).toList());
       _ProdCache.set(widget.storeId, widget.categoryId, products, lastDoc: lastDoc);
+      OfflineCache.writeList('products_${widget.storeId}_${widget.categoryId}', data);
 
       if (mounted) {
         setState(() {
@@ -568,8 +579,26 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       precacheImages(
         products.map((p) => p.imagePath).where((i) => i.isNotEmpty).toList(),
       );
+      _fetchAllPages();
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // ✅ مكاش إنترنت → نعرضو من النسخة المخزنة على الجهاز
+      final disk = await OfflineCache.readList('products_${widget.storeId}_${widget.categoryId}');
+      if (disk.isNotEmpty) {
+        final products = _toProducts(disk.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+        if (mounted) {
+          setState(() {
+            _allProducts = products;
+            _hasMore = false;
+            _computeMaxPrice();
+            _applyLocalFilter();
+            _isLoading = false;
+          });
+          _syncVisibleFavorites();
+          _pageAnimController.forward();
+        }
+      } else if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -604,6 +633,14 @@ class _ProductsListScreenState extends State<ProductsListScreen>
       );
     } catch (_) {
       if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _fetchAllPages() async {
+    int guard = 0;
+    while (_hasMore && _lastDoc != null && !_isSearchMode && guard < 50) {
+      await _fetchMore();
+      guard++;
     }
   }
 
@@ -1334,19 +1371,21 @@ class _ProductsListScreenState extends State<ProductsListScreen>
               duration: const Duration(milliseconds: 200),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: !_twoColumnView ? c.withOpacity(0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: !_twoColumnView ? c.withOpacity(0.4) : Colors.transparent),
                   boxShadow: !_twoColumnView ? [BoxShadow(color: c.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
                 ),
-                child: Image.asset(
-                  'assets/3.png',
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.contain,
-                  color: !_twoColumnView ? c : Colors.grey.shade400,
+                child: Text(
+                  'تكبير',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                    color: !_twoColumnView ? c : Colors.grey.shade400,
+                  ),
                 ),
               ),
             ),
@@ -1359,19 +1398,21 @@ class _ProductsListScreenState extends State<ProductsListScreen>
               duration: const Duration(milliseconds: 200),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _twoColumnView ? c.withOpacity(0.15) : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: _twoColumnView ? c.withOpacity(0.4) : Colors.transparent),
                   boxShadow: _twoColumnView ? [BoxShadow(color: c.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
                 ),
-                child: Image.asset(
-                  'assets/2.png',
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.contain,
-                  color: _twoColumnView ? c : Colors.grey.shade400,
+                child: Text(
+                  'تصغير',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                    color: _twoColumnView ? c : Colors.grey.shade400,
+                  ),
                 ),
               ),
             ),

@@ -305,6 +305,16 @@ router.put('/project-deliveries/:id', async (req, res) => {
           console.error('Self project delivery owner earnings error:', ownErr.message);
         }
       }
+      // ضمان: المشروع يصبح مكتمل حتى لو فشل التطبيق في تحديثه (يبقى مش ظاهر في "الجارية")
+      if (delivery.projectId) {
+        await Project.findByIdAndUpdate(delivery.projectId, { status: 'completed', updatedAt: new Date() });
+        const project = await Project.findById(delivery.projectId);
+        const io = getIO();
+        if (io && project) {
+          if (delivery.userId) io.to(`user_${delivery.userId}`).emit('project:updated', project.toObject());
+          if (delivery.storeOwnerId) io.to(`user_${delivery.storeOwnerId}`).emit('project:updated', project.toObject());
+        }
+      }
       deleteImageFile(delivery.imageUrl);
     } else if (delivery.status === 'rejected' && oldStatus !== 'rejected') {
       sendToUser({ userId: delivery.userId, title: '❌ تم رفض توصيلية المشروع', body: 'تم رفض توصيلية مشروعك، يرجى التواصل مع الدعم.', data: { deliveryId: delivery._id.toString(), type: 'delivery_rejected' } });

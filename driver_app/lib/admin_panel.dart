@@ -24,6 +24,7 @@ import 'package:dashbord/services/api_client.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:package_info_plus/package_info_plus.dart';
 
 Future<String> _uploadImg(File file, String folder) async {
   try {
@@ -321,8 +322,16 @@ class _AdminDashboardMainState extends State<AdminDashboardMain> {
 
     final currentVersion = current['latestVersion']?.toString() ?? '';
     final nextBuild = (current['minBuild'] as num?)?.toInt() ?? 0;
+    int myBuild = 0;
+    if (appKey == 'driver') {
+      try {
+        final info = await PackageInfo.fromPlatform();
+        myBuild = int.tryParse(info.buildNumber) ?? 0;
+      } catch (_) {}
+    }
+    final prefilledBuild = myBuild > 0 ? myBuild : nextBuild;
     final versionController = TextEditingController(
-      text: currentVersion.isNotEmpty ? '$currentVersion+${nextBuild + 1}' : '${nextBuild + 1}',
+      text: currentVersion.isNotEmpty ? '$currentVersion+$prefilledBuild' : '$prefilledBuild',
     );
 
     if (!mounted) return;
@@ -1661,6 +1670,11 @@ class _StoresActivationTabState extends State<_StoresActivationTab> {
   bool _showPending = true;
   List<Map<String, dynamic>> _users = [];
   bool _loading = true;
+  int _page = 1;
+  int _totalOwners = 0;
+  static const int _pageSize = 10;
+
+  int get _totalPages => (_totalOwners / _pageSize).ceil();
 
   @override
   void initState() {
@@ -1671,13 +1685,16 @@ class _StoresActivationTabState extends State<_StoresActivationTab> {
   Future<void> _loadUsers() async {
     setState(() => _loading = true);
     try {
-      // 1. جلب البيانات الخام من السيرفر
-      final list = await ApiClient.getList('/api/users');
+      // 1. عدد أصحاب المحلات كامل (باش نحسبو عدد الصفحات)
+      int total = _totalOwners;
+      try {
+        final c = await ApiClient.get('/api/users/count?role=owner');
+        total = (c['count'] as num?)?.toInt() ?? 0;
+      } catch (_) {}
 
-      // 2. هاد السطر هو المهم: اطبع البيانات باش نشوفوها في الكونسول
-      debugPrint("-----------------------------------------");
-      debugPrint("DEBUG: RAW USERS DATA: $list");
-      debugPrint("-----------------------------------------");
+      // 2. جلب الصفحة الحالية برك (role=owner) بالـ pagination
+      final skip = (_page - 1) * _pageSize;
+      final list = await ApiClient.getList('/api/users?role=owner&limit=$_pageSize&skip=$skip');
 
       if (!mounted) return;
 
@@ -1695,6 +1712,7 @@ class _StoresActivationTabState extends State<_StoresActivationTab> {
       }).toList();
 
       setState(() {
+        _totalOwners = total;
         _users = filtered.cast<Map<String, dynamic>>();
         _loading = false;
       });
@@ -1706,7 +1724,79 @@ class _StoresActivationTabState extends State<_StoresActivationTab> {
 
   void _toggleFilter(bool pending) {
     setState(() => _showPending = pending);
+    _page = 1;
     _loadUsers();
+  }
+
+  void _goToPage(int p) {
+    if (p < 1 || p > _totalPages || p == _page) return;
+    setState(() => _page = p);
+    _loadUsers();
+  }
+
+  // شريط الصفحات (1 2 3 ...) أسفل القائمة
+  Widget _paginationBar() {
+    if (_totalPages <= 1) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: _page > 1 ? () => _goToPage(_page - 1) : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _kPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(CupertinoIcons.chevron_left, size: 16, color: _kPrimary),
+              ),
+            ),
+            ...List.generate(_totalPages, (i) {
+              final p = i + 1;
+              final active = p == _page;
+              return GestureDetector(
+                onTap: () => _goToPage(p),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: active ? _kPrimary : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: active ? _kPrimary : _kPrimary.withOpacity(0.25)),
+                  ),
+                  child: Text(
+                    '$p',
+                    style: TextStyle(
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                      color: active ? Colors.white : _kPrimary,
+                    ),
+                  ),
+                ),
+              );
+            }),
+            GestureDetector(
+              onTap: _page < _totalPages ? () => _goToPage(_page + 1) : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _kPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(CupertinoIcons.chevron_right, size: 16, color: _kPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -1755,17 +1845,24 @@ class _StoresActivationTabState extends State<_StoresActivationTab> {
         Expanded(
           child: _loading
               ? const Center(child: CircularProgressIndicator(color: _kPrimary))
-              : _users.isEmpty
-              ? _emptyState(
-                  icon: CupertinoIcons.building_2_fill,
-                  msg: _showPending
-                      ? 'لا يوجد طلبات انضمام جديدة'
-                      : 'لا يوجد مستخدمون مفعّلون',
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _users.length,
-                  itemBuilder: (_, i) => _ownerCard(_users[i]),
+              : Column(
+                  children: [
+                    Expanded(
+                      child: _users.isEmpty
+                          ? _emptyState(
+                              icon: CupertinoIcons.building_2_fill,
+                              msg: _showPending
+                                  ? 'لا يوجد طلبات انضمام جديدة'
+                                  : 'لا يوجد مستخدمون مفعّلون',
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _users.length,
+                              itemBuilder: (_, i) => _ownerCard(_users[i]),
+                            ),
+                    ),
+                    _paginationBar(),
+                  ],
                 ),
         ),
       ],
@@ -3667,9 +3764,19 @@ class _CategoryEditorSheetState extends State<CategoryEditorSheet> {
     try {
       final store = await ApiClient.get('/api/stores/${widget.storeId}');
       if (!mounted) return;
+      var showDistance = store['showDistance'] ?? false;
+      final templateId = store['templateId'] as String?;
+      // إذا كان القالب هو اللي يتطلب الموقع (تطبيق الزبون يصفّي حسبه)،
+      // نعتمد على إعداد القالب حتى لو محل التاجر ما ورثوش
+      if (!showDistance && templateId != null && templateId.isNotEmpty) {
+        try {
+          final tpl = await ApiClient.get('/api/stores/$templateId');
+          showDistance = tpl['showDistance'] ?? false;
+        } catch (_) {}
+      }
       setState(() {
-        _showDistance = store['showDistance'] ?? false;
-        _templateId = store['templateId'];
+        _showDistance = showDistance;
+        _templateId = templateId;
       });
     } catch (_) {}
   }
@@ -3719,7 +3826,7 @@ class _CategoryEditorSheetState extends State<CategoryEditorSheet> {
       return;
     }
     if (_showDistance) {
-      if (_lat == null || _lng == null || _address.contains("تحديد الموقع")) {
+      if (_lat == null || _lng == null) {
         _showError("تحديد الموقع على الخريطة إلزامي لهذا المحل");
         return;
       }
@@ -3909,52 +4016,49 @@ class _CategoryEditorSheetState extends State<CategoryEditorSheet> {
             const SizedBox(height: 20),
             _localInputBox(_nameCtrl, "اسم الكارد"),
             const SizedBox(height: 15),
-            if (_showDistance) ...[
-              GestureDetector(
-                onTap: () async {
-                  final res = await Navigator.push<Map<String, dynamic>>(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MapPickerScreen()),
-                  );
-                  if (res != null) {
-                    String rawAddr = res['address'] ?? "";
-                    if (rawAddr.contains('،') || rawAddr.contains(',')) {
-                      String sep = rawAddr.contains('،') ? '،' : ',';
-                      rawAddr = rawAddr.split(sep).first.trim();
-                    }
-                    setState(() {
-                      _address = rawAddr;
-                      _lat = res['lat'];
-                      _lng = res['lng'];
-                    });
+            GestureDetector(
+              onTap: () async {
+                final res = await Navigator.push<Map<String, dynamic>>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+                );
+                if (res != null) {
+                  String rawAddr = res['address'] ?? "";
+                  if (rawAddr.contains('،') || rawAddr.contains(',')) {
+                    String sep = rawAddr.contains('،') ? '،' : ',';
+                    rawAddr = rawAddr.split(sep).first.trim();
                   }
-                },
-                child: _localNeuBox(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _address,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Amiri',
-                          ),
-                          textAlign: TextAlign.right,
+                  setState(() {
+                    _address = rawAddr;
+                    _lat = res['lat'];
+                    _lng = res['lng'];
+                  });
+                }
+              },
+              child: _localNeuBox(
+                padding: const EdgeInsets.all(15),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _address,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'Amiri',
                         ),
+                        textAlign: TextAlign.right,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 15),
-            ],
+            ),
             const SizedBox(height: 15),
             // ── ساعات العمل ──
             Row(

@@ -30,6 +30,16 @@ async function resolveOptionalUser(req) {
   return null;
 }
 
+// عدد المستخدمين حسب الفلترة (للـ pagination)
+router.get('/users/count', async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.role) filter.role = req.query.role;
+    const count = await User.countDocuments(filter);
+    res.json({ count });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // جلب مستخدم واحد (للزباين والتجار)
 router.get('/users/:id', authMiddleware, async (req, res) => {
   try {
@@ -126,7 +136,10 @@ router.get('/users', async (req, res) => {
     const isAdmin = req.user && req.user.role === 'admin';
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const skip = parseInt(req.query.skip) || 0;
-    const users = await User.find()
+    // فلترة حسب الدور (مثال: ?role=owner يجيب أصحاب المحلات برك)
+    const filter = {};
+    if (req.query.role) filter.role = req.query.role;
+    const users = await User.find(filter)
       .select(isAdmin ? '-password -lastIp -bannedIp' : '_id uid username role storeName firstName lastName createdAt isActive')
       .sort({ createdAt: -1 }).skip(skip).limit(limit);
     res.json(users);

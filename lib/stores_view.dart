@@ -12,6 +12,7 @@ import 'dart:math' as math;
 import 'Services/api_client.dart';
 import 'user_local.dart';
 import 'main_page.dart';
+import 'offline_cache.dart';
 
 const kPrimaryColor = Color(0xFF7D29C6);
 const kPrimaryDark = Color(0xFF6D22AC);
@@ -201,52 +202,10 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
 
     try {
       final cats = await ApiClient.getList('/api/categories?templateId=$templateId&storeId=$templateId');
-      final List<_CachedCategory> validCats = [];
-      for (var doc in cats) {
-        final d = doc as Map<String, dynamic>;
-        final docId = d['_id'] as String? ?? '';
-
-        double catLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
-        double catLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
-        String specificStoreId =
-            d['storeId'] ?? '';
-
-        if (locProv.hasLocation && locProv.lat != null && locProv.lng != null && _showDistanceFlag && !_allowMultiple) {
-          double dist = _calculateDistance(
-            locProv.lat!,
-            locProv.lng!,
-            catLat,
-            catLng);
-
-          if (dist <= 35.0) {
-            validCats.add(
-              _CachedCategory(
-                id: docId,
-                name: d['nom'] ?? '',
-                image: d['image'] ?? '',
-                distance: dist,
-                storeId:
-                    specificStoreId,
-                lat: catLat,
-                lng: catLng,
-                openTime: d['openTime'] ?? '',
-                closeTime: d['closeTime'] ?? ''));
-          }
-        } else {
-          validCats.add(
-            _CachedCategory(
-              id: docId,
-              name: d['nom'] ?? '',
-              image: d['image'] ?? '',
-              storeId: specificStoreId,
-              lat: catLat,
-              lng: catLng,
-              openTime: d['openTime'] ?? '',
-              closeTime: d['closeTime'] ?? ''));
-        }
-      }
+      final List<_CachedCategory> validCats = _buildCachedCats(cats);
       // ✅ نخزن فال cache (حتى لو كان قديم، نحدثو)
       _CatCache.set(templateId, validCats);
+      OfflineCache.writeList('cats_$templateId', cats);
 
       if (mounted) {
         setState(() {
@@ -262,8 +221,75 @@ class _StoresViewState extends State<StoresView> with TickerProviderStateMixin {
         validCats.map((c) => c.image).where((i) => i.isNotEmpty).toList(),
       );
     } catch (e) {
-      if (mounted) setState(() => _loadingCats = false);
+      // ✅ مكاش إنترنت → نعرضو من النسخة المخزنة على الجهاز
+      final disk = await OfflineCache.readList('cats_$templateId');
+      if (disk.isNotEmpty) {
+        final validCats = _buildCachedCats(disk);
+        _CatCache.set(templateId, validCats);
+        if (mounted) {
+          setState(() {
+            _categories = validCats;
+            _loadingCats = false;
+            _isOutOfRange = false;
+            _locationNotSet = false;
+          });
+          _staggerCtrl.forward(from: 0);
+        }
+        precacheImages(
+          validCats.map((c) => c.image).where((i) => i.isNotEmpty).toList(),
+        );
+      } else {
+        if (mounted) setState(() => _loadingCats = false);
+      }
     }
+  }
+
+  List<_CachedCategory> _buildCachedCats(List<dynamic> cats) {
+    final locProv = LocationProvider();
+    final List<_CachedCategory> validCats = [];
+    for (var doc in cats) {
+      if (doc is! Map<String, dynamic>) continue;
+      final d = doc;
+      final docId = d['_id'] as String? ?? '';
+
+      double catLat = (d['lat'] as num?)?.toDouble() ?? 0.0;
+      double catLng = (d['lng'] as num?)?.toDouble() ?? 0.0;
+      String specificStoreId = d['storeId'] ?? '';
+
+      if (locProv.hasLocation && locProv.lat != null && locProv.lng != null && _showDistanceFlag && !_allowMultiple) {
+        double dist = _calculateDistance(
+          locProv.lat!,
+          locProv.lng!,
+          catLat,
+          catLng);
+
+        if (dist <= 35.0) {
+          validCats.add(
+            _CachedCategory(
+              id: docId,
+              name: d['nom'] ?? '',
+              image: d['image'] ?? '',
+              distance: dist,
+              storeId: specificStoreId,
+              lat: catLat,
+              lng: catLng,
+              openTime: d['openTime'] ?? '',
+              closeTime: d['closeTime'] ?? ''));
+        }
+      } else {
+        validCats.add(
+          _CachedCategory(
+            id: docId,
+            name: d['nom'] ?? '',
+            image: d['image'] ?? '',
+            storeId: specificStoreId,
+            lat: catLat,
+            lng: catLng,
+            openTime: d['openTime'] ?? '',
+            closeTime: d['closeTime'] ?? ''));
+      }
+    }
+    return validCats;
   }
 
   @override

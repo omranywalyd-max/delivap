@@ -21,6 +21,8 @@ const projectDeliverySchema = new mongoose.Schema({
   storeAddress: String,
   driverId: String,
   driverName: String,
+  driverLat: Number,
+  driverLng: Number,
   status: { type: String, default: 'pending' },
   rejectedBy: [String],
   rejectionReason: String,
