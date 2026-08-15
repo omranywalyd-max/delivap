@@ -274,24 +274,74 @@ class _OwnerProjectOrdersPageState extends State<OwnerProjectOrdersPage> {
       child: Scaffold(
         backgroundColor: _kBg,
         appBar: AppBar(
-          title: const Text(
-            "طلبات المشاريع",
-            style: TextStyle(fontFamily: 'Amiri', color: _kTextPrimary, fontSize: 16),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                "طلبات المشاريع",
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  color: _kTextPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                widget.storeName,
+                style: const TextStyle(
+                  fontFamily: 'Amiri',
+                  color: _kTextSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
           backgroundColor: _kBg,
           elevation: 0,
+          centerTitle: true,
           iconTheme: const IconThemeData(color: _kPrimary),
-          bottom: TabBar(
-            indicatorColor: _kPrimary,
-            indicatorWeight: 3,
-            labelColor: _kPrimary,
-            unselectedLabelColor: _kTextSecondary,
-            labelStyle: const TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 14),
-            unselectedLabelStyle: const TextStyle(fontFamily: 'Amiri', fontSize: 14),
-            tabs: [
-              Tab(text: 'جارية (${active.length})'),
-              Tab(text: 'منتهية (${finished.length})'),
-            ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFF1F0F5), Color(0xFFE6E4F0)],
+                  ),
+                  boxShadow: _neuShadow(blur: 8, offset: 3),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: TabBar(
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(11),
+                    color: _kPrimary,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kPrimary.withOpacity(0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: _kTextSecondary,
+                  labelStyle: const TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(fontFamily: 'Amiri', fontSize: 13),
+                  tabs: [
+                    Tab(text: 'جارية (${active.length})'),
+                    Tab(text: 'منتهية (${finished.length})'),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         body: _loading
@@ -305,11 +355,13 @@ class _OwnerProjectOrdersPageState extends State<OwnerProjectOrdersPage> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _createNewDelivery,
           backgroundColor: _kPrimary,
-          icon: const Icon(Icons.add, color: Colors.white),
+          elevation: 4,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
           label: const Text(
             "إضافة طلبية جديدة",
-            style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 13),
+            style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
           ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
     );
@@ -321,15 +373,20 @@ class _OwnerProjectOrdersPageState extends State<OwnerProjectOrdersPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.doc_text, size: 60, color: _kTextSecondary.withOpacity(0.35)),
-            const SizedBox(height: 12),
-            Text(emptyMsg, style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary)),
+            Container(
+              width: 92,
+              height: 92,
+              decoration: _neuBox(radius: 46),
+              child: Icon(CupertinoIcons.doc_text, size: 38, color: _kTextSecondary.withOpacity(0.45)),
+            ),
+            const SizedBox(height: 16),
+            Text(emptyMsg, style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 14)),
           ],
         ),
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       itemCount: items.length,
       itemBuilder: (_, i) {
         final d = items[i];
@@ -441,112 +498,111 @@ class _ProjectOrderCard extends StatelessWidget {
     final statusLabel = st['label'] as String;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       child: GestureDetector(
         onTap: () => _showDetail(context),
         child: Container(
           padding: const EdgeInsets.all(14),
-          decoration: _neuBox(),
+          decoration: _neuBox(radius: 18),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontFamily: 'Amiri',
-                          fontWeight: FontWeight.bold,
-                          color: _kTextPrimary,
-                          fontSize: 14,
+                  _buildThumb(imageUrl),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: statusColor.withOpacity(0.3)),
+                              ),
+                              child: Text(
+                                statusLabel,
+                                style: TextStyle(
+                                  fontFamily: 'Amiri',
+                                  fontSize: 10,
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                name,
+                                textAlign: TextAlign.end,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: 'Amiri',
+                                  fontWeight: FontWeight.bold,
+                                  color: _kTextPrimary,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: TextStyle(
-                            fontFamily: 'Amiri',
-                            fontSize: 10,
-                            color: statusColor,
-                            fontWeight: FontWeight.bold,
+                        if (phone.toString().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                phone,
+                                style: const TextStyle(
+                                  fontFamily: 'Amiri',
+                                  color: _kTextSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(CupertinoIcons.phone_fill, size: 11, color: _kTextSecondary),
+                            ],
                           ),
+                        ],
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatDate(data['createdAt']),
+                          style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 11),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    phone,
-                    style: const TextStyle(
-                      fontFamily: 'Amiri',
-                      color: _kTextSecondary,
-                      fontSize: 12,
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 10,
+                          children: [
+                            if (quantity != null)
+                              Text(
+                                'الكمية: $quantity',
+                                style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 11),
+                              ),
+                            if (capacite.isNotEmpty)
+                              Text(
+                                'الحجم: $capacite',
+                                style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 11),
+                              ),
+                          ],
+                        ),
+                        if (productPrice != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'سعر المنتج: ${_fmt(productPrice)} دج',
+                              style: const TextStyle(fontFamily: 'Amiri', color: _kPrimary, fontSize: 11),
+                            ),
+                          ),
+                        _buildPriceRow(),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatDate(data['createdAt']),
-                    style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 11),
-                  ),
-                  if (quantity != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'الكمية: $quantity',
-                        style: const TextStyle(fontFamily: 'Amiri', color: _kTextSecondary, fontSize: 11),
-                      ),
-                    ),
-                  if (productPrice != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'السعر: ${_fmt(productPrice)} دج',
-                        style: const TextStyle(fontFamily: 'Amiri', color: _kPrimary, fontSize: 11),
-                      ),
-                    ),
-                  if (capacite.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'الحجم: $capacite',
-                        style: const TextStyle(fontFamily: 'Amiri', color: _kPrimary, fontSize: 11),
-                      ),
-                    ),
-                  _buildPriceRow(),
-                ],
-              ),
-              const Spacer(),
-              if (imageUrl.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
-                      width: 48,
-                      height: 48,
-                      color: _kBg,
-                      child: const Icon(
-                        Icons.image_outlined,
-                        color: _kTextSecondary,
-                      ),
-                    ),
-                  ),
-                ),
                 ],
               ),
               if ((data['userId'] as String? ?? '').isNotEmpty) ...[
@@ -600,6 +656,35 @@ class _ProjectOrderCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildThumb(String imageUrl) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: imageUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: imageUrl,
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(width: 64, height: 64, color: _kBg),
+              errorWidget: (_, __, ___) => Container(
+                width: 64,
+                height: 64,
+                color: _kBg,
+                child: const Icon(Icons.image_outlined, color: _kTextSecondary),
+              ),
+            )
+          : Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: _kPrimary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(CupertinoIcons.cube_box_fill, color: _kPrimary, size: 26),
+            ),
     );
   }
 
@@ -790,89 +875,59 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
     }
   }
 
+  // قبول الطلبية: تتقبل مباشرة ويقفل الشيت، وبعدها تختار صاحبة المحل
+  // طريقة التسليم (مع سائق / بدون سائق) كي تعاود تدخل في الكارد.
   Future<void> _acceptProject() async {
     setState(() => _processing = true);
     final ctx = context;
+    try {
+      await ApiClient.put('/api/projects/${widget.projectId}', {'status': 'processing'});
 
-    // 1) اختيار طريقة التسليم: مع سائق أم بدون سائق (مباشرة عند القبول)
-    if (!ctx.mounted) { if (mounted) setState(() => _processing = false); return; }
-    final method = await showDialog<String>(
-      context: ctx,
-      builder: (dCtx) => AlertDialog(
-        backgroundColor: _kBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          "كيف تريدين التسليم؟",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: 'Amiri'),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _methodOption(
-              dCtx,
-              'driver',
-              '🚚 مع سائق',
-              'نختار سائقاً يوصل الطلبية للزبون',
-              CupertinoIcons.car_fill,
-              _kPrimary,
-            ),
-            const SizedBox(height: 6),
-            _methodOption(
-              dCtx,
-              'self',
-              '🛵 بدون سائق',
-              'أنا بنفسي أوصل الطلبية للزبون',
-              Icons.directions_bike,
-              _kSuccess,
-            ),
-          ],
-        ),
-      ),
-    );
-    if (method == null) { if (mounted) setState(() => _processing = false); return; }
+      if (widget.data['userId'] != null) {
+        await ApiClient.post('/api/notifications', {
+          'toId': widget.data['userId'],
+          'title': '✅ تم قبول طلبك',
+          'body': 'طلبيتك تم قبولها',
+          'type': 'project_accepted',
+          'createdAt': DateTime.now().toIso8601String(),
+          'isRead': false,
+        });
+      }
 
-    // 2) تأكيد عند اختيار "بدون سائق" — احتمال ضغط غلطة
-    if (method == 'self') {
-      if (!ctx.mounted) { if (mounted) setState(() => _processing = false); return; }
-      final selfConfirmed = await showDialog<bool>(
-        context: ctx,
-        builder: (dCtx) => AlertDialog(
-          backgroundColor: _kBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            "تأكيد التوصيل الذاتي",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: 'Amiri'),
-          ),
-          content: const Text(
-            "هل أنت متأكدة؟ ستقومين بتوصيل الطلبية للزبون بنفسك.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: 'Amiri'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dCtx, false),
-              child: const Text("إلغاء", style: TextStyle(fontFamily: 'Amiri')),
+      widget.data['status'] = 'processing';
+
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(
+            content: const Text(
+              '✅ تم قبول الطلبية، اختاري طريقة التسليم من الكارد',
+              style: TextStyle(fontFamily: 'Amiri'),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dCtx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: _kSuccess),
-              child: const Text("نعم، متأكدة", style: TextStyle(fontFamily: 'Amiri')),
-            ),
-          ],
-        ),
-      );
-      if (selfConfirmed != true) { if (mounted) setState(() => _processing = false); return; }
+            backgroundColor: _kSuccess,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(content: Text('حدث خطأ: $e'), backgroundColor: _kDanger),
+        );
+      }
     }
+    if (mounted) setState(() => _processing = false);
+    // سكر الشيت باش القائمة تتحدث والعملية تبان في التبويب المناسب
+    if (ctx.mounted) {
+      Navigator.pop(ctx);
+      widget.onReady();
+    }
+  }
 
-    // 3) بدون سائق: من غير شيت الموقع والسعر — مباشرة تسجيل التوصيلية
-
-    // 2أ) بدون سائق: صاحبة المحل توصل بنفسها
-    if (method == 'self') {
-      if (!ctx.mounted) { if (mounted) setState(() => _processing = false); return; }
-      setState(() => _processing = true);
-      try {
+  // بدون سائق: صاحبة المحل توصل الطلبية للزبون بنفسها
+  Future<void> _startSelfDelivery() async {
+    setState(() => _processing = true);
+    final ctx = context;
+    try {
         final Map<String, dynamic> delivery = await ApiClient.post('/api/project-deliveries', {
           'projectId': widget.projectId,
           'storeId': widget.storeId,
@@ -935,14 +990,17 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
         }
       }
       if (mounted) setState(() => _processing = false);
-      await _confirmSelfDelivered(ctx);
-      // سكر الشيت وحدو باش القائمة تتحدث والعملية تبان في التبويب المناسب
-      if (ctx.mounted) Navigator.pop(ctx);
-      return;
-    }
+      // سكر الشيت باش القائمة تتحدث وحالة التوصيلية تبان في الشيت
+      if (ctx.mounted) {
+        Navigator.pop(ctx);
+        widget.onReady();
+      }
+  }
 
-    // 2ب) تحديد الموقع + السعر (فقط مع سائق) ثم اختيار السائق
-    if (!ctx.mounted) { if (mounted) setState(() => _processing = false); return; }
+  // مع سائق: تحديد الموقع والسعر ثم اختيار السائق
+  Future<void> _startWithDriver() async {
+    setState(() => _processing = true);
+    final ctx = context;
     final customerPrice = (widget.data['productPrice'] as num? ?? 0).toDouble();
     final locationAndPrices = await showModalBottomSheet<Map<String, dynamic>>(
       context: ctx,
@@ -1040,8 +1098,6 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        // سكر الشيت وحدو باش القائمة تتحدث وحالة الطلبية تبان في التبويب المناسب
-        Navigator.pop(ctx);
       }
     } catch (e) {
       if (ctx.mounted) {
@@ -1051,60 +1107,11 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
       }
     }
     if (mounted) setState(() => _processing = false);
-  }
-
-  Widget _methodOption(
-    BuildContext dCtx,
-    String value,
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-  ) {
-    return GestureDetector(
-      onTap: () => Navigator.pop(dCtx, value),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: color.withOpacity(0.1),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'Amiri',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: _kTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 11,
-                      color: _kTextSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    // سكر الشيت باش القائمة تتحدث وحالة الطلبية تبان في التبويب المناسب
+    if (ctx.mounted) {
+      Navigator.pop(ctx);
+      widget.onReady();
+    }
   }
 
   Future<void> _confirmSelfDelivered(BuildContext ctx) async {
@@ -1199,7 +1206,7 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        top: 20,
+        top: 14,
         left: 20,
         right: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -1214,57 +1221,68 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
           children: [
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 44,
+                height: 5,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade400,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (isPending)
-                  Row(
-                    children: [
-                      _actionBtn(
-                        Icons.close_rounded,
-                        _kWarning,
-                        _rejectProject,
-                        label: 'رفض',
-                      ),
-                      const SizedBox(width: 8),
-                      _actionBtn(
-                        Icons.check_circle_outline,
-                        _kSuccess,
-                        _acceptProject,
-                        label: 'قبول',
-                      ),
-                    ],
-                  ),
-                Row(
-                  children: [
-                    if ((widget.data['userId'] as String? ?? '').isNotEmpty)
-                      _actionBtn(
-                        Icons.chat_bubble_outline,
-                        _kPrimary,
-                        _openChat,
-                        label: 'مراسلة الزبون',
-                      ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      "تفاصيل الطلب",
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: _kTextPrimary,
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: _neuBox(radius: 12),
+                  child: const Icon(CupertinoIcons.doc_text_fill, color: _kPrimary, size: 16),
                 ),
+                const Text(
+                  "تفاصيل الطلب",
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19,
+                    color: _kTextPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                if ((widget.data['userId'] as String? ?? '').isNotEmpty)
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.chat_bubble_outline,
+                      _kPrimary,
+                      _openChat,
+                      label: 'مراسلة الزبون',
+                    ),
+                  ),
+                if (isPending) ...[
+                  if ((widget.data['userId'] as String? ?? '').isNotEmpty)
+                    const SizedBox(width: 8),
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.close_rounded,
+                      _kWarning,
+                      _rejectProject,
+                      label: 'رفض',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.check_circle_outline,
+                      _kSuccess,
+                      _acceptProject,
+                      label: 'قبول',
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 20),
@@ -1273,13 +1291,18 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
                 onTap: () => _showFullImage(imageUrl),
                 child: Container(
                   width: double.infinity,
-                  height: 200,
+                  height: 190,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F0EB),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF1F0F5), Color(0xFFE6E4F0)],
+                    ),
+                    boxShadow: _neuShadow(blur: 8, offset: 3),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                     child: CachedNetworkImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.contain,
@@ -1297,11 +1320,15 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
                   ),
                 ),
               ),
-            if (imageUrl.isNotEmpty) const SizedBox(height: 16),
+            if (imageUrl.isNotEmpty) const SizedBox(height: 18),
+            _sectionLabel('معلومات الطلب'),
+            const SizedBox(height: 10),
             _infoRow(CupertinoIcons.person_fill, 'الاسم', name),
             _infoRow(CupertinoIcons.phone_fill, 'الهاتف', phone),
-            _infoRow(CupertinoIcons.doc_text_fill, 'الوصف', desc),
-            _infoRow(CupertinoIcons.location_fill, 'الموقع', location),
+            if (desc.toString().isNotEmpty)
+              _infoRow(CupertinoIcons.doc_text_fill, 'الوصف', desc),
+            if (location.toString().isNotEmpty)
+              _infoRow(CupertinoIcons.location_fill, 'الموقع', location),
             if (quantity != null)
               _infoRow(Icons.shopping_bag_outlined, 'الكمية', '$quantity'),
             if (capacite != null && capacite.toString().isNotEmpty)
@@ -1321,6 +1348,26 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
     );
   }
 
+  Widget _sectionLabel(String text) => Padding(
+    padding: const EdgeInsets.only(top: 4, right: 2),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Amiri',
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: _kTextSecondary,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Container(width: 4, height: 4, decoration: const BoxDecoration(color: _kPrimary, shape: BoxShape.circle)),
+      ],
+    ),
+  );
+
   void _showFullImage(String url) {
     showDialog(
       context: context,
@@ -1337,9 +1384,97 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
     );
   }
 
+  // بعد قبول الطلبية: اختيار طريقة التسليم (مع سائق / بدون سائق)
+  Widget _buildDeliveryMethodChoice() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _sectionLabel('اختيار طريقة التسليم'),
+          const SizedBox(height: 10),
+          _methodCard(
+            CupertinoIcons.car_fill,
+            '🚚 مع سائق',
+            'نختار سائقاً يوصل الطلبية للزبون',
+            _kPrimary,
+            _processing ? null : _startWithDriver,
+          ),
+          const SizedBox(height: 8),
+          _methodCard(
+            Icons.directions_bike,
+            '🛵 بدون سائق',
+            'أنا بنفسي أوصل الطلبية للزبون',
+            _kSuccess,
+            _processing ? null : _startSelfDelivery,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _methodCard(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+    VoidCallback? onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: color.withOpacity(0.1),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 26),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: _kTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      fontFamily: 'Amiri',
+                      fontSize: 11,
+                      color: _kTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDeliveryStatus() {
     final delivery = widget.data['_delivery'] as Map<String, dynamic>?;
-    if (delivery == null) return const SizedBox.shrink();
+    if (delivery == null) {
+      // الطلبية متقبلة ولسا ما اختارت طريقة التسليم
+      if ((widget.data['status'] ?? '') == 'processing') {
+        return _buildDeliveryMethodChoice();
+      }
+      return const SizedBox.shrink();
+    }
     final status = delivery['status'] ?? '';
     final driverName = delivery['driverName'] ?? '';
     final counterOffer = delivery['counterOffer'];
@@ -1387,96 +1522,155 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: _neuBox(radius: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text(
-              'حالة التوصيل:',
-              style: TextStyle(fontFamily: 'Amiri', fontSize: 12, color: _kTextSecondary),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _sectionLabel('حالة التوصيل'),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: _neuBox(radius: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (driverName.isNotEmpty)
-                  Text(driverName, style: const TextStyle(fontFamily: 'Amiri', fontSize: 13, color: _kTextSecondary)),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(statusText, style: TextStyle(fontFamily: 'Amiri', fontSize: 14, fontWeight: FontWeight.bold, color: statusColor)),
+                    if (driverName.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(CupertinoIcons.person_crop_circle, size: 15, color: _kTextSecondary),
+                          const SizedBox(width: 4),
+                          Text(driverName, style: const TextStyle(fontFamily: 'Amiri', fontSize: 12.5, color: _kTextSecondary)),
+                        ],
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              statusText,
+                              textAlign: TextAlign.end,
+                              style: TextStyle(fontFamily: 'Amiri', fontSize: 14, fontWeight: FontWeight.bold, color: statusColor),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
+                if (hasCounter) ...[
+                  const SizedBox(height: 12),
+                  const Divider(color: _kTextSecondary, height: 1),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _kWarning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '💰 السائق اقترح ${counterOffer['proposedPrice']} دج بدلاً من ${delivery['deliveryPrice']} دج',
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontFamily: 'Amiri', fontSize: 13.5, color: _kTextPrimary),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _handleCounter(context, 'reject'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _kDanger,
+                            side: const BorderSide(color: _kDanger),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.close, size: 18),
+                          label: const Text('رفض', style: TextStyle(fontFamily: 'Amiri')),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _handleCounter(context, 'accept'),
+                          icon: const Icon(Icons.check, color: Colors.white, size: 18),
+                          label: const Text('قبول', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kSuccess,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (isPendingDriver) ...[
+                  const SizedBox(height: 12),
+                  const Divider(color: _kTextSecondary, height: 1),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _processing ? null : () => _cancelDriver(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _kDanger,
+                            side: const BorderSide(color: _kDanger),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.cancel_outlined, size: 17),
+                          label: const Text('إلغاء السائق', style: TextStyle(fontFamily: 'Amiri', fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _processing ? null : () => _changeDriver(context),
+                          icon: const Icon(Icons.swap_horiz, color: Colors.white, size: 17),
+                          label: const Text('تغيير السائق', style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kPrimary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (status == 'self_delivery') ...[
+                  const SizedBox(height: 12),
+                  const Divider(color: _kTextSecondary, height: 1),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: _processing ? null : () => _confirmSelfDelivered(context),
+                      icon: const Icon(Icons.check, color: Colors.white, size: 18),
+                      label: const Text(
+                        '✅ سلمت الطلبية للزبون',
+                        style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kSuccess,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
-            if (hasCounter) ...[
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              Text('💰 السائق اقترح ${counterOffer['proposedPrice']} DA بدلاً من ${delivery['deliveryPrice']} DA',
-                  style: const TextStyle(fontFamily: 'Amiri', fontSize: 14, color: _kTextPrimary)),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => _handleCounter(context, 'reject'),
-                    icon: const Icon(Icons.close, color: _kDanger, size: 18),
-                    label: const Text('رفض', style: TextStyle(fontFamily: 'Amiri', color: _kDanger)),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => _handleCounter(context, 'accept'),
-                    icon: const Icon(Icons.check, color: Colors.white, size: 18),
-                    label: const Text('قبول', style: TextStyle(fontFamily: 'Amiri', color: Colors.white)),
-                    style: ElevatedButton.styleFrom(backgroundColor: _kSuccess),
-                  ),
-                ],
-              ),
-            ],
-            if (isPendingDriver) ...[
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: _processing ? null : () => _cancelDriver(context),
-                    icon: const Icon(Icons.cancel_outlined, color: _kDanger, size: 18),
-                    label: const Text('إلغاء السائق', style: TextStyle(fontFamily: 'Amiri', color: _kDanger, fontSize: 12)),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _processing ? null : () => _changeDriver(context),
-                    icon: const Icon(Icons.swap_horiz, color: Colors.white, size: 18),
-                    label: const Text('تغيير السائق', style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 12)),
-                    style: ElevatedButton.styleFrom(backgroundColor: _kPrimary),
-                  ),
-                ],
-              ),
-            ],
-            if (status == 'self_delivery') ...[
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _processing ? null : () => _confirmSelfDelivered(context),
-                  icon: const Icon(Icons.check, color: Colors.white, size: 18),
-                  label: const Text(
-                    '✅ سلمت الطلبية للزبون',
-                    style: TextStyle(fontFamily: 'Amiri', color: Colors.white, fontSize: 13),
-                  ),
-                  style: ElevatedButton.styleFrom(backgroundColor: _kSuccess),
-                ),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1599,41 +1793,59 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
       GestureDetector(
         onTap: _processing ? null : onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.25)),
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: color.withOpacity(0.28)),
           ),
           child: _processing
               ? const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: CircularProgressIndicator(strokeWidth: 2, color: _kPrimary),
+                  padding: EdgeInsets.all(4),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: _kPrimary),
+                  ),
                 )
               : Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (label.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 6),
-                        child: Text(label, style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: color, fontSize: 13)),
+                    if (label.isNotEmpty) ...[
+                      Flexible(
+                        child: Text(
+                          label,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontFamily: 'Amiri', fontWeight: FontWeight.bold, color: color, fontSize: 12.5),
+                        ),
                       ),
-                    Icon(icon, color: color, size: 20),
+                      const SizedBox(width: 6),
+                    ],
+                    Icon(icon, color: color, size: 18),
                   ],
                 ),
         ),
       );
 
   Widget _infoRow(IconData icon, String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: 10),
     child: Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: _neuBox(radius: 12, padding: const EdgeInsets.all(14)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: _neuBox(radius: 14),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: _kPrimary),
-          const SizedBox(width: 8),
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: _kPrimary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 15, color: _kPrimary),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               value,
@@ -1642,16 +1854,17 @@ class _ProjectOrderDetailSheetState extends State<_ProjectOrderDetailSheet> {
                 fontFamily: 'Amiri',
                 color: _kTextPrimary,
                 fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           const SizedBox(width: 8),
           Text(
-            "$label:",
+            "$label",
             style: const TextStyle(
               fontFamily: 'Amiri',
               color: _kTextSecondary,
-              fontSize: 12,
+              fontSize: 11.5,
             ),
           ),
         ],

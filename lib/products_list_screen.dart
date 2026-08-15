@@ -456,7 +456,7 @@ class _ProductsListScreenState extends State<ProductsListScreen>
     }
   }
   bool _loadingFavorites = true;
-  bool _twoColumnView = false;
+  bool _twoColumnView = true;
 
   bool get _showCartBar => GlobalCart.provider.count > 0;
   bool get _isPizzaStyle => widget.uiStyle == 2;
@@ -1365,33 +1365,6 @@ class _ProductsListScreenState extends State<ProductsListScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => setState(() => _twoColumnView = false),
-            child: AnimatedScale(
-              scale: !_twoColumnView ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: !_twoColumnView ? c.withOpacity(0.15) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: !_twoColumnView ? c.withOpacity(0.4) : Colors.transparent),
-                  boxShadow: !_twoColumnView ? [BoxShadow(color: c.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
-                ),
-                child: Text(
-                  'تكبير',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Cairo',
-                    color: !_twoColumnView ? c : Colors.grey.shade400,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
             onTap: () => setState(() => _twoColumnView = true),
             child: AnimatedScale(
               scale: _twoColumnView ? 1.1 : 1.0,
@@ -1406,12 +1379,39 @@ class _ProductsListScreenState extends State<ProductsListScreen>
                   boxShadow: _twoColumnView ? [BoxShadow(color: c.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
                 ),
                 child: Text(
-                  'تصغير',
+                  'تكبير',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Cairo',
                     color: _twoColumnView ? c : Colors.grey.shade400,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => setState(() => _twoColumnView = false),
+            child: AnimatedScale(
+              scale: !_twoColumnView ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: !_twoColumnView ? c.withOpacity(0.15) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: !_twoColumnView ? c.withOpacity(0.4) : Colors.transparent),
+                  boxShadow: !_twoColumnView ? [BoxShadow(color: c.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
+                ),
+                child: Text(
+                  'تصغير',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                    color: !_twoColumnView ? c : Colors.grey.shade400,
                   ),
                 ),
               ),
