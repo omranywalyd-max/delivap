@@ -1005,27 +1005,11 @@ class _OrderCardState extends State<OrderCard> {
         if (!alreadyConfirmed) {
           try {
             final userData =
-                await ApiClient.put('/api/users/${widget.userId}/loyalty', {
-                      'driverId': widget.order.driverId,
-                    })
+                await ApiClient.get('/api/users/${widget.userId}')
                     as Map<String, dynamic>? ??
                 {};
             alreadyVerified = userData['isVerified'] ?? false;
-          } catch (e) {
-            debugPrint('loyalty update failed: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'تم استلام الطلبية لكن حدث خطأ في تحديث نقاط الولاء',
-                    style: const TextStyle(fontFamily: 'Amiri'),
-                  ),
-                  backgroundColor: Colors.orange.shade700,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          }
+          } catch (_) {}
         } else {
           alreadyVerified = true;
         }
@@ -3757,45 +3741,28 @@ class OrderDetailsSheetState extends State<OrderDetailsSheet> {
       return;
     }
 
-    bool loyaltyUpdated = false;
     if (!alreadyConfirmed) {
+      bool alreadyVerified = false;
       try {
         final userData =
-            await ApiClient.put('/api/users/${widget.userId}/loyalty', {
-                  'driverId': _order.driverId,
-                })
+            await ApiClient.get('/api/users/${widget.userId}')
                 as Map<String, dynamic>? ??
             {};
-        final bool alreadyVerified = userData['isVerified'] ?? false;
-        loyaltyUpdated = true;
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                alreadyVerified
-                    ? 'تم استلام الطلبية، شكراً لك!'
-                    : 'تم توثيق حسابك بنجاح، لن يظهر رقمك للسائقين بعد الآن',
-                style: const TextStyle(fontFamily: 'Amiri'),
-              ),
-              backgroundColor: alreadyVerified ? kPrimaryColor : kSuccessColor,
-              behavior: SnackBarBehavior.floating,
+        alreadyVerified = userData['isVerified'] ?? false;
+      } catch (_) {}
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              alreadyVerified
+                  ? 'تم استلام الطلبية، شكراً لك!'
+                  : 'تم توثيق حسابك بنجاح، لن يظهر رقمك للسائقين بعد الآن',
+              style: const TextStyle(fontFamily: 'Amiri'),
             ),
-          );
-        }
-      } catch (e) {
-        debugPrint('loyalty update failed: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'تم استلام الطلبية لكن حدث خطأ في تحديث نقاط الولاء',
-                style: const TextStyle(fontFamily: 'Amiri'),
-              ),
-              backgroundColor: Colors.orange.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+            backgroundColor: alreadyVerified ? kPrimaryColor : kSuccessColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
 

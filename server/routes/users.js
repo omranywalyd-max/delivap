@@ -356,12 +356,18 @@ router.put('/users/:id/loyalty', async (req, res) => {
     const user = await User.findOne(filter);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (orderId) {
-      const Order = require('../models/Order');
-      const order = await Order.findById(orderId);
-      if (order && order.customerConfirmed) {
-        return res.json({ ...user.toObject(), loyaltySkipped: true });
-      }
+    // منذ الآن تتم زيادة الولاء تلقائياً داخل PUT /orders/:id عند تأكيد الاستلام.
+    // هاد المسار يبقى فقط كـ fallback ولازم يحمل orderId:
+    // - بلا orderId → نرجع بلا زيادة (منعاً للعدّ المزدوج من النسخ القديمة للتطبيق).
+    // - مع orderId والطلب مؤكد مسبقاً → لا نزيد.
+    if (!orderId) {
+      return res.json({ ...user.toObject(), loyaltySkipped: true, fallback: true });
+    }
+
+    const Order = require('../models/Order');
+    const order = await Order.findById(orderId);
+    if (order && order.customerConfirmed) {
+      return res.json({ ...user.toObject(), loyaltySkipped: true });
     }
 
     const updates = { updatedAt: new Date() };

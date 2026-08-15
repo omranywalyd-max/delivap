@@ -24,7 +24,8 @@ class DeliveredActivity : Activity() {
 
     private var ringtone: android.media.Ringtone? = null
     private val handler = Handler(Looper.getMainLooper())
-    private var isConfirmed = false
+    private var isConfirming = false
+    private var orderId = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +51,7 @@ class DeliveredActivity : Activity() {
 
         val driverName = intent.getStringExtra("driverName") ?: "السائق"
         val driverPhoto = intent.getStringExtra("driverPhoto") ?: ""
-        val orderId = intent.getStringExtra("orderId") ?: ""
+        orderId = intent.getStringExtra("orderId") ?: ""
 
         findViewById<TextView>(R.id.tvDriverName).text = driverName
 
@@ -65,8 +66,8 @@ class DeliveredActivity : Activity() {
         val tvStatus = findViewById<TextView>(R.id.tvStatus)
 
         btnConfirm.setOnClickListener {
-            if (isConfirmed) return@setOnClickListener
-            isConfirmed = true
+            if (isConfirming) return@setOnClickListener
+            isConfirming = true
             tvStatus.text = "جاري التأكيد..."
             tvStatus.visibility = View.VISIBLE
             btnConfirm.isEnabled = false
@@ -77,69 +78,78 @@ class DeliveredActivity : Activity() {
     }
 
     private fun confirmDelivery(orderId: String) {
-        Thread {
-            try {
-                val user = FirebaseAuth.getInstance().currentUser
-                val token = user?.getIdToken(false)?.result?.token
-                val userId = user?.uid ?: ""
-
-                // 1. Update order: customerConfirmed = true
-                val orderUrl = URL("https://api.delivap.com/api/orders/$orderId")
-                val orderConn = orderUrl.openConnection() as HttpURLConnection
-                orderConn.requestMethod = "PUT"
-                orderConn.setRequestProperty("Content-Type", "application/json")
+        if (orderId.isEmpty()) {
+            showResult("فشل التأكيد: لا يوجد معرّف الطلبية", success = false)
+            return
+        }
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            showResult("فشل التأكيد: غير متصل، أعد فتح التطبيق وحاول", success = false)
+            return
+        }
+        // نحاول بالتوكن المحلي، وإن فشل نجربو التحديث (refresh)
+        user.getIdToken(false)
+            .addOnSuccessListener { result ->
+                val token = result.token
                 if (token != null) {
-                    orderConn.setRequestProperty("Authorization", "Bearer $token")
-                }
-                orderConn.doOutput = true
-
-                val orderBody = JSONObject().apply {
-                    put("customerConfirmed", true)
-                }
-                orderConn.outputStream.use { os ->
-                    os.write(orderBody.toString().toByteArray())
-                }
-                orderConn.responseCode
-                orderConn.disconnect()
-
-                // 2. Update loyalty: add loyalty point
-                if (orderId.isNotEmpty() && userId.isNotEmpty()) {
-                    try {
-                        val loyaltyUrl = URL("https://api.delivap.com/api/users/$userId/loyalty")
-                        val loyaltyConn = loyaltyUrl.openConnection() as HttpURLConnection
-                        loyaltyConn.requestMethod = "PUT"
-                        loyaltyConn.setRequestProperty("Content-Type", "application/json")
-                        if (token != null) {
-                            loyaltyConn.setRequestProperty("Authorization", "Bearer $token")
-                        }
-                        loyaltyConn.doOutput = true
-
-                        val loyaltyBody = JSONObject().apply {
-                            put("driverId", intent.getStringExtra("driverId") ?: "")
-                        }
-                        loyaltyConn.outputStream.use { os ->
-                            os.write(loyaltyBody.toString().toByteArray())
-                        }
-                        loyaltyConn.responseCode
-                        loyaltyConn.disconnect()
-                    } catch (_: Exception) {}
-                }
-
-                handler.post {
-                    val tvStatus = findViewById<TextView>(R.id.tvStatus)
-                    tvStatus.text = "تم التأكيد ✅"
-                    tvStatus.visibility = View.VISIBLE
-                    handler.postDelayed({ dismiss() }, 2000)
-                }
-            } catch (_: Exception) {
-                handler.post {
-                    val tvStatus = findViewById<TextView>(R.id.tvStatus)
-                    tvStatus.text = "تم التأكيد ✅"
-                    tvStatus.visibility = View.VISIBLE
-                    handler.postDelayed({ dismiss() }, 2000)
+                    Thread { confirmDeliveryRequest(orderId, token) }.start()
+                } else {
+                    showResult("فشل التأكيد: توكن غير صالح", success = false)
                 }
             }
-        }.start()
+            .addOnFailureListener {
+                user.getIdToken(true)
+                    .addOnSuccessListener { result ->
+                        val token = result.token
+                        if (token != null) {
+                            Thread { confirmDeliveryRequest(orderId, token) }.start()
+                        } else {
+                            showResult("فشل التأكيد: توكن غير صالح", success = false)
+                        }
+                    }
+                    .addOnFailureListener {
+                        showResult("فشل التأكيد: تعذّر تحديث الجلسة", success = false)
+                    }
+            }
+    }
+
+    private fun confirmDeliveryRequest(orderId: String, token: String) {
+        try {
+            val url = URL("https://api.delivap.com/api/orders/$orderId")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "PUT"
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            conn.doOutput = true
+
+            val body = JSONObject().apply { put("customerConfirmed", true) }
+            conn.outputStream.use { os -> os.write(body.toString().toByteArray()) }
+            val code = conn.responseCode
+            conn.disconnect()
+
+            val success = code in 200..299
+            showResult(if (success) "تم التأكيد ✅" else "فشل التأكيد (رمز $code)", success = success)
+        } catch (e: Exception) {
+            showResult("فشل التأكيد: ${e.message ?: "خطأ في الاتصال"}", success = false)
+        }
+    }
+
+    private fun showResult(message: String, success: Boolean) {
+        handler.post {
+            val tvStatus = findViewById<TextView>(R.id.tvStatus)
+            tvStatus.text = message
+            tvStatus.visibility = View.VISIBLE
+            if (success) {
+                handler.postDelayed({ dismiss() }, 2000)
+            } else {
+                isConfirming = false
+                val btnConfirm = findViewById<Button>(R.id.btnConfirm)
+                btnConfirm.isEnabled = true
+                btnConfirm.text = "إعادة المحاولة"
+            }
+        }
     }
 
     private fun playNotificationSound() {

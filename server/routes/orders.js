@@ -349,6 +349,32 @@ router.put('/orders/:id', async (req, res) => {
       if (order.driverId) emitToDriver(io, order.driverId, 'order:updated', order);
     }
     const oldStatus = old?.status;
+    // ✅ زيادة نقاط الولاء تلقائياً عند تأكيد الزبون للاستلام (طلب واحد من العميل، منعاً للفشل الصامت والعدّ المزدوج)
+    if (req.body.customerConfirmed === true && old && old.customerConfirmed !== true) {
+      if (order.userId) {
+        try {
+          const loyaltyUser = await User.findOne({ uid: order.userId });
+          if (loyaltyUser) {
+            const updates = {};
+            if (!loyaltyUser.isVerified) updates.isVerified = true;
+            if (order.driverId && !order.isFreeDelivery) {
+              const driverLoyalty = loyaltyUser.driverLoyalty || {};
+              const currentDriverCount = (driverLoyalty.get?.(order.driverId) ?? 0) + 1;
+              updates[`driverLoyalty.${order.driverId}`] = currentDriverCount >= 5 ? 0 : currentDriverCount;
+              if (currentDriverCount >= 5) {
+                updates[`driverFreeDelivery.${order.driverId}`] = true;
+              }
+              console.log(`[LOYALTY] +1 for user ${order.userId} with driver ${order.driverId} (count=${currentDriverCount})`);
+            }
+            await User.updateOne({ uid: order.userId }, { $set: updates });
+            const loyaltyIO = getIO();
+            if (loyaltyIO) emitToUser(loyaltyIO, order.userId, 'user:updated', { uid: order.userId });
+          }
+        } catch (loyaltyErr) {
+          console.error('[LOYALTY] update error:', loyaltyErr.message);
+        }
+      }
+    }
     if (order.status === 'accepted' && oldStatus !== 'accepted') {
       // حفظ موقع السائق الحالي في الطلبية عند القبول
       if (order.driverId) {
