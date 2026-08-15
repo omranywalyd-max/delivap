@@ -37,7 +37,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   Map<String, dynamic>? _userData;
   List<Map<String, dynamic>> _savedLocations = [];
   final Map<String, String> _driverNames = {};
@@ -53,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _headerCtrl = AnimationController(
       vsync: this,
@@ -96,6 +97,13 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   void _onUserUpdated(_) {
     _loadUser();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadUser();
+    }
   }
 
   Future<void> _loadUser() async {

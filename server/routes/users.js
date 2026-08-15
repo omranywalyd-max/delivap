@@ -13,9 +13,20 @@ const { isSelfOrAdmin } = require('../middleware/authorize');
 
 // تنظيف الحقول الحساسة قبل الرد
 const PRIVATE_FIELDS = ['password', 'lastIp', 'bannedIp'];
+// Mongoose Map (نوع Map) ما يتحولش مزيان عبر toObject() — يحوّله لمو ديل عادي
+function mapsToPlain(obj) {
+  for (const key of Object.keys(obj)) {
+    const v = obj[key];
+    if (v instanceof Map) {
+      obj[key] = Object.fromEntries(v);
+    }
+  }
+  return obj;
+}
 function toSafeUser(u) {
   if (!u) return u;
   const obj = u.toObject ? u.toObject() : { ...u };
+  mapsToPlain(obj);
   for (const f of PRIVATE_FIELDS) delete obj[f];
   return obj;
 }
@@ -361,13 +372,13 @@ router.put('/users/:id/loyalty', async (req, res) => {
     // - بلا orderId → نرجع بلا زيادة (منعاً للعدّ المزدوج من النسخ القديمة للتطبيق).
     // - مع orderId والطلب مؤكد مسبقاً → لا نزيد.
     if (!orderId) {
-      return res.json({ ...user.toObject(), loyaltySkipped: true, fallback: true });
+      return res.json({ ...mapsToPlain(user.toObject()), loyaltySkipped: true, fallback: true });
     }
 
     const Order = require('../models/Order');
     const order = await Order.findById(orderId);
     if (order && order.customerConfirmed) {
-      return res.json({ ...user.toObject(), loyaltySkipped: true });
+      return res.json({ ...mapsToPlain(user.toObject()), loyaltySkipped: true });
     }
 
     const updates = { updatedAt: new Date() };

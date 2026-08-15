@@ -462,6 +462,24 @@ router.put('/orders/:id', async (req, res) => {
           console.error('Driver earnings update error:', drvErr.message);
         }
       }
+      // 🎁 الطلبية المجانية: كي السائق يعلّم "تم تسليم الطلبية" → العداد يرجع للصفر (ماشي نقطة تقدّم)
+      if (order.isFreeDelivery && order.userId && order.driverId) {
+        try {
+          const User = require('../models/User');
+          const loyaltyUser = await User.findOne({ uid: order.userId });
+          if (loyaltyUser) {
+            const updates = {};
+            if (!loyaltyUser.isVerified) updates.isVerified = true;
+            updates[`driverLoyalty.${order.driverId}`] = 0;
+            console.log(`[LOYALTY] free delivery delivered: counter reset to 0 for user ${order.userId} with driver ${order.driverId}`);
+            await User.updateOne({ uid: order.userId }, { $set: updates });
+            const loyaltyIO = getIO();
+            if (loyaltyIO) emitToUser(loyaltyIO, order.userId, 'user:updated', { uid: order.userId });
+          }
+        } catch (loyaltyErr) {
+          console.error('[LOYALTY] free delivery delivered update error:', loyaltyErr.message);
+        }
+      }
       // تجميع أرباح صاحب المحل / الستايل + الزبون
       try {
         const items = order.items || [];
