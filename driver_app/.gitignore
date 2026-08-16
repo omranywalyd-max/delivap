@@ -50,3 +50,6 @@ app.*.map.json
 key.properties
 .env
 google-services.json
+
+# Temp backup files
+*.bak

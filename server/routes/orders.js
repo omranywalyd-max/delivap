@@ -348,6 +348,23 @@ router.put('/orders/:id', async (req, res) => {
       emitToUser(io, order.userId, 'order:updated', order);
       if (order.driverId) emitToDriver(io, order.driverId, 'order:updated', order);
     }
+    // إشعار FCM للسائق الجديد عند تغيير السائق
+    const driverChanged = req.body.driverId && old && old.driverId && req.body.driverId !== old.driverId;
+    if (driverChanged && order.driverId) {
+      const customerName = order.userName || 'زبون';
+      const productTotal = (order.items || []).reduce((sum, item) => {
+        const price = item.finalPrice ?? item.price ?? item.prix ?? 0;
+        const qty = item.quantity ?? 1;
+        return sum + (price * qty);
+      }, 0);
+      const deliveryFee = order.deliveryFee || 0;
+      sendToDriver({
+        driverId: order.driverId,
+        title: '📦 طلبية جديدة',
+        body: `${customerName} — ${productTotal} DA + ${deliveryFee} DA توصيل`,
+        data: { orderId: order._id.toString(), type: 'new_order' },
+      }).catch(e => console.error('FCM driver changed new order error:', e.message));
+    }
     const oldStatus = old?.status;
     // ✅ زيادة نقاط الولاء تلقائياً عند تأكيد الزبون للاستلام (طلب واحد من العميل، منعاً للفشل الصامت والعدّ المزدوج)
     if (req.body.customerConfirmed === true && old && old.customerConfirmed !== true) {

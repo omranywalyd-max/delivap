@@ -60,6 +60,7 @@ serviceAccountKey.json
 # Debug & temp files
 *.log
 flutter_*.log
+analyze_out.txt
 okhrej.mp3
 devtools_options.yaml
 
@@ -78,3 +79,6 @@ stores_widget_explanation.md
 
 # Agents
 /.agents/
+
+# Local tools
+/taiba_sync/
