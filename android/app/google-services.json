@@ -1,0 +1,108 @@
+{
+  "project_info": {
+    "project_number": "432689533764",
+    "project_id": "delive-667f5",
+    "storage_bucket": "delive-667f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432689533764:android:c8918496abfe4148a77d11",
+        "android_client_info": {
+          "package_name": "com.deliv.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "432689533764-35urr7dclo0cpg1ie588bbsr3fipptt3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deliv.customer",
+            "certificate_hash": "9221cdb92deb07e442141cd0004057db57bc5541"
+          }
+        },
+        {
+          "client_id": "432689533764-fn0f7ev84qaftp4cm7m36vr7tqvoirv8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deliv.customer",
+            "certificate_hash": "9e8f1fa158f8780c3345150282eee5df9c0b824f"
+          }
+        },
+        {
+          "client_id": "432689533764-s8pin88eks2c42nftrcuutvnfcquaeph.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deliv.customer",
+            "certificate_hash": "661a54a5ae61ee8427eb1d8afc3246d201df1706"
+          }
+        },
+        {
+          "client_id": "432689533764-vd27eqh7kt7hsjd816mp62kn3anvpper.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deliv.customer",
+            "certificate_hash": "88608531f856f3c98892093af9b5440a270d1efb"
+          }
+        },
+        {
+          "client_id": "432689533764-6qh35mbtn6l3v7t1su6rde0psluhp15k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp2VwwSQSY2vvyCot-oq7UFvlO61xpo2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "432689533764-6qh35mbtn6l3v7t1su6rde0psluhp15k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432689533764:android:d447c96b460e0dbca77d11",
+        "android_client_info": {
+          "package_name": "com.deliv.driver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "432689533764-1qi4qdrfds3460ardr6itqtvmkb2str2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.deliv.driver",
+            "certificate_hash": "9e8f1fa158f8780c3345150282eee5df9c0b824f"
+          }
+        },
+        {
+          "client_id": "432689533764-6qh35mbtn6l3v7t1su6rde0psluhp15k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp2VwwSQSY2vvyCot-oq7UFvlO61xpo2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "432689533764-6qh35mbtn6l3v7t1su6rde0psluhp15k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

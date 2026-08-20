@@ -1,0 +1,12 @@
+﻿... def classify(name_score, size_match, our_size_known): |     if size_match and name_score >= 0.55: |         return 'HIGH' |     if size_match and name_score >= 0.35: |         return 'MEDIUM' |     if (not our_size_known) and name_score >= 0.65: |         return 'MEDIUM' | 
+---
+... def main(): |     ap = argparse.ArgumentParser(description='┘àÏ▓Ïº┘à┘åÏ® ÏÁ┘êÏ▒ Ïº┘ä┘à┘åÏ¬Ï¼ÏºÏ¬ ┘à┘å taibaoline ÏÑ┘ä┘ë Deliv') |     ap.add_argument('--apply', action='store_true', help='Ï¬ÏÀÏ¿┘è┘é Ïº┘ä┘àÏÀÏºÏ¿┘éÏºÏ¬ HIGH ┘ü┘éÏÀ') |     ap.add_argument('--apply-all', action='store_true', help='Ï¬ÏÀÏ¿┘è┘é ┘â┘ä 
+---
+... args.apply_all: |         min_conf = args.min_confidence or 'LOW' |     elif args.apply: |         min_conf = args.min_confidence or 'HIGH' |     else: |         min_conf = args.min_confidence or 'HIGH' |  |     print('[*] Ï¬Ï│Ï¼┘è┘ä Ïº┘äÏ»Ï«┘ê┘ä ÏÑ┘ä┘ë Deliv ...') |     token = admin_logi
+---
+... args.apply: |         min_conf = args.min_confidence or 'HIGH' |     else: |         min_conf = args.min_confidence or 'HIGH' |  |     print('[*] Ï¬Ï│Ï¼┘è┘ä Ïº┘äÏ»Ï«┘ê┘ä ÏÑ┘ä┘ë Deliv ...') |     token = admin_login() |     print('[+] Ï¬┘à Ïº┘äÏ»Ï«┘ê┘ä') |  |     if args.revert_report: |         revert
+---
+... args.apply or args.apply_all: |             if CONF_RANK[conf] < CONF_RANK[min_conf]: |                 action = 'SKIP_LOW_CONFIDENCE' |             elif mflags: |                 action = 'REVIEW_' + flag |                 stats['REVIEW'] += 1 |             elif not src:
+---
+... args.apply_all: |             if CONF_RANK[conf] < CONF_RANK[min_conf]: |                 action = 'SKIP_LOW_CONFIDENCE' |             elif mflags: |                 action = 'REVIEW_' + flag |                 stats['REVIEW'] += 1 |             elif not src: |              
+---

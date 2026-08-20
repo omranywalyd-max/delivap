@@ -1,0 +1,45 @@
+# Secrets - NEVER commit
+.env
+serviceAccountKey.json
+*.jks
+key.properties
+keystore.jks
+
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Android
+android/.gradle/
+android/.kotlin/
+android/app/build/
+*.iml
+local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+
+# Node.js
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Archives
+*.rar
+*.zip
+
+# Build outputs
+build/app/outputs/

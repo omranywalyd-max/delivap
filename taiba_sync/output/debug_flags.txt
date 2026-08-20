@@ -1,0 +1,62 @@
+﻿total: 807
+conf: {'HIGH': 116, 'MEDIUM': 263, 'LOW': 428}
+flags: {'': 116, 'BRAND_GAP': 429, 'BRAND_GAP+DUP_SOURCE': 150, 'COMMON_ONLY+DUP_SOURCE': 41, 'COMMON_ONLY': 68, 'DUP_SOURCE': 3}
+WOULD_APPLY: 60
+
+--- HIGH flagged (needs review) ---
+Ï▓┘èÏ¬ Ïº┘ä┘è┘ê 5 ┘äÏ¬Ï▒                       [5L   ] <- Ol├®or Huiel 5 L                          [5L] | BRAND_GAP | score=0.667
+Ï▓┘èÏ¬ Ïº┘ä┘è┘ê 1 ┘äÏ¬Ï▒                       [1L   ] <- Afia Huile 1 L                           [1L] | BRAND_GAP | score=0.667
+Ï▓┘èÏ¬ Ïº┘ä┘è┘ê 2 ┘äÏ¬Ï▒                       [2L   ] <- Afia Huile 2 L                           [2L] | BRAND_GAP | score=0.667
+┘üÏÀÏ▒ ┘ü┘èÏ¬Ï▒ ┘âÏº┘à┘ä 380 Ï║                  [380g ] <- Extra Champignons De Paris Entiers 380   [380g] | BRAND_GAP | score=0.667
+ÏºÏ▒Ï▓ Ï¿Ï│┘àÏ¬Ï│ Ïº┘ä┘êÏ│Ïº┘à 500 Ï║               [500g ] <- El Wissam Riz Sella Basmati Indien Gol   [500g] | BRAND_GAP+DUP_SOURCE | score=0.667
+┘àÏº┘éÏ▒┘ê┘å Ï╣┘àÏ▒ Ï¿┘å Ï╣┘àÏ▒ 500 Ï║              [500g ] <- Amor Benamor Plombs 500 G                [500g] | BRAND_GAP+DUP_SOURCE | score=0.667
+ÏÀÏ╣Ïº┘à ┘àÏº┘àÏº Ï▒┘é┘è┘é 1 ┘âÏ║                  [1kg  ] <- Mama Semoule Fine 1 KG                   [1kg] | BRAND_GAP | score=0.667
+ÏºÏ▒Ï▓ Ï¿Ï│┘àÏ¬┘è Ï▒┘êÏ╣Ï® 500 Ï║                 [500g ] <- El Wissam Riz Sella Basmati Indien Gol   [500g] | BRAND_GAP+DUP_SOURCE | score=0.667
+┘àÏº┘éÏ▒┘ê┘å Ï│┘è┘à ┘â┘êÏ»6/ 500 Ï║               [500g ] <- Sim P├átes Coude Moyen 500 G              [500g] | BRAND_GAP | score=0.667
+┘àÏº┘éÏ▒┘ê┘å Ï│┘è┘à ┘â┘êÏ» 4 500Ï║                [500g ] <- Sim P├átes Coude Moyen 500 G              [500g] | BRAND_GAP | score=0.667
+ÏºÏ▒Ï▓ ┘à┘ü┘êÏ▒ Ï▒┘êÏ╣Ï® 500 Ï║                  [500g ] <- SOS Parboiled Long Grain 500 G           [500g] | BRAND_GAP | score=0.667
+ÏºÏ▒Ï▓ Ï¿Ï│┘àÏ¬┘è ┘âÏ▒┘è┘à┘è 1 ┘âÏ║                 [1kg  ] <- Wissam Rice Basmati Brown 1KG            [1kg] | BRAND_GAP | score=0.667
+ÏºÏ▒Ï▓ ┘à┘ü┘êÏ▒ Ï▒┘êÏ╣Ï® 1 ┘âÏ║                   [1kg  ] <- ┬áShazia Premium Indian Basmati Rice 1    [1kg] | BRAND_GAP | score=0.667
+Ï│┘à┘èÏ» ┘à┘ê┘ä┘ë Ï▒┘é┘è┘é 1 ┘âÏ║                  [1kg  ] <- Mama Semoule Fine 1 KG                   [1kg] | BRAND_GAP | score=0.667
+Ï│┘à┘èÏ» Ï│┘ü┘è┘åÏ® Ï▒┘é┘è┘é 1 ┘âÏ║                 [1kg  ] <- Mama Semoule Fine 1 KG                   [1kg] | BRAND_GAP | score=0.667
+Ï¼Ïº┘ü┘è┘ä Ï»┘êÏ▓ 2 ┘äÏ¬Ï▒                      [2L   ] <- Atack plus &#8211; javel Moussant 2L     [2L] | BRAND_GAP+DUP_SOURCE | score=0.667
+┘à┘åÏ©┘ü Ï▓Ï¼ÏºÏ¼ Ï¿Ï▒┘è┘ä┘âÏ│ 750┘à┘ä               [750ml] <- Brilex Lave Viter 750 ML                 [750ml] | BRAND_GAP | score=0.667
+Ï│ÏºÏª┘ä Ïº┘êÏº┘å┘è Ïº┘é┘ä 650┘à┘ä                 [650ml] <- Aigle Liquide Vaisselle Citron 650 ML    [650ml] | BRAND_GAP | score=0.667
+ÏÁÏº┘å┘èÏ¿┘ê Ïº┘à┘èÏ▒ ┘äÏº┘üÏÁ┘ê┘ä 1┘äÏ¬Ï▒              [1L   ] <- Amir SaniBon Senteur Lavande 1L          [1L] | BRAND_GAP | score=0.75
+ÏÁÏº┘å┘èÏ¿┘ê ┘êÏº┘è┘ü  1┘äÏ¬Ï▒                    [1L   ] <- Amir SaniBon Senteur Lavande 1L          [1L] | BRAND_GAP+DUP_SOURCE | score=0.667
+ÏÁÏº┘å┘èÏ¿┘ê Ï¿Ï▒┘è┘ä┘âÏ│ ┘äÏº┘üÏÁ┘ê┘ä 1┘äÏ¬Ï▒            [1L   ] <- ┬áSaniBon Brilex Marine 1L                [1L] | BRAND_GAP+DUP_SOURCE | score=0.75
+┘àÏ╣ÏÀÏ▒ Ïº┘ä┘à┘äÏºÏ¿Ï│ Ï¿Ï▒┘è┘ä┘âÏ│ 1.2┘ä             [1.2L ] <- Brilex Adoucissant Linge 1,2 L           [1.2L] | BRAND_GAP | score=0.667
+Ï│ÏºÏª┘ä Ïº┘êÏº┘å┘è ┘äÏº┘è┘ü 1.25┘ä                [1.25L] <- life Liquide Vaisselle Citron 1,25 L     [1.25L] | BRAND_GAP | score=0.667
+Ï│ÏºÏª┘ä Ïº┘êÏº┘å┘è Ï¿Ï▒┘è┘ä 650┘à┘ä                [650ml] <- Pril ISIS Liquide Vaisselle 650 ML       [650ml] | BRAND_GAP | score=0.667
+Ï│ÏºÏª┘ä Ïº┘êÏº┘å┘è ┘äÏº┘è┘ü 650┘à┘ä                [650ml] <- life Liquide Vaisselle Citron 650 ML     [650ml] | BRAND_GAP | score=0.667
+ÏÁÏº┘å┘èÏ¿┘ê Ïº┘à┘èÏ▒ Ï╣ÏºÏ»┘è1┘ä                   [1L   ] <- Amir SaniBon Senteur Lavande 1L          [1L] | BRAND_GAP+DUP_SOURCE | score=0.667
+Ï¼Ïº┘ü┘è┘ä Ï¿Ï▒┘è┘ä┘âÏ│2┘äÏ¬Ï▒                     [2L   ] <- Atack plus &#8211; javel Moussant 2L     [2L] | BRAND_GAP+DUP_SOURCE | score=0.667
+Ï¼Ïº┘ü┘è┘ä Ï¬Ï│Ï¬ 2 ┘äÏ¬Ï▒                      [2L   ] <- Atack plus &#8211; javel Moussant 2L     [2L] | BRAND_GAP+DUP_SOURCE | score=0.667
+Ï¼Ïº┘ä Ï¼Ïº┘ü┘è┘ä Ï¿Ï▒┘è┘ä┘âÏ│ 2┘äÏ¬Ï▒                [2L   ] <- Atack plus &#8211; javel Moussant 2L     [2L] | BRAND_GAP | score=0.75
+┘àÏº┘è┘ê┘å┘èÏ▓ ┘ü┘ä┘êÏ▒┘èÏº┘ä Ï¿┘äÏºÏ│Ï¬┘è┘â 200Ï║         [200g ] <- Fleurial Mayonnaise Aux Oeufs Frais 20   [200g] | BRAND_GAP | score=0.667
+┘àÏº┘è┘ê┘å┘èÏ▓ Ï▓Ï¼ÏºÏ¼ ┘ü┘ä┘êÏ▒┘èÏº┘ä 200Ï║            [200g ] <- Fleurial Mayonnaise Aux Oeufs Frais 20   [200g] | BRAND_GAP | score=0.667
+Ï¡┘àÏÁ ┘àÏ▒Ï¡┘è Ïº┘äÏ¬┘åÏºÏ¼ 400Ï║                 [400g ] <- Altadj pois chiche moulu 400g            [400g] | BRAND_GAP | score=0.667
+Ï▒Ïº┘à┘è ┘à┘è┘ä┘â┘è ┘âÏ▒ÏÀ┘ê┘åÏ® 1┘ä                 [1L   ] <- Jus Ramy Milky Grenadine 1L              [1L] | BRAND_GAP | score=0.667
+Ï¼┘è Ïº┘üÏ▒┘ê┘è ┘âÏ▒ÏÀ┘ê┘åÏ® 1┘ä                   [1L   ] <- Ifruit Jus 100% Pomme 1L                 [1L] | BRAND_GAP | score=0.667
+┘àÏ╣ÏÀÏ▒ Ïº┘äÏ¼┘ê Ï¿Ï▒┘è┘ä┘âÏ│ 430┘à┘ä               [430ml] <- Forcexpress d├®sodorise fleurs d&#8217;   [430ml] | BRAND_GAP | score=0.667
+Ï¿Ï▒┘è┘ä┘âÏ│ ┘àÏ▓┘è┘ä Ïº┘äÏ»┘ç┘ê┘å ÏÁÏ║┘èÏ▒ 500┘à┘ä        [500ml] <- Brilex Degraissant Professionnel 500 M   [500ml] | BRAND_GAP | score=0.75
+Ï▒┘êÏ¡ Ïº┘ä┘à┘äÏ¡ ┘åÏºÏÁÏ¡ 720┘à┘ä                 [720ml] <- Brilex Esprit De Sel 700 ML              [700ml] | BRAND_GAP | score=0.667
+┘éÏ▒┘èÏ▓┘è┘ä ÏºÏ│┘êÏ» Ï¿Ï▒┘è┘ä┘âÏ│ 850┘à┘ä             [850ml] <- Brilex Gr├®zyl Noir 850 ML                [850ml] | BRAND_GAP | score=0.667
+ÏÁÏºÏ¿┘ê┘å Ï│ÏºÏª┘ä Ïº┘à┘èÏ▒ 390┘à┘ä                [390ml] <- Force Xpress Savon Liquide Mains Mango   [400ml] | BRAND_GAP | score=0.667
+┘àÏ╣ÏÀÏ▒ Ïº┘äÏ¼┘ê ┘äÏº┘è┘ü 500┘à┘ä                 [500ml] <- Atack plus air fresher bouquet of flow   [500ml] | BRAND_GAP | score=0.667
+Ï▒Ïº┘à┘è ┘à┘è┘ä┘â┘è 1┘äÏ¬Ï▒ ┘éÏ▒Ï╣Ï®                 [1L   ] <- Jus Ramy Milky Orange Ananas 1L          [1L] | BRAND_GAP | score=0.75
+Ï┤Ïº┘è ÏºÏ«ÏÂÏ▒ Ïº┘äÏ¼┘à┘ä 125Ï║                  [125g ] <- THE VERT DE CHINE SAFINET E&#8217; SAH   [125g] | BRAND_GAP | score=0.667
+┘éÏºÏ▓┘êÏ▓ ÏºÏ▒┘ê┘ë Ï▒┘àÏº┘å 1┘ä                   [1L   ] <- Eau Gazeuse Schweppes Grenadine 1L       [1L] | BRAND_GAP | score=0.667
+┘àÏ╣Ï¼┘ê┘å ÏºÏ│┘åÏº┘å Ï│┘è┘éÏºÏ»┘ê┘åÏ¬ 100Ï║            [100g ] <- Extra Dentifrice Girofle &#038; Menthe   [100g] | BRAND_GAP | score=0.667
+Ï¼┘è ┘üÏ▒┘ê┘èÏ¬┘è 1 ┘äÏ¬Ï▒                      [1L   ] <- Jus Rouiba Ananas 1 L                    [1L] | BRAND_GAP | score=0.667
+┘äÏ¿┘å Ï│ÏºÏ┤┘è 1 ┘äÏ¬Ï▒                       [1L   ] <- Ï¡┘ä┘èÏ¿ Ïú┘êÏ¿┘è 1 ┘äÏ¬Ï▒                          [1L] | BRAND_GAP | score=0.733
+ÏÁÏºÏ¿┘ê┘å Ï│ÏºÏª┘ä Ï»┘êÏ▓ 5┘äÏ¬Ï▒                  [5L   ] <- Life Gel Machine a laver pareum savon    [5L] | BRAND_GAP | score=0.75
+Ï¼Ïº┘ü┘è┘ä Ïº┘é┘ä 5┘äÏ¬Ï▒                       [5L   ] <- Test Eau De Javel 5 L                    [5L] | BRAND_GAP | score=0.667
+ÏÁ┘ê┘àÏº┘à Ï¼┘å┘è┘å┘èÏ® 1 ┘äÏ¬Ï▒                   [1L   ] <- ┬á Yaourt Soummam Yago _ Mangue 1L        [1L] | BRAND_GAP+DUP_SOURCE | score=0.667
+┘âÏº┘àÏ¿┘èÏ▒ Ï│┘èÏ»┘è Ï│Ï╣ÏºÏ»Ï® 250Ï║               [250g ] <- Sidi Sa├áda Camembert 250 G               [250g] | BRAND_GAP | score=0.667
+ÏÁ┘ê┘àÏº┘à Ï┤┘â┘ê┘äÏº 1 ┘äÏ¬Ï▒                    [1L   ] <- ┬á Yaourt Soummam Yago _ Mangue 1L        [1L] | BRAND_GAP+DUP_SOURCE | score=0.667
+┘à┘éÏ▒┘ê┘å Ï¿Ï»┘ê┘å Ï║┘ä┘êÏ¬┘è┘å 300Ï║               [300g ] <- ┬áEl Mordjene Levure Chimique 300 G       [300g] | BRAND_GAP | score=0.667
+Ï¼Ïº┘ü┘è┘ä Ï▒Ï║┘ê┘è 1 ┘äÏ¬Ï▒                     [1L   ] <- ┬áGel Javel AMIR 1L                       [1L] | BRAND_GAP+DUP_SOURCE | score=0.667
+Ïº┘üÏ▒┘è1 ┘äÏ¬Ï▒                            [1L   ] <- Ï¡┘ä┘èÏ¿ Ïú┘êÏ¿┘è 1 ┘äÏ¬Ï▒                          [1L] | BRAND_GAP+DUP_SOURCE | score=0.56
+Ï│Ïº┘ë┘ä Ïº┘êÏº┘å┘è 3 ┘äÏ¬Ï▒                     [3L   ] <- Pril ISIS Liquide Vaisselle 3 L          [3L] | BRAND_GAP | score=0.667
+Ï¼┘è Ï»Ïº┘è┘ä┘è 1┘äÏ¬Ï▒                        [1L   ] <- Jus Rouiba Ananas 1 L                    [1L] | BRAND_GAP | score=0.667

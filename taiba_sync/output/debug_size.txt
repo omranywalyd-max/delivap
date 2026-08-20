@@ -1,0 +1,30 @@
+﻿def sizes_match(a, b):
+    for x in a:
+        for y in b:
+            if x[0] == y[0]:
+                if abs(x[1] - y[1]) <= max(10, 0.05 * max(x[1], y[1])):
+                    return True
+    return False
+
+
+def our_sizes(p):
+    name = p.get('name') or ''
+    cap = str(p.get('capacite') or '')
+    sizes = extract_sizes(name + ' ' + cap)
+    c = cap.strip().replace(',', '.')
+    if c and '/' not in c and re.fullmatch(r'\d+(?:\.\d+)?', c):
+        v = float(c)
+        if 0 < v <= 10:
+            sizes.append(('l', v))
+    return canonical(sizes)
+
+
+def taiba_sizes(p):
+    txt = html.unescape((p.get('name') or '')) + ' ' + strip_tags(html.unescape(p.get('description') or ''))
+    return canonical(extract_sizes(txt))
+
+
+def fmt_sizes(sizes):
+    parts = []
+    for kind, val in sizes:
+       

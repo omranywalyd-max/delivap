@@ -1,0 +1,18 @@
+﻿HIGH | قازوز حمود 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=1.0 cov=1.0 fuzzy=0.241 | flag=
+HIGH | حليب صومام 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=1.0 cov=1.0 fuzzy=0.127 | flag=
+HIGH | حليب صومام 0.5ل [500ml] <- Guedila Fardeau de 12 bouteilles d&#8217;eau minérale 0.5L [500ml] | score=1.0 cov=1.0 fuzzy=0.072 | flag=
+MEDIUM | قازوز معلم 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.127 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | ياغورت ياقو 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.162 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | ياغورت ترته 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.126 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | ياغورت سيريالو 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.175 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | رايب صومام 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.109 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | لبن صومام 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.092 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | جي اولي 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.131 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | قازوز اروى 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.127 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | كوكا 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.096 | flag=BRAND_GAP+DUP_SOURCE
+MEDIUM | داناو 1ل [1L] <- Dorilfor degraissant for active 1l [1L] | score=0.5 cov=0.5 fuzzy=0.114 | flag=BRAND_GAP+DUP_SOURCE
+LOW | قازوز زعيم اورونجينا 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=0.333 cov=0.333 fuzzy=0.237 | flag=BRAND_GAP+DUP_SOURCE
+LOW | قازوز اروى اورونجينا 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=0.333 cov=0.333 fuzzy=0.215 | flag=BRAND_GAP+DUP_SOURCE
+LOW | جي فروي ماكس 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=0.333 cov=0.333 fuzzy=0.118 | flag=BRAND_GAP+DUP_SOURCE
+LOW | جي باست جو 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=0.333 cov=0.333 fuzzy=0.145 | flag=BRAND_GAP+DUP_SOURCE
+LOW | توبسيل اواني 2ل [2L] <- Eau Gazeuse Selecto _ 2L [2L] | score=0.333 cov=0.333 fuzzy=0.188 | flag=BRAND_GAP+DUP_SOURCE

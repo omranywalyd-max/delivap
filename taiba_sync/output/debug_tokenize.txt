@@ -1,0 +1,67 @@
+﻿
+            skip += 1
+            continue
+        data, code = update_product(token, pid, old)
+        if code in (200, 201):
+            ok += 1
+            print('    [OK] %s <- ÏºÏ│Ï¬Ï▒Ï¼Ï╣Ï¬ Ïº┘äÏÁ┘êÏ▒Ï® Ïº┘ä┘éÏ»┘è┘àÏ®%s' % (
+                ((r.get('our_name') or '').strip() or pid),
+                '' if old else ' (┘âÏº┘åÏ¬ Ï¿┘äÏº ÏÁ┘êÏ▒Ï® -> ÏúÏÁÏ¿Ï¡Ï¬ Ï¿┘äÏº ÏÁ┘êÏ▒Ï®)'))
+        else:
+            err += 1
+            print('    [ERR] %s code=%s %s' % ((r.get('our_name') or '').strip() or pid, code,
+                                                json.dumps(data, ensure_ascii=False)[:200]))
+    print('\n===== Ïº┘äÏºÏ│Ï¬Ï▒Ï¼ÏºÏ╣ =====')
+    print('  ┘àÏ│Ï¬Ï▒Ï¼┘ÄÏ╣: %d | ┘üÏ┤┘ä: %d | Ï¿┘äÏº ÏÁ┘êÏ▒Ï® ┘éÏ»┘è┘àÏ®: %d' % (ok, err, skip))
+
+
+# ============================ NORMALISATION ============================
+
+_AR_TBL = str.maketrans({'Ïú': 'Ïº', 'ÏÑ': 'Ïº', 'Ïó': 'Ïº', 'Ï®': '┘ç', '┘ë': '┘è', 'Ïñ': '┘ê', 'Ïª': '┘è', 'Ïí': ''})
+
+
+def strip_diacritics(t):
+    return ''.join(c for c in t if not unicodedata.combining(c))
+
+
+def normalize(t):
+    return strip_diacritics(t.lower()).translate(_AR_TBL)
+
+
+def strip_tags(t):
+    return re.sub(r'<[^>]+>', ' ', t or '')
+
+
+_STOP = {
+    'Ïº┘ä', '┘à┘å', '┘ü┘è', 'Ï╣┘ä┘ë', 'Ïº┘ä┘ë', 'Ïº┘ä┘è', '┘ê', 'Ï¿', '┘ä', '┘â', '┘ü', '┘àÏ╣', '┘â┘ä', 'Ï│', 'Ï»Ï¼',
+    'le', 'la', 'les', 'de', 'du', 'des', 'un', 'une', 'et', 'au', 'aux', 'avec', 'pour',
+    'sur', 'en', 'a', 'est', 'sans',
+}
+
+# Ï╣Ï»Ï» ┘àÏ▒ÏºÏ¬ Ïº┘äÏ©┘ç┘êÏ▒ Ïº┘ä┘àÏ│┘à┘êÏ¡ ┘ä┘ä┘â┘ä┘àÏ® ┘ü┘è ┘à┘åÏ¬Ï¼ÏºÏ¬ ÏÀ┘èÏ¿Ï® Ï¡Ï¬┘ë Ï¬Ï¿┘é┘ë "┘à┘à┘èÏ▓Ï®".
+# Ïº┘ä┘â┘ä┘àÏºÏ¬ Ïº┘äÏ┤ÏºÏªÏ╣Ï® (┘àÏ½┘ä "Ï¿Ï»┘ê┘å Ï║┘ä┘êÏ¬┘è┘å" Ïº┘äÏ¬┘è Ï¬Ï©┘çÏ▒ ┘ü┘è Ï╣Ï┤Ï▒ÏºÏ¬ Ïº┘ä┘à┘åÏ¬Ï¼ÏºÏ¬) ┘äÏº Ï¬┘ÅÏ¡Ï│Ï¿ ┘ü┘è Ïº┘äÏ¬Ï║ÏÀ┘èÏ®.
+DISTINCT_DF = 50
+
+
+def tokenize(t):
+    toks = re.findall(r'[a-z0-9\u0600-\u06ff]+', normalize(t))
+    return {x for x in toks if x not in _STOP and len(x) >= 2}
+
+
+# ============================ Ïº┘äÏ¡Ï¼┘à (Size) ============================
+
+_SIZE_PATTERNS = [
+    (r'(\d+(?:[.,]\d+)?)\s*(?:┘äÏ¬Ï▒|┘ä┘èÏ¬Ï▒|litre|liters?)\b', 'l'),
+    (r'(\d+(?:[.,]\d+)?)\s*┘ä\b', 'l'),
+    (r'(\d+(?:[.,]\d+)?)\s*l\b', 'l'),
+    (r'(\d+(?:[.,]\d+)?)\s*(?:┘à┘ä|ml)\b', 'ml'),
+    (r'(\d+(?:[.,]\d+)?)\s*cl\b', 'cl'),
+    (r'(\d+(?:[.,]\d+)?)\s*(?:┘âÏ║|┘âÏ¼|┘â┘äÏ║|kg)\b', 'kg'),
+    (r'(\d+(?:[.,]\d+)?)\s*(?:Ï║|Ï║Ï▒Ïº┘à|g|gr|gramme)\b', 'g'),
+]
+
+
+def extract_sizes(text):
+    text = normalize(text or '')
+    text = re.sub(r',\s+(\d)', r',\1', text)
+    sizes

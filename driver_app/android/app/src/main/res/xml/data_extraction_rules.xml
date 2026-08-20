@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   منع نسخ واسترجاع بيانات التطبيق احتياطياً (Android 12+)
+   حتى لا ترجع جلسة تسجيل الدخول القديمة بعد إعادة التثبيت
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="."/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="."/>
+    </device-transfer>
+</data-extraction-rules>

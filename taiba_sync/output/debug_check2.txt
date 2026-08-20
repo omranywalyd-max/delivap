@@ -1,0 +1,21 @@
+﻿rows: 807
+┘àÏ¡┘àÏÁÏ® Ï╣┘àÏ▒ Ï¿┘å Ï╣┘àÏ▒ 500 Ï║                   [500g] <- Amor Benamor Plombs 500 G [500g] | conf=HIGH flag= score=1.0
+Ï│┘à┘èÏ» ┘à┘ê┘ä┘ë Ï▒┘é┘è┘é 1 ┘âÏ║                      [1kg] <- Mama Semoule Fine 1 KG [1kg] | conf=HIGH flag=BRAND_GAP score=0.667
+Ï│┘à┘èÏ» ┘àÏº┘àÏº Ï▒┘é┘è┘é 2 ┘âÏ║                      [2kg] <- Mama Semoule Fine 2 KG [2kg] | conf=HIGH flag= score=1.0
+Ï│┘à┘èÏ» ┘àÏº┘àÏº Ï«Ï┤┘å 2 ┘âÏ║                       [2kg] <- Mama Semoule Gros 2KG [2kg] | conf=HIGH flag= score=1.0
+Ï│┘à┘èÏ» ┘àÏº┘àÏº 1┘âÏ║                            [1kg] <- Mama Semoule Moyenne 1 KG [1kg] | conf=HIGH flag= score=1.0
+Ï╣Ï│┘ä 1┘âÏ║                                  [1kg] <- Santa Clara Miel 950 G [950g] | conf=HIGH flag= score=1.0
+┘éÏºÏ▓┘êÏ▓ Ï¡┘à┘êÏ» 2┘ä                            [2L] <- Eau Gazeuse HAMOUD BOUALEM LA BLANCHE _ 2L [2L] | conf=HIGH flag= score=1.0
+┘éÏºÏ▓┘êÏ▓ Ï¡┘à┘êÏ» Ï│┘ä┘è┘à 1┘ä                       [1L] <- Eau Gazeuse Slim Litchi _ 1L [1L] | conf=HIGH flag= score=1.0
+ÏÁ┘ê┘àÏº┘à Ï»┘èÏº┘ä┘åÏº 100Ï║                        [100g] <- Yaourt Soummam Dialna chocolat 100 G [100g] | conf=HIGH flag= score=1.0
+┘äÏ¿┘å ÏÁ┘ê┘àÏº┘à 1┘ä                             [1L] <- ┬á Raib Au Bifides Soummam 1L [1L] | conf=HIGH flag= score=1.0
+Ï¡┘ä┘èÏ¿ ÏÁ┘ê┘àÏº┘à 1┘ä                            [1L] <- Soummam Lait 1 Litre [1L] | conf=HIGH flag= score=1.0
+Ï¡┘ä┘èÏ¿ ÏÁ┘ê┘àÏº┘à 0.5┘ä                          [500ml] <- Soummam Lait 500 ML [500ml] | conf=HIGH flag= score=1.0
+Ï┤ÏºÏ▒Ï¿ÏºÏ¬ ÏÁ┘ê┘àÏº┘à 1┘ä                          [1L] <- ┬á  Soummam Laymouna Citron 1L [1L] | conf=HIGH flag= score=1.0
+┘àÏ╣ÏÀÏ▒ Ïº┘äÏ¼┘ê Ï¿Ï▒┘è┘ä┘âÏ│ 430┘à┘ä                   [430ml] <- Forcexpress d├®sodorise fleurs d&#8217;agrumes 430ml [430ml] | conf=HIGH flag=BRAND_GAP score=0.667
+┘àÏ¿┘èÏ» Ïº┘äÏ¡Ï┤Ï▒ÏºÏ¬ Ï│Ï¬┘êÏ¿ 300┘à┘ä                  [300ml] <- Stop Insecticide Volonts Citron 300 ML [300ml] | conf=HIGH flag= score=1.0
+┘à┘éÏ▒┘ê┘å Ï¿Ï»┘ê┘å Ï║┘ä┘êÏ¬┘è┘å 300Ï║                   [300g] <- ┬áEl Mordjene Levure Chimique 300 G [300g] | conf=HIGH flag=BRAND_GAP score=0.667
+Ï¡┘ä┘èÏ¿ ┘à┘ê┘åÏ»┘êÏ▒ 500 Ï║                        [500g] <- ┬áMilkospray Lait 500 G [500g] | conf=MEDIUM flag=BRAND_GAP+DUP_SOURCE score=0.5
+┘âÏ▒┘è┘à Ï┤┘ê┘åÏ¬┘è 200Ï║                          [200g] <- Double Mix Gaufrettes Double Cr├®me Vanille Et Noisette 200G [200g] | conf=MEDIUM flag=BRAND_GAP score=0.5
+ÏÁ┘ê┘àÏº┘à Ï»┘èÏº┘ä┘åÏº                             [] <- Yaourt Soummam Dialna chocolat 100 G [100g] | conf=MEDIUM flag=DUP_SOURCE score=1.0
+Ï┤Ïº┘àÏ¿┘ê ÏºÏÀ┘üÏº┘ä ┘ü┘è┘å┘êÏ│250┘à┘ä                   [250ml] <- SWALIS INTENSE CARE SHAMPOO 0% SULFATE 250ml [250ml] | conf=LOW flag=BRAND_GAP score=0.333
